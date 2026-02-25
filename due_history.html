@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Business Report - Stashio</title>
+    <title>Due History - Stashio</title>
     
     <meta name="theme-color" content="#4F46E5">
 
@@ -25,33 +25,43 @@
         :root {
             --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
-            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --success: #10b981;
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 90px; }
         
-        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: relative; z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); }
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
         .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; }
 
-        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -20px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: flex-end; border: 1px solid #f8fafc; }
-        .date-input { flex: 1; }
-        .date-input label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
-        .date-input input { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
-        .btn-filter { background: var(--text-dark); color: white; border: none; width: 40px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -20px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; flex-direction: column; gap: 10px; border: 1px solid #f8fafc; }
+        .date-row { display: flex; gap: 10px; }
+        .input-group { flex: 1; }
+        .input-group label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
+        .search-box { position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 10px; border: 1px solid #e5e7eb; outline: none; font-size: 13px; font-family: inherit; background: #f8fafc; }
 
-        .report-grid { padding: 0 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .report-card { background: var(--white); padding: 15px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #f8fafc; text-align: center; }
-        .report-card.full { grid-column: span 2; background: linear-gradient(135deg, var(--success), #059669); color: white; display: flex; justify-content: space-between; align-items: center; text-align: left; }
-        .report-card.full .rc-title { color: #d1fae5; margin-bottom: 2px; }
-        .report-card.full .rc-val { color: white; font-size: 28px; }
+        .history-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .history-card { background: var(--white); border-radius: 14px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); border-left: 4px solid transparent; }
+        .history-card.in { border-left-color: var(--success); }
+        .history-card.out { border-left-color: var(--danger); }
         
-        .rc-title { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 5px; }
-        .rc-val { font-size: 18px; font-weight: 800; color: var(--text-dark); }
+        .hc-info { flex: 1; min-width: 0; }
+        .hc-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+        .hc-note { font-size: 11px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+        .hc-date { font-size: 10px; color: #9ca3af; margin-top: 4px; font-weight: 600; }
+        
+        .hc-amt-box { text-align: right; }
+        .hc-amt { font-size: 16px; font-weight: 800; }
+        .hc-bal { font-size: 10px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+        .text-green { color: var(--success); }
+        .text-red { color: var(--danger); }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--white); display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -5px 25px rgba(0,0,0,0.08); border-top-left-radius: 30px; border-top-right-radius: 30px; z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; flex: 1; height: 100%; text-decoration: none; transition: 0.3s; }
@@ -67,64 +77,35 @@
         <div class="header-top">
             <div class="header-title">
                 <a href="reports.html"><i class="fas fa-arrow-left"></i></a>
-                <span>Business Report</span>
+                <span>Due Ledger History</span>
             </div>
             <button onclick="downloadPDF()" class="btn-pdf" id="btnPdf"><i class="fas fa-file-pdf"></i> Save Report</button>
         </div>
     </div>
 
     <div class="filter-card">
-        <div class="date-input">
-            <label>From Date</label>
-            <input type="date" id="dateFrom">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchName" placeholder="Search by customer/supplier name...">
         </div>
-        <div class="date-input">
-            <label>To Date</label>
-            <input type="date" id="dateTo">
+        <div class="date-row">
+            <div class="input-group" style="margin: 0;">
+                <label>From Date</label>
+                <input type="date" id="dateFrom">
+            </div>
+            <div class="input-group" style="margin: 0;">
+                <label>To Date</label>
+                <input type="date" id="dateTo">
+            </div>
         </div>
-        <button onclick="calculateReport()" class="btn-filter"><i class="fas fa-search"></i></button>
+        <button onclick="applyFilters()" style="width:100%; background:var(--text-dark); color:white; border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer; margin-top:5px;">Filter Data</button>
     </div>
 
     <div id="loading" style="text-align: center; padding: 20px; color: var(--text-light); font-weight: 600; font-size: 13px;">
-        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Generating Report...
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading History...
     </div>
 
-    <div class="report-grid" id="reportContent" style="display: none;">
-        <div class="report-card full" id="netProfitCard">
-            <div>
-                <div class="rc-title">Net Profit (নিট লাভ)</div>
-                <div class="rc-val" id="valNetProfit">৳0</div>
-            </div>
-            <i class="fas fa-chart-line" style="font-size: 40px; opacity: 0.4;"></i>
-        </div>
-
-        <div class="report-card">
-            <div class="rc-title">Total Sales</div>
-            <div class="rc-val text-primary" id="valSales">৳0</div>
-        </div>
-        <div class="report-card">
-            <div class="rc-title">Gross Profit</div>
-            <div class="rc-val text-success" id="valGrossProfit">৳0</div>
-        </div>
-
-        <div class="report-card">
-            <div class="rc-title text-danger">Total Expenses</div>
-            <div class="rc-val text-danger" id="valExpense">৳0</div>
-        </div>
-        <div class="report-card">
-            <div class="rc-title text-warning">Total Purchases</div>
-            <div class="rc-val text-warning" id="valPurchase">৳0</div>
-        </div>
-
-        <div class="report-card" style="border-top: 3px solid var(--success);">
-            <div class="rc-title">Receivable (পাব)</div>
-            <div class="rc-val text-success" id="valDueRecv">৳0</div>
-        </div>
-        <div class="report-card" style="border-top: 3px solid var(--danger);">
-            <div class="rc-title">Payable (দিব)</div>
-            <div class="rc-val text-danger" id="valDuePay">৳0</div>
-        </div>
-    </div>
+    <div class="history-list" id="historyList"></div>
 
     <div class="bottom-nav">
         <a href="home.html" class="nav-item">
@@ -151,115 +132,118 @@
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
 
-        let salesData = [], purchaseData = [], expenseData = [], dueData = [];
+        let allHistory = [];
+        let filteredHistory = [];
 
         window.onload = () => {
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-            const currentDay = today.toISOString().split('T')[0];
-            
-            document.getElementById('dateFrom').value = firstDay;
-            document.getElementById('dateTo').value = currentDay;
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = today;
+            document.getElementById('dateTo').value = today;
 
-            fetchData();
+            db.ref('due_history').on('value', snap => {
+                document.getElementById('loading').style.display = 'none';
+                allHistory = [];
+                if(snap.exists()) {
+                    allHistory = Object.entries(snap.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(h => h.shop_id === SHOP_ID)
+                        .reverse();
+                }
+                applyFilters();
+            });
         };
 
-        function fetchData() {
-            let loaded = 0;
-            const checkLoad = () => { loaded++; if(loaded === 4) calculateReport(); };
+        document.getElementById('searchName').addEventListener('input', applyFilters);
 
-            db.ref('sales_history').on('value', snap => { salesData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
-            db.ref('purchase_history').on('value', snap => { purchaseData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
-            db.ref('expenses_book').on('value', snap => { expenseData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
-            db.ref('due_book').on('value', snap => { dueData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID && r.current_due > 0) : []; checkLoad(); });
+        window.applyFilters = () => {
+            const term = document.getElementById('searchName').value.toLowerCase().trim();
+            const dateFrom = new Date(document.getElementById('dateFrom').value).setHours(0,0,0,0);
+            const dateTo = new Date(document.getElementById('dateTo').value).setHours(23,59,59,999);
+
+            filteredHistory = allHistory.filter(h => {
+                const matchName = h.name ? h.name.toLowerCase().includes(term) : false;
+                const hDate = new Date(h.date).getTime();
+                const matchDate = hDate >= dateFrom && hDate <= dateTo;
+                return matchName && matchDate;
+            });
+
+            renderHistory();
+        };
+
+        function renderHistory() {
+            const listEl = document.getElementById('historyList');
+            listEl.innerHTML = '';
+
+            if(filteredHistory.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;">No records found.</div>`;
+                return;
+            }
+
+            filteredHistory.forEach(h => {
+                const d = new Date(h.date);
+                // Logic: If receive type & action includes "Paid" or "Received" -> it's cash IN. Else OUT/DUE.
+                const isPositive = h.type === 'receive' ? (h.action.includes('Received') ? true : false) : (h.action.includes('Paid') ? false : true);
+                
+                const cardClass = isPositive ? 'in' : 'out';
+                const textClass = isPositive ? 'text-green' : 'text-red';
+                const sign = isPositive ? '+' : '-';
+
+                const html = `
+                <div class="history-card ${cardClass}">
+                    <div class="hc-info">
+                        <div class="hc-name">${h.name}</div>
+                        <div class="hc-note">${h.action}</div>
+                        <div class="hc-date">${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                    <div class="hc-amt-box">
+                        <div class="hc-amt ${textClass}">${sign}৳${Number(h.amount).toLocaleString()}</div>
+                        <div class="hc-bal">Bal: ৳${h.balance_left !== undefined ? Number(h.balance_left).toLocaleString() : 'N/A'}</div>
+                    </div>
+                </div>`;
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
         }
 
-        window.calculateReport = () => {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('reportContent').style.display = 'grid';
-
-            const startStr = new Date(document.getElementById('dateFrom').value).setHours(0,0,0,0);
-            const endStr = new Date(document.getElementById('dateTo').value).setHours(23,59,59,999);
-
-            let totalSales = 0, grossProfit = 0, totalPurchase = 0, totalExpense = 0, recv = 0, pay = 0;
-
-            salesData.forEach(r => {
-                const d = r.created_at || new Date(r.date).getTime();
-                if(d >= startStr && d <= endStr) { totalSales += Number(r.total_amount||0); grossProfit += Number(r.total_profit||0); }
-            });
-
-            purchaseData.forEach(r => {
-                const d = r.created_at || new Date(r.date).getTime();
-                if(d >= startStr && d <= endStr) totalPurchase += Number(r.total_amount||0);
-            });
-
-            expenseData.forEach(r => {
-                const d = r.date || r.created_at;
-                if(d >= startStr && d <= endStr) totalExpense += Number(r.amount||0);
-            });
-
-            // Due is overall, not date filtered usually, but let's filter by creation for report specifically
-            dueData.forEach(r => {
-                if(r.type === 'receive') recv += Number(r.current_due||0);
-                else pay += Number(r.current_due||0);
-            });
-
-            const netProfit = grossProfit - totalExpense;
-
-            document.getElementById('valSales').innerText = `৳${totalSales.toLocaleString()}`;
-            document.getElementById('valGrossProfit').innerText = `৳${grossProfit.toLocaleString()}`;
-            document.getElementById('valPurchase').innerText = `৳${totalPurchase.toLocaleString()}`;
-            document.getElementById('valExpense').innerText = `৳${totalExpense.toLocaleString()}`;
-            document.getElementById('valNetProfit').innerText = `৳${netProfit.toLocaleString()}`;
-            document.getElementById('valDueRecv').innerText = `৳${recv.toLocaleString()}`;
-            document.getElementById('valDuePay').innerText = `৳${pay.toLocaleString()}`;
-
-            const npCard = document.getElementById('netProfitCard');
-            if(netProfit < 0) {
-                npCard.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
-                document.querySelector('.rc-title').innerText = "Net Loss (লোকসান)";
-            } else {
-                npCard.style.background = 'linear-gradient(135deg, var(--success), #059669)';
-                document.querySelector('.rc-title').innerText = "Net Profit (নিট লাভ)";
-            }
-        };
-
         window.downloadPDF = () => {
+            if(filteredHistory.length === 0) return alert("No data to download!");
+            
             const btn = document.getElementById('btnPdf');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-            const dFrom = document.getElementById('dateFrom').value;
-            const dTo = document.getElementById('dateTo').value;
-            
             const tempDiv = document.createElement('div');
             tempDiv.style.padding = '20px';
             tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
             
+            let trs = '';
+            filteredHistory.forEach(h => {
+                const d = new Date(h.date).toLocaleDateString('en-GB');
+                trs += `<tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${d}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; font-weight:bold;">${h.name}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${h.action}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align:right; font-weight:bold;">${Number(h.amount).toLocaleString()}</td>
+                </tr>`;
+            });
+
             tempDiv.innerHTML = `
-                <h2 style="text-align:center; font-size: 24px; margin-bottom: 5px;">${SHOP_NAME}</h2>
-                <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #666;">Business Analytics Report<br>Date: ${dFrom} to ${dTo}</p>
-                
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; margin-bottom: 20px;">
-                    <tbody>
-                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">Total Sales (মোট বিক্রি)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${document.getElementById('valSales').innerText}</td></tr>
-                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">Total Purchases (মোট ক্রয়)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${document.getElementById('valPurchase').innerText}</td></tr>
-                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">Gross Profit (মোট লাভ)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:green;">${document.getElementById('valGrossProfit').innerText}</td></tr>
-                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:red;">Total Expenses (মোট খরচ)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:red;">${document.getElementById('valExpense').innerText}</td></tr>
-                        <tr style="background:#f3f4f6;"><td style="padding: 12px; border: 1px solid #ddd; font-weight:bold; font-size:16px;">NET PROFIT / LOSS (নিট লাভ/ক্ষতি)</td><td style="padding: 12px; border: 1px solid #ddd; text-align:right; font-weight:bold; font-size:16px;">${document.getElementById('valNetProfit').innerText}</td></tr>
-                    </tbody>
-                </table>
-                <h4 style="margin-bottom:10px;">Market Due Status (বাজারের বাকি)</h4>
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                    <tbody>
-                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:green;">Receivable (পাব)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:green;">${document.getElementById('valDueRecv').innerText}</td></tr>
-                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:red;">Payable (দিব)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:red;">${document.getElementById('valDuePay').innerText}</td></tr>
-                    </tbody>
+                <h2 style="text-align:center; margin-bottom: 5px;">${SHOP_NAME}</h2>
+                <p style="text-align:center; font-size: 14px; margin-bottom: 20px;">Due Ledger Transaction History</p>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead style="background-color: #4F46E5; color: white;">
+                        <tr>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Party Name</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Action</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; text-align:right;">Amount (৳)</th>
+                        </tr>
+                    </thead>
+                    <tbody>${trs}</tbody>
                 </table>
             `;
             
             html2pdf().set({
-                margin: 10, filename: `Business_Report_${dFrom}.pdf`,
+                margin: 10, filename: `Due_History_Report.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -270,4 +254,4 @@
         };
     </script>
 </body>
-  </html>
+</html>
