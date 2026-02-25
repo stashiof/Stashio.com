@@ -10,14 +10,14 @@
     <link rel="apple-touch-icon" href="icon-192x192.png">
 
     <script>
-        // Check all possible storage keys we used for login
         const loggedInUserPhone = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
-        
-        // If NO user is found, kick them out immediately to index.html
         if (!loggedInUserPhone) {
             window.location.replace("index.html");
         }
     </script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -53,10 +53,9 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Better for mobile scrolling */
+            align-items: flex-start;
         }
 
-        /* App Container Layout */
         .app-container {
             width: 100%;
             max-width: 450px;
@@ -68,7 +67,6 @@
             flex-direction: column;
         }
 
-        /* Responsive constraints for larger screens */
         @media (min-width: 480px) {
             body { align-items: center; }
             .app-container { 
@@ -79,7 +77,6 @@
             }
         }
 
-        /* Top Bar Styling */
         .top-bar { 
             padding: 35px 25px 20px; 
             text-align: center; 
@@ -105,307 +102,83 @@
             100% { background-position: 300%; } 
         }
         
-        .user-info p { 
-            margin: 5px 0 0; 
-            font-size: 13px; 
-            color: var(--text-light); 
-            font-weight: 500;
-        }
+        .user-info p { margin: 5px 0 0; font-size: 13px; color: var(--text-light); font-weight: 500; }
 
-        /* Main Content Container */
-        .container { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 25px 20px 40px; 
-            background: #ffffff;
-        }
-        
-        /* Custom Scrollbar for container */
+        .container { flex: 1; overflow-y: auto; padding: 25px 20px 40px; background: #ffffff; }
         .container::-webkit-scrollbar { width: 5px; }
         .container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        /* Add New Shop Card */
         .add-shop-card { 
-            border: 2px dashed #cbd5e1; 
-            border-radius: 20px; 
-            padding: 20px; 
-            text-align: center; 
-            cursor: pointer; 
-            margin-bottom: 25px;
-            transition: all 0.3s ease; 
-            background: #f8fafc; 
-            color: var(--text-light);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            border: 2px dashed #cbd5e1; border-radius: 20px; padding: 20px; text-align: center; 
+            cursor: pointer; margin-bottom: 25px; transition: all 0.3s ease; background: #f8fafc; color: var(--text-light);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .add-shop-card:hover { border-color: var(--primary); background: #eff6ff; }
         .add-shop-card:active { transform: scale(0.97); }
-        .add-shop-card i { 
-            color: var(--primary); 
-            font-size: 28px; 
-            margin-bottom: 10px; 
-            transition: transform 0.3s;
-        }
+        .add-shop-card i { color: var(--primary); font-size: 28px; margin-bottom: 10px; transition: transform 0.3s; }
         .add-shop-card:hover i { transform: rotate(90deg); }
         .add-shop-card h3 { font-size: 15px; color: var(--primary); font-weight: 700; }
         .add-shop-card p { font-size: 12px; margin-top: 4px; }
 
-        /* Shop List Container */
-        .shop-list { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 18px; 
-        }
+        .shop-list { display: flex; flex-direction: column; gap: 18px; }
         
-        /* Individual Shop Card */
         .shop-card { 
-            background: #fff; 
-            border-radius: 20px; 
-            padding: 15px; 
-            box-shadow: var(--shadow-sm); 
-            border: 1px solid #f1f5f9;
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            background: #fff; border-radius: 20px; padding: 15px; box-shadow: var(--shadow-sm); 
+            border: 1px solid #f1f5f9; display: flex; align-items: center; gap: 15px; transition: all 0.3s ease; position: relative; overflow: hidden;
         }
         .shop-card:hover { box-shadow: var(--shadow-md); border-color: #e2e8f0; }
         
-        .shop-img { 
-            width: 65px; 
-            height: 65px; 
-            border-radius: 14px; 
-            object-fit: cover; 
-            background: #f3f4f6; 
-            border: 1px solid #e5e7eb;
-            flex-shrink: 0;
-        }
+        .shop-img { width: 65px; height: 65px; border-radius: 14px; object-fit: cover; background: #f3f4f6; border: 1px solid #e5e7eb; flex-shrink: 0; }
         
         .shop-details { flex: 1; min-width: 0; }
         .shop-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-        .shop-name { 
-            font-size: 16px; 
-            font-weight: 700; 
-            color: var(--text-dark); 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            max-width: 180px;
-        }
+        .shop-name { font-size: 16px; font-weight: 700; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .shop-role { font-size: 10px; background: #e0e7ff; color: var(--primary); padding: 3px 10px; border-radius: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .shop-desc { font-size: 12px; color: var(--text-light); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
         
-        .shop-role { 
-            font-size: 10px; 
-            background: #e0e7ff; 
-            color: var(--primary); 
-            padding: 3px 10px; 
-            border-radius: 12px; 
-            font-weight: 700; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .shop-desc { 
-            font-size: 12px; 
-            color: var(--text-light); 
-            display: -webkit-box; 
-            -webkit-line-clamp: 1; 
-            -webkit-box-orient: vertical; 
-            overflow: hidden; 
-            margin-bottom: 12px; 
-        }
-        
-        /* Enter Button inside Card */
         .btn-enter { 
-            width: 100%;
-            padding: 10px 15px; 
-            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 13px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.2); 
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
+            width: 100%; padding: 10px 15px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: white; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.2); transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; gap: 8px;
         }
         .btn-enter:hover { box-shadow: 0 6px 15px rgba(236, 72, 153, 0.3); }
         .btn-enter:active { transform: scale(0.97); }
         
-        /* Settings Gear Icon */
-        .settings-icon { 
-            color: #cbd5e1; 
-            cursor: pointer; 
-            font-size: 18px; 
-            transition: 0.2s; 
-            padding: 5px;
-        }
+        .settings-icon { color: #cbd5e1; cursor: pointer; font-size: 18px; transition: 0.2s; padding: 5px; }
         .settings-icon:hover { color: var(--primary); transform: rotate(45deg); }
 
-        /* Loader Animation */
-        .loader-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 0;
-            display: none;
-        }
-        .custom-loader {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e0e7ff;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-        }
+        .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; display: none; }
+        .custom-loader { width: 40px; height: 40px; border: 4px solid #e0e7ff; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
 
-        /* Modal Overlay & Content */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(17, 24, 39, 0.7); 
-            backdrop-filter: blur(6px); 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 1000; 
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(6px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #ffffff; padding: 30px 25px; border-radius: 28px; width: 90%; max-width: 380px; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         
-        .modal-content { 
-            background: #ffffff; 
-            padding: 30px 25px; 
-            border-radius: 28px; 
-            width: 90%; 
-            max-width: 380px; 
-            position: relative; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
-            animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
-        }
+        @keyframes modalPopUp { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
         
-        @keyframes modalPopUp { 
-            from { transform: scale(0.9) translateY(20px); opacity: 0; } 
-            to { transform: scale(1) translateY(0); opacity: 1; } 
-        }
-        
-        .close-btn { 
-            position: absolute; 
-            top: 20px; 
-            right: 25px; 
-            font-size: 24px; 
-            cursor: pointer; 
-            color: #9ca3af; 
-            transition: 0.2s;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: #f3f4f6;
-        }
+        .close-btn { position: absolute; top: 20px; right: 25px; font-size: 24px; cursor: pointer; color: #9ca3af; transition: 0.2s; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f3f4f6; }
         .close-btn:hover { background: #fee2e2; color: var(--danger); }
         
-        /* Modal Form Inputs */
         .input-group { margin-bottom: 18px; position: relative; }
-        .input-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-            display: block;
-        }
-        .input-group input, .input-group textarea {
-            width: 100%; 
-            padding: 14px 16px; 
-            border: 2px solid #e5e7eb; 
-            background: #f9fafb; 
-            border-radius: 14px; 
-            font-size: 14px; 
-            outline: none; 
-            transition: all 0.3s ease; 
-            color: var(--text-dark); 
-            font-family: 'Poppins', sans-serif;
-        }
-        .input-group input:focus, .input-group textarea:focus { 
-            border-color: var(--primary); 
-            background: #ffffff; 
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-        }
+        .input-group label { font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; display: block; }
+        .input-group input, .input-group textarea { width: 100%; padding: 14px 16px; border: 2px solid #e5e7eb; background: #f9fafb; border-radius: 14px; font-size: 14px; outline: none; transition: all 0.3s ease; color: var(--text-dark); font-family: 'Poppins', sans-serif; }
+        .input-group input:focus, .input-group textarea:focus { border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
         
-        /* Image Upload Custom UI inside Modal */
-        .image-upload-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed #cbd5e1;
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 20px;
-            background: #f8fafc;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+        .image-upload-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; margin-bottom: 20px; background: #f8fafc; cursor: pointer; transition: 0.3s; }
         .image-upload-wrapper:hover { border-color: var(--primary); }
         
-        /* Buttons inside Modal */
-        .modal-btn { 
-            width: 100%; 
-            padding: 16px; 
-            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-            color: white; 
-            border: none; 
-            border-radius: 14px; 
-            font-size: 15px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            margin-top: 10px;
-            transition: 0.2s;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-        }
+        .modal-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
         .modal-btn:active { transform: scale(0.98); }
         .modal-btn:disabled { opacity: 0.7; cursor: not-allowed; }
         
-        .btn-danger { 
-            width: 100%; 
-            padding: 14px; 
-            background: transparent; 
-            color: var(--danger); 
-            border: 2px solid var(--danger); 
-            border-radius: 14px; 
-            font-size: 14px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            margin-top: 15px; 
-            transition: all 0.3s ease; 
-        }
+        .btn-danger { width: 100%; padding: 14px; background: transparent; color: var(--danger); border: 2px solid var(--danger); border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: all 0.3s ease; }
         .btn-danger:hover { background: var(--danger); color: white; }
         
-        /* Status Text */
         .status-msg { text-align: center; font-size: 13px; font-weight: 600; margin-top: 15px; min-height: 20px; }
         
-        /* Empty State Illustration */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            text-align: center;
-        }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
         .empty-state i { font-size: 50px; color: #cbd5e1; margin-bottom: 15px; }
         .empty-state h4 { font-size: 16px; color: var(--text-dark); margin-bottom: 5px; }
         .empty-state p { font-size: 13px; color: var(--text-light); }
-
     </style>
 </head>
 <body>
@@ -432,11 +205,9 @@
                 <p style="color: var(--text-light); font-size: 13px; font-weight: 500;">Loading your shops...</p>
             </div>
 
-            <div id="shopList" class="shop-list">
-                </div>
+            <div id="shopList" class="shop-list"></div>
         </div>
     </div>
-
 
     <div id="shopModal" class="modal">
         <div class="modal-content">
@@ -483,7 +254,6 @@
         </div>
     </div>
 
-
     <div id="otpModal" class="modal">
         <div class="modal-content" style="text-align: center;">
             <div class="close-btn" onclick="closeModal('otpModal')"><i class="fas fa-times"></i></div>
@@ -512,15 +282,23 @@
     </div>
 
 
-    <script type="module">
-        // Modular Firebase Imports
-        import { dbFirestore, doc, getDoc, collection, addDoc, getDocs, updateDoc, deleteDoc } from './firebase_config.js';
+    <script>
+        // --- FIREBASE CONFIGURATION (V8 STANDARD) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
+            authDomain: "stashio-6b332.firebaseapp.com",
+            projectId: "stashio-6b332",
+            storageBucket: "stashio-6b332.firebasestorage.app",
+            messagingSenderId: "210525763748",
+            appId: "1:210525763748:web:372466a48071cb53fc4e31"
+        };
 
-        // External APIs
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432"; 
         const scriptURL = "https://script.google.com/macros/s/AKfycbwoC5HV-g8E5W3LY4tw4I63OUtIIK5e7kEDMW5Dk8XTn9BmBFyLR6sOGCd1JHo9HdLx/exec";
 
-        // Global Variables
         const activeUserPhone = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeUserName = localStorage.getItem('tempUserName') || sessionStorage.getItem('tempUserName') || localStorage.getItem('userName') || "User";
         
@@ -532,21 +310,20 @@
                 window.location.replace("index.html"); 
                 return; 
             }
-            
             document.getElementById('welcomeName').innerText = "Hi, " + activeUserName;
             loadShops();
         };
 
         // --- FETCH SHOPS LOGIC ---
-        async function loadShops() {
+        function loadShops() {
             const listDiv = document.getElementById('shopList');
             const loader = document.getElementById('loader');
             
             listDiv.innerHTML = ""; 
             loader.style.display = "flex"; 
 
-            try {
-                const querySnapshot = await getDocs(collection(dbFirestore, "shops"));
+            db.collection("shops").get()
+            .then((querySnapshot) => {
                 loader.style.display = "none";
                 let shopCount = 0;
 
@@ -597,15 +374,16 @@
                         </div>
                     `;
                 }
-            } catch (error) {
+            })
+            .catch(error => { 
                 loader.style.display = "none"; 
                 console.error("Error loading shops:", error);
                 listDiv.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle text-danger"></i><h4>Connection Error</h4><p>Failed to load data. Check internet.</p></div>`;
-            }
+            });
         }
 
-        // --- ENTER SHOP LOGIC ---
-        window.enterShop = (shopId, shopName) => {
+        // --- ENTER SHOP ---
+        function enterShop(shopId, shopName) {
             localStorage.setItem('tempUserPhone', activeUserPhone); 
             localStorage.setItem('tempUserName', activeUserName);
             localStorage.setItem('activeShopId', shopId);
@@ -615,10 +393,10 @@
             document.body.style.transition = "opacity 0.3s";
             
             setTimeout(() => { window.location.href = "home.html"; }, 300);
-        };
+        }
 
         // --- MODAL HANDLING ---
-        window.openModal = (mode, shopId = null) => {
+        function openModal(mode, shopId = null) {
             const title = document.getElementById('modalTitle');
             const btn = document.getElementById('modalActionBtn');
             const deleteContainer = document.getElementById('deleteBtnContainer');
@@ -656,20 +434,19 @@
             }
             
             document.getElementById('shopModal').style.display = "flex";
-        };
+        }
 
-        window.closeModal = (modalId) => { 
+        function closeModal(modalId) { 
             document.getElementById(modalId).style.display = "none"; 
-        };
+        }
 
         function setStatus(elementId, text, color) {
             const el = document.getElementById(elementId);
-            el.innerText = text;
-            el.style.color = color;
+            el.innerText = text; el.style.color = color;
         }
 
-        // --- CLIENT-SIDE IMAGE COMPRESSION ---
-        window.compressAndUploadLogo = async (input) => {
+        // --- IMAGE COMPRESSION & UPLOAD ---
+        function compressAndUploadLogo(input) {
             const file = input.files[0];
             if (!file) return;
 
@@ -715,10 +492,10 @@
                     }
                 }
             };
-        };
+        }
 
         // --- SAVE NEW SHOP ---
-        async function saveShop() {
+        function saveShop() {
             const name = document.getElementById('shopName').value.trim();
             const desc = document.getElementById('shopDesc').value.trim();
             const address = document.getElementById('shopAddress').value.trim();
@@ -726,58 +503,41 @@
             const btn = document.getElementById('modalActionBtn');
 
             if (!name || !address) { 
-                setStatus('modalStatus', "Please provide Shop Name and Address!", "var(--danger)"); 
-                return; 
+                setStatus('modalStatus', "Please provide Shop Name and Address!", "var(--danger)"); return; 
             }
 
             setStatus('modalStatus', "Creating your shop...", "var(--warning)"); 
             btn.disabled = true;
 
-            try {
-                const newShopRef = await addDoc(collection(dbFirestore, "shops"), {
-                    name: name, 
-                    description: desc, 
-                    address: address, 
-                    image: imageUrl,
-                    createdAt: new Date().getTime(), 
-                    createdBy: activeUserPhone, 
-                    members: [activeUserPhone], 
-                    roles: { [activeUserPhone]: "owner" }
+            db.collection("shops").add({
+                name: name, description: desc, address: address, image: imageUrl,
+                createdAt: new Date().getTime(), createdBy: activeUserPhone, 
+                members: [activeUserPhone], roles: { [activeUserPhone]: "owner" }
+            }).then((newShopRef) => {
+                // Update User Document
+                db.collection("users").doc(activeUserPhone).get().then((userDoc) => {
+                    if (userDoc.exists) {
+                        db.collection("users").doc(activeUserPhone).update({
+                            shops: firebase.firestore.FieldValue.arrayUnion(newShopRef.id)
+                        });
+                    }
                 });
 
-                // Update User Document to include this shop ID
-                const userDocRef = doc(dbFirestore, "users", activeUserPhone);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    let userShops = userDoc.data().shops || [];
-                    userShops.push(newShopRef.id);
-                    await updateDoc(userDocRef, { shops: userShops });
-                }
-
                 setStatus('modalStatus', "Shop Created Successfully! ✅", "var(--success)");
-                
-                setTimeout(() => { 
-                    closeModal('shopModal'); 
-                    loadShops(); 
-                }, 1500);
-
-            } catch (e) { 
+                setTimeout(() => { closeModal('shopModal'); loadShops(); }, 1500);
+            }).catch((e) => { 
                 setStatus('modalStatus', "Error: " + e.message, "var(--danger)"); 
-            } finally { 
-                btn.disabled = false; 
-            }
+                btn.disabled = false;
+            });
         }
 
         // --- EDIT SHOP LOGIC ---
-        async function fetchShopDataForEdit(id) {
+        function fetchShopDataForEdit(id) {
             setStatus('modalStatus', "Fetching details...", "var(--text-light)");
             
-            try {
-                const docRef = doc(dbFirestore, "shops", id);
-                const docSnap = await getDoc(docRef);
-                
-                if(docSnap.exists()) {
-                    const d = docSnap.data();
+            db.collection("shops").doc(id).get().then((doc) => {
+                if(doc.exists) {
+                    const d = doc.data();
                     document.getElementById('shopName').value = d.name;
                     document.getElementById('shopDesc').value = d.description || "";
                     document.getElementById('shopAddress').value = d.address || "";
@@ -790,12 +550,10 @@
                     }
                     setStatus('modalStatus', "", "black");
                 }
-            } catch(err) {
-                setStatus('modalStatus', "Failed to load data.", "var(--danger)");
-            }
+            }).catch(err => setStatus('modalStatus', "Failed to load data.", "var(--danger)"));
         }
 
-        async function updateShop() {
+        function updateShop() {
             const id = document.getElementById('editShopId').value;
             const name = document.getElementById('shopName').value.trim();
             const desc = document.getElementById('shopDesc').value.trim();
@@ -804,59 +562,41 @@
             const btn = document.getElementById('modalActionBtn');
 
             if (!name || !address) { 
-                setStatus('modalStatus', "Name & Address cannot be empty!", "var(--danger)"); 
-                return; 
+                setStatus('modalStatus', "Name & Address cannot be empty!", "var(--danger)"); return; 
             }
 
             setStatus('modalStatus', "Updating details...", "var(--warning)"); 
             btn.disabled = true;
 
-            try {
-                const shopRef = doc(dbFirestore, "shops", id);
-                await updateDoc(shopRef, { 
-                    name: name, 
-                    description: desc, 
-                    address: address,
-                    image: imageUrl,
-                    updatedAt: new Date().getTime()
-                });
-                
-                if(localStorage.getItem('activeShopId') === id) {
-                    localStorage.setItem('activeShopName', name);
-                }
-
+            db.collection("shops").doc(id).update({ 
+                name: name, description: desc, address: address, image: imageUrl, updatedAt: new Date().getTime()
+            }).then(() => {
+                if(localStorage.getItem('activeShopId') === id) localStorage.setItem('activeShopName', name);
                 setStatus('modalStatus', "Shop Updated! ✅", "var(--success)");
-                setTimeout(() => { 
-                    closeModal('shopModal'); 
-                    loadShops(); 
-                }, 1500);
-
-            } catch (e) { 
+                setTimeout(() => { closeModal('shopModal'); loadShops(); }, 1500);
+            }).catch((e) => { 
                 setStatus('modalStatus', "Error: " + e.message, "var(--danger)"); 
-            } finally { 
-                btn.disabled = false; 
-            }
+                btn.disabled = false;
+            });
         }
 
         // --- SECURE DELETE SHOP LOGIC ---
-        window.initiateDelete = async () => {
+        function initiateDelete() {
             const btnDelete = document.getElementById('btnDelete');
             btnDelete.disabled = true;
             setStatus('modalStatus', "Preparing security check...", "var(--warning)");
 
-            try {
-                const userDoc = await getDoc(doc(dbFirestore, "users", activeUserPhone));
-                if (userDoc.exists() && userDoc.data().email) {
-                    sendDeleteOtp(userDoc.data().email);
-                } else {
+            db.collection("users").doc(activeUserPhone).get().then((doc) => {
+                if (doc.exists && doc.data().email) sendDeleteOtp(doc.data().email);
+                else {
                     setStatus('modalStatus', "Security Error: No email linked to your account.", "var(--danger)");
                     btnDelete.disabled = false;
                 }
-            } catch(err) {
+            }).catch(err => {
                 setStatus('modalStatus', "Database error! Try again.", "var(--danger)");
                 btnDelete.disabled = false;
-            }
-        };
+            });
+        }
 
         function sendDeleteOtp(email) {
             setStatus('modalStatus', "Sending OTP to email...", "var(--warning)");
@@ -879,7 +619,7 @@
             });
         }
 
-        window.confirmDeleteShop = async () => {
+        function confirmDeleteShop() {
             const inputOtp = document.getElementById('deleteOtpInput').value;
             const btnConfirm = document.getElementById('btnConfirmDelete');
 
@@ -887,29 +627,23 @@
                 btnConfirm.disabled = true;
                 setStatus('otpModalStatus', "Deleting shop... Please wait.", "var(--warning)");
 
-                try {
-                    await deleteDoc(doc(dbFirestore, "shops", shopToDelete));
-                    
+                db.collection("shops").doc(shopToDelete).delete().then(() => {
                     setStatus('otpModalStatus', "Shop deleted permanently.", "var(--success)");
                     
                     if(localStorage.getItem('activeShopId') === shopToDelete) {
                         localStorage.removeItem('activeShopId');
                         localStorage.removeItem('activeShopName');
                     }
-
-                    setTimeout(() => {
-                        closeModal('otpModal');
-                        loadShops(); 
-                    }, 2000);
-                } catch(err) {
+                    setTimeout(() => { closeModal('otpModal'); loadShops(); }, 2000);
+                }).catch(err => {
                     setStatus('otpModalStatus', "Deletion failed! " + err.message, "var(--danger)");
                     btnConfirm.disabled = false;
-                }
+                });
             } else {
                 setStatus('otpModalStatus', "Incorrect PIN! Try again.", "var(--danger)");
                 document.getElementById('deleteOtpInput').value = "";
             }
-        };
+        }
     </script>
 </body>
 </html>
