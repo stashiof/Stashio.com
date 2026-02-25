@@ -14,6 +14,10 @@
         else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -74,7 +78,7 @@
         .fab:active { transform: scale(0.9); }
 
         /* Modal Settings */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 1000; align-items: flex-end; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1000; align-items: flex-end; justify-content: center; }
         .modal-content { background: var(--bg-color); width: 100%; max-width: 500px; max-height: 90vh; border-top-left-radius: 30px; border-top-right-radius: 30px; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @media (min-width: 768px) { .modal-overlay { align-items: center; } .modal-content { border-radius: 25px; height: auto; } }
@@ -82,7 +86,6 @@
         .modal-header { padding: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
         .btn-close { background: #f2f2f7; border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-dark); font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
-        .btn-close:active { background: #e5e5ea; }
 
         .upload-area { text-align: center; margin-bottom: 20px; }
         .preview-img { width: 90px; height: 90px; border-radius: 28px; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.08); background: #f1f5f9; cursor: pointer; }
@@ -90,7 +93,7 @@
         /* Inputs & Checkboxes */
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 5px; text-transform: uppercase; }
-        .input-field { width: 100%; padding: 14px 15px; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; font-size: 13px; font-family: inherit; font-weight: 500; outline: none; background: white; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); color: var(--text-dark); }
+        .input-field { width: 100%; padding: 14px 15px; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; font-size: 13px; font-family: inherit; font-weight: 500; outline: none; background: white; transition: 0.3s; color: var(--text-dark); }
         .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
         .input-field:disabled { background: #e5e5ea; color: #8e8e93; }
 
@@ -99,26 +102,25 @@
         .perm-check { display: flex; align-items: center; gap: 10px; background: white; padding: 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.05); font-size: 12px; font-weight: 600; cursor: pointer; user-select: none; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .perm-check.active { background: #e0e7ff; border-color: var(--primary); color: var(--primary); }
         .perm-check.disabled { opacity: 0.5; pointer-events: none; }
-        .perm-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); pointer-events: none; }
+        .perm-check input { width: 18px; height: 18px; margin: 0; pointer-events: none; }
 
         .btn-save { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 16px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3); margin-top: 25px; transition: 0.2s; }
         .btn-save:active { transform: scale(0.98); }
         .btn-save:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
         .btn-delete { background: white; color: var(--danger); border: 2px solid #fee2e2; box-shadow: none; margin-top: 10px; }
-        .btn-delete:active { background: #fee2e2; }
 
         #loading { text-align: center; padding: 40px; color: var(--text-dark); font-weight: 600; font-size: 14px; position: relative; z-index: 20; }
         body.has-theme #loading { color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
         /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--white); display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -5px 25px rgba(0,0,0,0.08); border-top-left-radius: 30px; border-top-right-radius: 30px; z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; flex: 1; height: 100%; position: relative; transition: 0.3s; cursor: pointer; }
-        .nav-item i { font-size: 22px; margin-bottom: 4px; transition: 0.3s; }
-        .nav-item span { font-size: 11px; font-weight: 700; transition: 0.3s; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; flex: 1; height: 100%; text-decoration: none; transition: 0.3s; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
+        .nav-item span { font-size: 11px; font-weight: 700; }
         .nav-item.active { color: var(--primary); }
         .nav-item.active i { transform: translateY(-4px); }
         .nav-item.active::after { content: ''; position: absolute; top: 12px; right: 35%; width: 6px; height: 6px; background: var(--secondary); border-radius: 50%; }
-        body.has-theme .bottom-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
+        body.has-theme .bottom-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); }
     </style>
 </head>
 <body>
@@ -196,11 +198,36 @@
         </div>
     </div>
 
-    <div id="bottom-nav-container" class="bottom-nav"></div>
+    <div class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="reports.html" class="nav-item">
+            <i class="fas fa-chart-pie"></i>
+            <span>Reports</span>
+        </a>
+        <a href="settings.html" class="nav-item active">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </div>
 
-<script type="module">
-    // মডুলার ফায়ারবেস ইমপোর্ট
-    import { rtdb, dbFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove, deleteField, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
+<script>
+    // --- FIREBASE CONFIGURATION (V8 STANDARD) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
+        authDomain: "stashio-6b332.firebaseapp.com",
+        projectId: "stashio-6b332",
+        databaseURL: "https://stashio-6b332-default-rtdb.firebaseio.com",
+        storageBucket: "stashio-6b332.firebasestorage.app"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const dbFirestore = firebase.firestore();
+    const rtdb = firebase.database();
 
     const IMGBB_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
     const shopId = localStorage.getItem('activeShopId');
@@ -219,29 +246,14 @@
         { file: "expenses_book.html", name: "Expenses", icon: "fa-wallet" },
         { file: "sales_return.html", name: "Sales Return", icon: "fa-undo-alt" },
         { file: "purchase_return.html", name: "Purchase Return", icon: "fa-share" },
-        { file: "recycle_bin.html", name: "Recycle Bin", icon: "fa-trash-restore" },
         { file: "reports.html", name: "Reports & AI", icon: "fa-chart-pie" },
         { file: "settings.html", name: "Shop Settings", icon: "fa-cog" },
         { file: "app_access.html", name: "Team & Access", icon: "fa-shield-halved" }
     ];
 
-    // Header & Footer Load
-    async function loadComponents() {
-        try {
-            const navRes = await fetch('bottom_nav.html');
-            if (navRes.ok) {
-                document.getElementById('bottom-nav-container').innerHTML = await navRes.text();
-                // Settings tab active
-                document.getElementById('nav-settings').classList.add('active');
-            }
-        } catch (error) { console.error("Error loading nav:", error); }
-    }
-
     window.onload = () => {
-        loadComponents();
-
         // Theme sync
-        rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
+        rtdb.ref(`global_settings/header_theme`).on('value', (snap) => {
             const themeCode = snap.exists() ? snap.val().code : null;
             if (themeCode && themeCode.trim() !== "") {
                 document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
@@ -271,12 +283,11 @@
         const role = document.getElementById('userRole').value;
         const phoneBeingEdited = document.getElementById('userPhone').value;
         
-        // Owner নিজের পারমিশন চেঞ্জ করতে পারবে না
         let myRealRole = currentShopData.roles ? currentShopData.roles[myPhone] : 'staff';
-        if (currentShopData.phone === myPhone) myRealRole = 'owner';
+        if (currentShopData.createdBy === myPhone || currentShopData.phone === myPhone) myRealRole = 'owner';
         
         if (myRealRole === 'owner' && myPhone === phoneBeingEdited) return; 
-        if(role !== 'custom') return; // Only allow toggling if role is custom
+        if(role !== 'custom') return; 
         
         const cb = document.getElementById(`perm_${file}`);
         cb.checked = !cb.checked;
@@ -293,17 +304,14 @@
         else { div.classList.remove('active'); icon.style.color = '#9ca3af'; }
     }
 
-    async function loadUsersAndCheckSecurity() {
-        const shopRef = doc(dbFirestore, "shops", shopId);
-        try {
-            const docSnap = await getDoc(shopRef);
-            
-            if (docSnap.exists()) {
+    function loadUsersAndCheckSecurity() {
+        dbFirestore.collection("shops").doc(shopId).get().then(docSnap => {
+            if (docSnap.exists) {
                 currentShopData = docSnap.data();
 
                 let realRole = 'staff';
                 if (currentShopData.roles && currentShopData.roles[myPhone]) { realRole = currentShopData.roles[myPhone]; }
-                if (currentShopData.phone === myPhone) { realRole = 'owner'; }
+                if (currentShopData.createdBy === myPhone || currentShopData.phone === myPhone) { realRole = 'owner'; }
 
                 let hasAccess = false;
                 if (realRole === 'owner') hasAccess = true;
@@ -315,7 +323,6 @@
                     return; 
                 }
 
-                // Show UI
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('userList').style.display = 'grid';
                 document.getElementById('fabAdd').style.display = 'flex';
@@ -330,7 +337,7 @@
                 members.forEach(phone => {
                     const info = staffInfo[phone] || {};
                     let roleKey = currentShopData.roles ? currentShopData.roles[phone] : 'staff';
-                    if (currentShopData.phone === phone) roleKey = 'owner';
+                    if (currentShopData.createdBy === phone || currentShopData.phone === phone) roleKey = 'owner';
                     
                     let displayRole = roleKey;
                     if(roleKey === 'custom' && info.customTitle) displayRole = info.customTitle;
@@ -356,10 +363,12 @@
                     `;
                     listDiv.innerHTML += card;
                 });
+            } else {
+                document.getElementById('loading').innerHTML = "Shop details not found.";
             }
-        } catch(e) {
-            console.log(e); alert("Error loading data.");
-        }
+        }).catch(e => {
+            console.error(e); alert("Error loading data.");
+        });
     }
 
     window.openModal = (mode, phone = '') => {
@@ -376,7 +385,6 @@
         document.getElementById('saveBtn').innerHTML = "Add Member";
         document.getElementById('deleteBtn').style.display = 'none';
 
-        // Enable all inputs default
         document.getElementById('userName').disabled = false;
         document.getElementById('joinDate').disabled = false;
         document.getElementById('userRole').disabled = false;
@@ -385,13 +393,13 @@
         document.getElementById('imgChangeText').style.display = 'block';
 
         let myRealRole = currentShopData.roles ? currentShopData.roles[myPhone] : 'staff';
-        if (currentShopData.phone === myPhone) myRealRole = 'owner';
+        if (currentShopData.createdBy === myPhone || currentShopData.phone === myPhone) myRealRole = 'owner';
 
         if (mode === 'edit') {
             document.getElementById('modalTitle').innerText = "Edit Member";
             const info = currentShopData.staff_info[phone] || {};
             let role = currentShopData.roles[phone] || 'staff';
-            if (currentShopData.phone === phone) role = 'owner';
+            if (currentShopData.createdBy === phone || currentShopData.phone === phone) role = 'owner';
             
             const perms = currentShopData.permissions ? currentShopData.permissions[phone] : {};
 
@@ -402,7 +410,6 @@
             document.getElementById('userRole').value = role;
             document.getElementById('saveBtn').innerHTML = "Update Details";
             
-            // 🔥 LOGIC: Owner cannot change their OWN role/permissions.
             if(myRealRole === 'owner' && myPhone === phone) {
                 document.getElementById('userRole').disabled = true;
                 document.getElementById('customTitle').disabled = true;
@@ -484,9 +491,9 @@
         btn.disabled = true;
 
         try {
-            const userDocRef = doc(dbFirestore, "users", phone);
-            const userDoc = await getDoc(userDocRef);
-            if (!userDoc.exists()) {
+            const userDocRef = dbFirestore.collection("users").doc(phone);
+            const userDoc = await userDocRef.get();
+            if (!userDoc.exists) {
                 const proceed = confirm(`⚠️ Warning\n\nLogin ID: ${phone} is not registered in Stashio yet.\n\nThey must create an account using this exact ID to access your shop.\n\nProceed anyway?`);
                 if (!proceed) { btn.disabled = false; btn.innerHTML = "Save Member"; return; }
             }
@@ -505,12 +512,11 @@
                 if(document.getElementById(`perm_${p.file}`).checked) perms[p.file] = true;
             });
 
-            // If it's the owner updating their own profile, keep the existing role/perms intact
             let finalRole = role;
             let finalPerms = perms;
             
             let myRealRole = currentShopData.roles ? currentShopData.roles[myPhone] : 'staff';
-            if (currentShopData.phone === myPhone) myRealRole = 'owner';
+            if (currentShopData.createdBy === myPhone || currentShopData.phone === myPhone) myRealRole = 'owner';
 
             if(myRealRole === 'owner' && myPhone === phone) {
                 finalRole = currentShopData.roles[phone] || 'owner';
@@ -518,21 +524,20 @@
             }
 
             const staffData = { name: name, joinDate: joinDate, image: imageUrl, customTitle: (finalRole === 'custom') ? document.getElementById('customTitle').value : "" };
-            const shopRef = doc(dbFirestore, "shops", shopId);
+            const shopRef = dbFirestore.collection("shops").doc(shopId);
             
             const updateData = {};
-            updateData.members = arrayUnion(phone);
+            updateData.members = firebase.firestore.FieldValue.arrayUnion(phone);
             updateData[`roles.${phone}`] = finalRole;
             updateData[`permissions.${phone}`] = finalPerms;
             updateData[`staff_info.${phone}`] = staffData;
 
-            await updateDoc(shopRef, updateData);
+            await shopRef.update(updateData);
             
-            if(userDoc.exists()) {
-                await updateDoc(userDocRef, { shops: arrayUnion(shopId) });
+            if(userDoc.exists) {
+                await userDocRef.update({ shops: firebase.firestore.FieldValue.arrayUnion(shopId) });
             }
 
-            // Sync with offline data locally
             if(myPhone === phone) {
                 localStorage.setItem('myRole', finalRole);
                 localStorage.setItem('myPermissions', JSON.stringify(finalPerms));
@@ -554,20 +559,20 @@
         if (!confirm("Are you sure you want to REVOKE ACCESS for this user? They will no longer see this shop on their dashboard.")) return;
 
         try {
-            const shopRef = doc(dbFirestore, "shops", shopId);
-            const userDocRef = doc(dbFirestore, "users", phone);
+            const shopRef = dbFirestore.collection("shops").doc(shopId);
+            const userDocRef = dbFirestore.collection("users").doc(phone);
             
             const updateData = {};
-            updateData.members = arrayRemove(phone);
-            updateData[`roles.${phone}`] = deleteField();
-            updateData[`permissions.${phone}`] = deleteField();
-            updateData[`staff_info.${phone}`] = deleteField();
+            updateData.members = firebase.firestore.FieldValue.arrayRemove(phone);
+            updateData[`roles.${phone}`] = firebase.firestore.FieldValue.delete();
+            updateData[`permissions.${phone}`] = firebase.firestore.FieldValue.delete();
+            updateData[`staff_info.${phone}`] = firebase.firestore.FieldValue.delete();
             
-            await updateDoc(shopRef, updateData);
+            await shopRef.update(updateData);
             
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                await updateDoc(userDocRef, { shops: arrayRemove(shopId) });
+            const userDoc = await userDocRef.get();
+            if (userDoc.exists) {
+                await userDocRef.update({ shops: firebase.firestore.FieldValue.arrayRemove(shopId) });
             }
 
             closeModal();
