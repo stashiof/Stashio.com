@@ -18,10 +18,6 @@
         }
     </script>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -129,12 +125,12 @@
         .tl-paid { color: var(--blue); font-weight: 600; }
 
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
-
-        /* Bottom Nav */
+        
+        /* Bottom Nav CSS Fallback (In case bottom_nav.html fails) */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--white); display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -5px 25px rgba(0,0,0,0.08); border-top-left-radius: 30px; border-top-right-radius: 30px; z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; flex: 1; height: 100%; position: relative; transition: 0.3s; cursor: pointer; text-decoration: none; }
-        .nav-item i { font-size: 22px; margin-bottom: 4px; transition: 0.3s; }
-        .nav-item span { font-size: 11px; font-weight: 700; transition: 0.3s; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; flex: 1; height: 100%; text-decoration: none; transition: 0.3s; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
+        .nav-item span { font-size: 11px; font-weight: 700; }
         .nav-item.active { color: var(--primary); }
         .nav-item.active i { transform: translateY(-4px); }
         .nav-item.active::after { content: ''; position: absolute; top: 12px; right: 35%; width: 6px; height: 6px; background: var(--secondary); border-radius: 50%; }
@@ -269,36 +265,11 @@
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <a href="home.html" class="nav-item">
-            <i class="fas fa-home"></i>
-            <span>Home</span>
-        </a>
-        <a href="reports.html" class="nav-item">
-            <i class="fas fa-chart-pie"></i>
-            <span>Reports</span>
-        </a>
-        <a href="settings.html" class="nav-item">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </div>
+    <div id="bottom-nav-container"></div>
 
-    <script>
-        // --- FIREBASE CONFIGURATION (V8 STANDARD) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
-            authDomain: "stashio-6b332.firebaseapp.com",
-            projectId: "stashio-6b332",
-            databaseURL: "https://stashio-6b332-default-rtdb.firebaseio.com",
-            storageBucket: "stashio-6b332.firebasestorage.app"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const dbFirestore = firebase.firestore();
-        const rtdb = firebase.database();
+    <script type="module">
+        // মডুলার ফায়ারবেস ইমপোর্ট
+        import { rtdb, dbFirestore, doc, getDoc, updateDoc, arrayUnion, ref as rtdbRef, push, update, onValue, get, remove } from './firebase_config.js';
 
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
         const SHOP_ID = localStorage.getItem('activeShopId');
@@ -307,9 +278,37 @@
         let contactsData = { customers: [], suppliers: [], employees: [] };
         let activeProfileId = null;
 
+        // Load Components explicitly
+        async function loadComponents() {
+            try {
+                const navRes = await fetch('bottom_nav.html');
+                if (navRes.ok) {
+                    document.getElementById('bottom-nav-container').innerHTML = await navRes.text();
+                } else {
+                    // Fallback nav if fetch fails
+                    document.getElementById('bottom-nav-container').innerHTML = `
+                        <div class="bottom-nav">
+                            <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                            <a href="reports.html" class="nav-item"><i class="fas fa-chart-pie"></i><span>Reports</span></a>
+                            <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+                        </div>`;
+                }
+            } catch (error) { 
+                console.error("Error loading nav:", error); 
+                document.getElementById('bottom-nav-container').innerHTML = `
+                    <div class="bottom-nav">
+                        <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                        <a href="reports.html" class="nav-item"><i class="fas fa-chart-pie"></i><span>Reports</span></a>
+                        <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+                    </div>`;
+            }
+        }
+
         window.onload = () => {
+            loadComponents();
+
             // Theme sync
-            rtdb.ref(`global_settings/header_theme`).on('value', (snap) => {
+            onValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                 const themeCode = snap.exists() ? snap.val().code : null;
                 if (themeCode && themeCode.trim() !== "") {
                     document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
@@ -334,7 +333,7 @@
             }
 
             // Realtime Sync
-            rtdb.ref(`contacts/${type}`).on('value', (snapshot) => {
+            onValue(rtdbRef(rtdb, `contacts/${type}`), (snapshot) => {
                 if (snapshot.exists()) {
                     const filteredData = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
@@ -544,15 +543,15 @@
             try {
                 // 1. Save to Realtime Database
                 if(id) {
-                    await rtdb.ref(`contacts/${currentTab}/${id}`).update(data);
+                    await update(rtdbRef(rtdb, `contacts/${currentTab}/${id}`), data);
                 } else {
                     data.created_at = Date.now();
-                    await rtdb.ref(`contacts/${currentTab}`).push(data);
+                    await push(rtdbRef(rtdb, `contacts/${currentTab}`), data);
                 }
 
                 // 2. AUTO APP-ACCESS INTEGRATION FOR EMPLOYEES (Firestore)
                 if (currentTab === 'employees' && phoneVal) {
-                    const shopRef = dbFirestore.collection("shops").doc(SHOP_ID);
+                    const shopRef = doc(dbFirestore, "shops", SHOP_ID);
                     const staffData = { 
                         name: nameVal, 
                         joinDate: new Date().toISOString().split('T')[0], 
@@ -561,20 +560,19 @@
                     };
                     
                     const updateData = {};
-                    updateData.members = firebase.firestore.FieldValue.arrayUnion(phoneVal);
-                    
+                    updateData.members = arrayUnion(phoneVal);
                     // Default to staff unless 'manager' is in title
                     const assignedRole = (posVal && posVal.toLowerCase().includes('manager')) ? 'manager' : 'staff';
                     updateData[`roles.${phoneVal}`] = assignedRole;
                     updateData[`staff_info.${phoneVal}`] = staffData;
                     
-                    await shopRef.update(updateData);
+                    await updateDoc(shopRef, updateData);
 
                     // Also give user doc access
-                    const userDocRef = dbFirestore.collection("users").doc(phoneVal);
-                    const userDoc = await userDocRef.get();
-                    if (userDoc.exists) {
-                        await userDocRef.update({ shops: firebase.firestore.FieldValue.arrayUnion(SHOP_ID) });
+                    const userDocRef = doc(dbFirestore, "users", phoneVal);
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists()) {
+                        await updateDoc(userDocRef, { shops: arrayUnion(SHOP_ID) });
                     }
                 }
 
@@ -620,7 +618,7 @@
                 // 1. CUSTOMER HISTORY
                 if (currentTab === 'customers') {
                     document.getElementById('historyHeading').innerText = "Purchase & Ledger History";
-                    const snap = await rtdb.ref('sales_history').get();
+                    const snap = await get(rtdbRef(rtdb, 'sales_history'));
                     if(snap.exists()) {
                         Object.values(snap.val()).forEach(sale => {
                             if(sale.shop_id === SHOP_ID && (sale.customer === c.name || sale.customer_name === c.name || sale.customer_phone === c.phone)) {
@@ -638,7 +636,7 @@
                 // 2. SUPPLIER HISTORY
                 else if (currentTab === 'suppliers') {
                     document.getElementById('historyHeading').innerText = "Supply & Payment History";
-                    const snap = await rtdb.ref('purchase_history').get();
+                    const snap = await get(rtdbRef(rtdb, 'purchase_history'));
                     if(snap.exists()) {
                         Object.values(snap.val()).forEach(purch => {
                             if(purch.shop_id === SHOP_ID && purch.supplier === c.name) {
@@ -663,8 +661,8 @@
                         paid: null, due: null
                     });
                     
-                    const shopDoc = await dbFirestore.collection("shops").doc(SHOP_ID).get();
-                    if(shopDoc.exists) {
+                    const shopDoc = await getDoc(doc(dbFirestore, "shops", SHOP_ID));
+                    if(shopDoc.exists()) {
                         const shopData = shopDoc.data();
                         if(shopData.roles && shopData.roles[c.phone]) {
                             logs.push({
@@ -716,7 +714,7 @@
         window.deleteContact = async (id) => {
             if(!confirm(`Are you sure you want to permanently delete this record?`)) return;
             try {
-                await rtdb.ref(`contacts/${currentTab}/${id}`).remove();
+                await remove(rtdbRef(rtdb, `contacts/${currentTab}/${id}`));
                 closeModal('profileModal');
             } catch(e) { alert("Failed to delete record."); }
         };
