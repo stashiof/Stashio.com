@@ -12,13 +12,7 @@
         const activeShopId = localStorage.getItem('activeShopId');
         if (!loggedInUser) window.location.replace("index.html");
         else if (!activeShopId) window.location.replace("dashboard.html");
-
-        const myRole = localStorage.getItem('myRole') || 'staff';
-        const myPerms = JSON.parse(localStorage.getItem('myPermissions') || '{}');
-        if (myRole !== 'owner' && myPerms['sales_return.html'] !== true) {
-            alert("Access Denied! 🚫\nএই পেজে প্রবেশ করার অনুমতি আপনার নেই।");
-            window.location.replace("home.html");
-        }
+        // Access Denied script removed to prevent false blocks
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -75,7 +69,7 @@
         
         .product-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: #f8fafc; }
         .product-info { flex: 1; }
-        .product-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .product-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .product-brand { font-size: 10px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 4px; }
         .product-meta { display: flex; gap: 10px; font-size: 11px; }
         .badge-stock { background: #f1f5f9; padding: 2px 8px; border-radius: 8px; color: var(--text-light); font-weight: 600; }
@@ -138,7 +132,6 @@
 <body>
 
     <div id="view-selection" class="view-container active">
-        
         <div class="app-header" id="header-container-selection">
             <div class="header-bg"></div>
             <div id="dynamicThemeContainer-selection"></div>
@@ -177,7 +170,6 @@
     </div>
 
     <div id="view-checkout" class="view-container">
-        
         <div class="app-header" id="header-container-checkout" style="padding-bottom: 25px;">
             <div class="header-bg"></div>
             <div id="dynamicThemeContainer-checkout"></div>
@@ -318,7 +310,6 @@
             document.getElementById('sellDate').valueAsDate = new Date();
             document.getElementById('invoiceNo').value = "RTN-" + Math.floor(100000 + Math.random() * 900000);
 
-            // Theme Sync
             rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                 const themeCode = snap.exists() ? snap.val().code : null;
                 if (themeCode && themeCode.trim() !== "") {
@@ -332,14 +323,12 @@
                 }
             });
 
-            // Offline Check First
             const cachedProducts = localStorage.getItem(`products_${SHOP_ID}`);
             if(cachedProducts) {
                 allProducts = JSON.parse(cachedProducts);
                 initPagination(allProducts);
             }
 
-            // Sync Products
             rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
                 if (snap.exists()) {
                     allProducts = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
@@ -351,7 +340,6 @@
                 }
             });
 
-            // Fetch Customers for Dropdown
             rtdbOnValue(rtdbRef(rtdb, 'contacts/customers'), (snap) => {
                 allCustomers = [{ name: 'Local (Walk-in)', phone: '' }]; 
                 if(snap.exists()){
@@ -360,7 +348,6 @@
             });
         };
 
-        // --- INFINITE SCROLL LOGIC ---
         function initPagination(products) {
             currentPage = 1;
             displayedProducts = products;
@@ -394,7 +381,6 @@
             }
         };
 
-        // Custom Dropdown Logic
         const custInput = document.getElementById('customerName');
         const custDropdown = document.getElementById('customerDropdown');
         function renderCustomerDropdown(filterText = '') {
@@ -520,7 +506,7 @@
                     refund_amount: finalPayable, deduction: deduction, refund_method: method, created_at: Date.now()
                 });
 
-                // 2. Restock Items (BUG FIXED: Convert to Number to prevent string concatenation)
+                // 2. Restock Items (BUG FIXED: String to Number conversion)
                 const updates = {};
                 Object.values(cart).forEach(item => { 
                     updates[`product_list/${item.id}/stock`] = Number(item.stock) + Number(item.qty); 
@@ -536,7 +522,12 @@
                         const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
                         if(dueSnap.exists()) {
                             let targetId = null; let currentDue = 0;
-                            Object.entries(dueSnap.val()).forEach(([id, val]) => { if(val.shop_id === SHOP_ID && val.name === customerName && val.type === 'receive' && val.current_due > 0) { targetId = id; currentDue = val.current_due; } });
+                            Object.entries(dueSnap.val()).forEach(([id, val]) => { 
+                                if(val.shop_id === SHOP_ID && val.name === customerName && val.type === 'receive' && val.current_due > 0) { 
+                                    targetId = id; currentDue = val.current_due; 
+                                } 
+                            });
+                            
                             if(targetId) {
                                 let newDue = currentDue - finalPayable; if(newDue < 0) newDue = 0;
                                 await update(rtdbRef(rtdb, `due_book/${targetId}`), { current_due: newDue, updated_at: Date.now() });
@@ -563,11 +554,7 @@
             const tbody = document.getElementById('rTableBody'); tbody.innerHTML = '';
             Object.values(cart).forEach(item => {
                 const brandHtml = item.brand ? `<br><span style="font-size:9px; color:#6b7280;">(${item.brand})</span>` : '';
-                tbody.innerHTML += `<tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">${item.name} ${brandHtml}</td>
-                    <td style="text-align: center;">${item.qty}</td>
-                    <td style="text-align: right; font-weight: bold;">৳${item.qty * item.sellRate}</td>
-                </tr>`;
+                tbody.innerHTML += `<tr><td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">${item.name} ${brandHtml}</td><td style="text-align: center;">${item.qty}</td><td style="text-align: right; font-weight: bold;">৳${item.qty * item.sellRate}</td></tr>`;
             });
             document.getElementById('rSubtotal').innerText = "৳" + window.checkoutSummary.subtotal;
             document.getElementById('rDeduction').innerText = "- ৳" + window.checkoutSummary.deduction;
