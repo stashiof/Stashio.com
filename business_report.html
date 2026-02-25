@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Due History - Stashio</title>
+    <title>Business Report - Stashio</title>
     
     <meta name="theme-color" content="#4F46E5">
 
     <script>
-        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const loggedInUser = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        
-        if (!loggedInUser) {
-            window.location.replace("index.html");
-        } else if (!activeShopId) {
-            window.location.replace("dashboard.html");
-        }
+        if (!loggedInUser) window.location.replace("index.html");
+        else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
@@ -30,60 +29,36 @@
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
-
-        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        /* Header Area */
-        .app-header {
-            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
-            padding: 20px 20px 45px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
-            position: sticky; top: 0; z-index: 50;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 90px; }
+        
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: relative; z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
-        .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-pdf:active { transform: scale(0.95); }
+        .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; }
 
-        /* Filter Section */
-        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: flex-end; }
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -20px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: flex-end; border: 1px solid #f8fafc; }
         .date-input { flex: 1; }
         .date-input label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
-        .date-input input { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; }
+        .date-input input { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
         .btn-filter { background: var(--text-dark); color: white; border: none; width: 40px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn-filter:active { transform: scale(0.95); }
 
-        /* History List (Timeline Style) */
-        .history-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
+        .report-grid { padding: 0 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .report-card { background: var(--white); padding: 15px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #f8fafc; text-align: center; }
+        .report-card.full { grid-column: span 2; background: linear-gradient(135deg, var(--success), #059669); color: white; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .report-card.full .rc-title { color: #d1fae5; margin-bottom: 2px; }
+        .report-card.full .rc-val { color: white; font-size: 28px; }
         
-        .history-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
-        
-        .hc-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; }
-        .hc-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
-        .hc-date { font-size: 11px; color: var(--text-light); font-weight: 500; margin-top: 2px; }
-        
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-received { background: #dcfce3; color: var(--success); }
-        .badge-paid { background: #fee2e2; color: var(--danger); }
-        .badge-created { background: #e0e7ff; color: var(--primary); }
+        .rc-title { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 5px; }
+        .rc-val { font-size: 18px; font-weight: 800; color: var(--text-dark); }
 
-        .hc-mid { display: flex; justify-content: space-between; align-items: center; }
-        .hc-amt-lbl { font-size: 11px; color: var(--text-light); font-weight: 600; text-transform: uppercase; }
-        .hc-amt-val { font-size: 18px; font-weight: 800; color: var(--text-dark); }
-        
-        .hc-bal { font-size: 12px; font-weight: 600; color: var(--primary); text-align: right; }
-
-        .btn-proof { background: #f8fafc; border: 1px solid #e5e7eb; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--text-dark); cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; }
-        .btn-proof:active { background: #e5e7eb; }
-
-        /* Proof Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .btn-close-img { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
-        .proof-img { width: 100%; max-height: 70vh; object-fit: contain; background: #000; }
-        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--white); display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -5px 25px rgba(0,0,0,0.08); border-top-left-radius: 30px; border-top-right-radius: 30px; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; flex: 1; height: 100%; text-decoration: none; transition: 0.3s; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
+        .nav-item span { font-size: 11px; font-weight: 700; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active i { transform: translateY(-4px); }
     </style>
 </head>
 <body>
@@ -91,10 +66,10 @@
     <div class="app-header">
         <div class="header-top">
             <div class="header-title">
-                <a href="due_book.html"><i class="fas fa-arrow-left"></i></a>
-                <span>Due History</span>
+                <a href="reports.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Business Report</span>
             </div>
-            <button onclick="downloadPDF()" class="btn-pdf"><i class="fas fa-file-pdf"></i> Download PDF</button>
+            <button onclick="downloadPDF()" class="btn-pdf" id="btnPdf"><i class="fas fa-file-pdf"></i> Save Report</button>
         </div>
     </div>
 
@@ -107,206 +82,192 @@
             <label>To Date</label>
             <input type="date" id="dateTo">
         </div>
-        <button onclick="loadHistory()" class="btn-filter"><i class="fas fa-search"></i></button>
+        <button onclick="calculateReport()" class="btn-filter"><i class="fas fa-search"></i></button>
     </div>
 
-    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
-        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading History...
+    <div id="loading" style="text-align: center; padding: 20px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Generating Report...
     </div>
 
-    <div class="history-list" id="historyList"></div>
-
-    <div class="modal-overlay" id="proofModal">
-        <div class="modal-content">
-            <button onclick="document.getElementById('proofModal').style.display='none'" class="btn-close-img"><i class="fas fa-times"></i></button>
-            <img id="proofImageDisplay" src="" class="proof-img">
-            <div style="padding: 15px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text-dark);">
-                Transaction Proof (Payment Receipt)
+    <div class="report-grid" id="reportContent" style="display: none;">
+        <div class="report-card full" id="netProfitCard">
+            <div>
+                <div class="rc-title">Net Profit (নিট লাভ)</div>
+                <div class="rc-val" id="valNetProfit">৳0</div>
             </div>
+            <i class="fas fa-chart-line" style="font-size: 40px; opacity: 0.4;"></i>
+        </div>
+
+        <div class="report-card">
+            <div class="rc-title">Total Sales</div>
+            <div class="rc-val text-primary" id="valSales">৳0</div>
+        </div>
+        <div class="report-card">
+            <div class="rc-title">Gross Profit</div>
+            <div class="rc-val text-success" id="valGrossProfit">৳0</div>
+        </div>
+
+        <div class="report-card">
+            <div class="rc-title text-danger">Total Expenses</div>
+            <div class="rc-val text-danger" id="valExpense">৳0</div>
+        </div>
+        <div class="report-card">
+            <div class="rc-title text-warning">Total Purchases</div>
+            <div class="rc-val text-warning" id="valPurchase">৳0</div>
+        </div>
+
+        <div class="report-card" style="border-top: 3px solid var(--success);">
+            <div class="rc-title">Receivable (পাব)</div>
+            <div class="rc-val text-success" id="valDueRecv">৳0</div>
+        </div>
+        <div class="report-card" style="border-top: 3px solid var(--danger);">
+            <div class="rc-title">Payable (দিব)</div>
+            <div class="rc-val text-danger" id="valDuePay">৳0</div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    <div class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="reports.html" class="nav-item active">
+            <i class="fas fa-chart-pie"></i><span>Reports</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
 
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
             authDomain: "stashio-6b332.firebaseapp.com",
-            databaseURL: "https://stashio-6b332-default-rtdb.firebaseio.com",
             projectId: "stashio-6b332",
+            databaseURL: "https://stashio-6b332-default-rtdb.firebaseio.com",
             storageBucket: "stashio-6b332.firebasestorage.app"
         };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
 
-        let allHistory = [];
-        let filteredHistory = [];
+        let salesData = [], purchaseData = [], expenseData = [], dueData = [];
 
         window.onload = () => {
-            // Set Default Date to TODAY
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('dateFrom').value = today;
-            document.getElementById('dateTo').value = today;
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+            const currentDay = today.toISOString().split('T')[0];
+            
+            document.getElementById('dateFrom').value = firstDay;
+            document.getElementById('dateTo').value = currentDay;
 
-            // Fetch History from Firebase (Filtered by SHOP_ID)
-            onValue(ref(db, 'due_history'), (snapshot) => {
-                document.getElementById('loading').style.display = 'none';
-                allHistory = [];
-                if (snapshot.exists()) {
-                    allHistory = Object.entries(snapshot.val())
-                        .map(([id, val]) => ({ id, ...val }))
-                        .filter(h => h.shop_id === SHOP_ID) // MAGIC LOGIC: Shop Isolation
-                        .reverse();
-                }
-                loadHistory(); 
-            });
+            fetchData();
         };
 
-        window.loadHistory = () => {
-            const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-            const listEl = document.getElementById('historyList');
+        function fetchData() {
+            let loaded = 0;
+            const checkLoad = () => { loaded++; if(loaded === 4) calculateReport(); };
 
-            if(!dateFrom || !dateTo) {
-                alert("Please select both dates.");
-                return;
-            }
-
-            const startStr = new Date(dateFrom).setHours(0,0,0,0);
-            const endStr = new Date(dateTo).setHours(23,59,59,999);
-
-            filteredHistory = allHistory.filter(h => {
-                const hDate = new Date(h.date).getTime();
-                return hDate >= startStr && hDate <= endStr;
-            });
-
-            renderList();
-        };
-
-        function renderList() {
-            const listEl = document.getElementById('historyList');
-            listEl.innerHTML = '';
-
-            if (filteredHistory.length === 0) {
-                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;">No records found for this date.</div>`;
-                return;
-            }
-
-            filteredHistory.forEach(h => {
-                const d = new Date(h.date);
-                
-                let badgeClass = 'badge-created';
-                let iconHtml = '<i class="fas fa-file-invoice"></i>';
-                
-                if(h.action === 'Received') {
-                    badgeClass = 'badge-received';
-                    iconHtml = '<i class="fas fa-arrow-down"></i>';
-                } else if(h.action === 'Paid') {
-                    badgeClass = 'badge-paid';
-                    iconHtml = '<i class="fas fa-arrow-up"></i>';
-                }
-
-                const html = `
-                <div class="history-card">
-                    <div class="hc-top">
-                        <div>
-                            <div class="hc-name">${h.name}</div>
-                            <div class="hc-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                        </div>
-                        <div class="badge ${badgeClass}">${iconHtml} ${h.action}</div>
-                    </div>
-
-                    <div class="hc-mid">
-                        <div>
-                            <div class="hc-amt-lbl">Amount</div>
-                            <div class="hc-amt-val">৳${h.amount}</div>
-                        </div>
-                        
-                        ${h.balance_left !== undefined ? `
-                        <div class="hc-bal">
-                            <span style="font-size: 10px; color: var(--text-light); font-weight: 600; display: block;">Balance Left</span>
-                            ৳${h.balance_left}
-                        </div>` : ''}
-                    </div>
-
-                    ${h.proof_image ? `
-                    <div>
-                        <button onclick="viewProof('${h.proof_image}')" class="btn-proof"><i class="fas fa-image" style="color: var(--primary);"></i> View Proof</button>
-                    </div>` : ''}
-                </div>`;
-                
-                listEl.insertAdjacentHTML('beforeend', html);
-            });
+            db.ref('sales_history').on('value', snap => { salesData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
+            db.ref('purchase_history').on('value', snap => { purchaseData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
+            db.ref('expenses_book').on('value', snap => { expenseData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
+            db.ref('due_book').on('value', snap => { dueData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID && r.current_due > 0) : []; checkLoad(); });
         }
 
-        window.viewProof = (url) => {
-            document.getElementById('proofImageDisplay').src = url;
-            document.getElementById('proofModal').style.display = 'flex';
+        window.calculateReport = () => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('reportContent').style.display = 'grid';
+
+            const startStr = new Date(document.getElementById('dateFrom').value).setHours(0,0,0,0);
+            const endStr = new Date(document.getElementById('dateTo').value).setHours(23,59,59,999);
+
+            let totalSales = 0, grossProfit = 0, totalPurchase = 0, totalExpense = 0, recv = 0, pay = 0;
+
+            salesData.forEach(r => {
+                const d = r.created_at || new Date(r.date).getTime();
+                if(d >= startStr && d <= endStr) { totalSales += Number(r.total_amount||0); grossProfit += Number(r.total_profit||0); }
+            });
+
+            purchaseData.forEach(r => {
+                const d = r.created_at || new Date(r.date).getTime();
+                if(d >= startStr && d <= endStr) totalPurchase += Number(r.total_amount||0);
+            });
+
+            expenseData.forEach(r => {
+                const d = r.date || r.created_at;
+                if(d >= startStr && d <= endStr) totalExpense += Number(r.amount||0);
+            });
+
+            // Due is overall, not date filtered usually, but let's filter by creation for report specifically
+            dueData.forEach(r => {
+                if(r.type === 'receive') recv += Number(r.current_due||0);
+                else pay += Number(r.current_due||0);
+            });
+
+            const netProfit = grossProfit - totalExpense;
+
+            document.getElementById('valSales').innerText = `৳${totalSales.toLocaleString()}`;
+            document.getElementById('valGrossProfit').innerText = `৳${grossProfit.toLocaleString()}`;
+            document.getElementById('valPurchase').innerText = `৳${totalPurchase.toLocaleString()}`;
+            document.getElementById('valExpense').innerText = `৳${totalExpense.toLocaleString()}`;
+            document.getElementById('valNetProfit').innerText = `৳${netProfit.toLocaleString()}`;
+            document.getElementById('valDueRecv').innerText = `৳${recv.toLocaleString()}`;
+            document.getElementById('valDuePay').innerText = `৳${pay.toLocaleString()}`;
+
+            const npCard = document.getElementById('netProfitCard');
+            if(netProfit < 0) {
+                npCard.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+                document.querySelector('.rc-title').innerText = "Net Loss (লোকসান)";
+            } else {
+                npCard.style.background = 'linear-gradient(135deg, var(--success), #059669)';
+                document.querySelector('.rc-title').innerText = "Net Profit (নিট লাভ)";
+            }
         };
 
-        // --- PDF EXPORT (BENGALI SUPPORT) ---
         window.downloadPDF = () => {
-            if(filteredHistory.length === 0) {
-                alert("No records to download!");
-                return;
-            }
+            const btn = document.getElementById('btnPdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
 
-            const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-
+            const dFrom = document.getElementById('dateFrom').value;
+            const dTo = document.getElementById('dateTo').value;
+            
             const tempDiv = document.createElement('div');
             tempDiv.style.padding = '20px';
             tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
             
-            let html = `
+            tempDiv.innerHTML = `
                 <h2 style="text-align:center; font-size: 24px; margin-bottom: 5px;">${SHOP_NAME}</h2>
-                <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #666;">Due Ledger Report (বাকির হিসাব)<br>Date: ${dateFrom} to ${dateTo}</p>
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                    <thead style="background-color: #4F46E5; color: white;">
-                        <tr>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Date</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Name / Customer</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Action</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Amount</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Balance Left</th>
-                        </tr>
-                    </thead>
+                <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #666;">Business Analytics Report<br>Date: ${dFrom} to ${dTo}</p>
+                
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; margin-bottom: 20px;">
                     <tbody>
-            `;
-            
-            filteredHistory.forEach(h => {
-                const d = new Date(h.date).toLocaleDateString();
-                const bal = h.balance_left !== undefined ? `৳${h.balance_left}` : '-';
-
-                html += `
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${d}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${h.name}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${h.action}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">৳${h.amount}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; color: ${h.balance_left > 0 ? 'red' : 'green'};">${bal}</td>
-                    </tr>
-                `;
-            });
-            
-            html += `
+                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">Total Sales (মোট বিক্রি)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${document.getElementById('valSales').innerText}</td></tr>
+                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">Total Purchases (মোট ক্রয়)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${document.getElementById('valPurchase').innerText}</td></tr>
+                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">Gross Profit (মোট লাভ)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:green;">${document.getElementById('valGrossProfit').innerText}</td></tr>
+                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:red;">Total Expenses (মোট খরচ)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:red;">${document.getElementById('valExpense').innerText}</td></tr>
+                        <tr style="background:#f3f4f6;"><td style="padding: 12px; border: 1px solid #ddd; font-weight:bold; font-size:16px;">NET PROFIT / LOSS (নিট লাভ/ক্ষতি)</td><td style="padding: 12px; border: 1px solid #ddd; text-align:right; font-weight:bold; font-size:16px;">${document.getElementById('valNetProfit').innerText}</td></tr>
+                    </tbody>
+                </table>
+                <h4 style="margin-bottom:10px;">Market Due Status (বাজারের বাকি)</h4>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                    <tbody>
+                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:green;">Receivable (পাব)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:green;">${document.getElementById('valDueRecv').innerText}</td></tr>
+                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:red;">Payable (দিব)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:red;">${document.getElementById('valDuePay').innerText}</td></tr>
                     </tbody>
                 </table>
             `;
-            tempDiv.innerHTML = html;
             
             html2pdf().set({
-                margin: 10, filename: `Due_History_${dateFrom}.pdf`,
+                margin: 10, filename: `Business_Report_${dFrom}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
+                html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).save();
+            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
+                window.open(pdfUrl, '_blank');
+                btn.innerHTML = originalText;
+            });
         };
     </script>
 </body>
-                                                              </html>
+</html>
