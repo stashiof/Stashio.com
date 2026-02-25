@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Due History - Stashio</title>
+    
+    <meta name="theme-color" content="#4F46E5">
+
+    <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Header Area */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            padding: 20px 20px 45px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+        .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-pdf:active { transform: scale(0.95); }
+
+        /* Filter Section */
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: flex-end; }
+        .date-input { flex: 1; }
+        .date-input label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
+        .date-input input { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; }
+        .btn-filter { background: var(--text-dark); color: white; border: none; width: 40px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-filter:active { transform: scale(0.95); }
+
+        /* History List (Timeline Style) */
+        .history-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .history-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+        
+        .hc-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; }
+        .hc-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+        .hc-date { font-size: 11px; color: var(--text-light); font-weight: 500; margin-top: 2px; }
+        
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-received { background: #dcfce3; color: var(--success); }
+        .badge-paid { background: #fee2e2; color: var(--danger); }
+        .badge-created { background: #e0e7ff; color: var(--primary); }
+
+        .hc-mid { display: flex; justify-content: space-between; align-items: center; }
+        .hc-amt-lbl { font-size: 11px; color: var(--text-light); font-weight: 600; text-transform: uppercase; }
+        .hc-amt-val { font-size: 18px; font-weight: 800; color: var(--text-dark); }
+        
+        .hc-bal { font-size: 12px; font-weight: 600; color: var(--primary); text-align: right; }
+
+        .btn-proof { background: #f8fafc; border: 1px solid #e5e7eb; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--text-dark); cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; }
+        .btn-proof:active { background: #e5e7eb; }
+
+        /* Proof Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .btn-close-img { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .proof-img { width: 100%; max-height: 70vh; object-fit: contain; background: #000; }
+        
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-top">
+            <div class="header-title">
+                <a href="due_book.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Due History</span>
+            </div>
+            <button onclick="downloadPDF()" class="btn-pdf"><i class="fas fa-file-pdf"></i> Download PDF</button>
+        </div>
+    </div>
+
+    <div class="filter-card">
+        <div class="date-input">
+            <label>From Date</label>
+            <input type="date" id="dateFrom">
+        </div>
+        <div class="date-input">
+            <label>To Date</label>
+            <input type="date" id="dateTo">
+        </div>
+        <button onclick="loadHistory()" class="btn-filter"><i class="fas fa-search"></i></button>
+    </div>
+
+    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading History...
+    </div>
+
+    <div class="history-list" id="historyList"></div>
+
+    <div class="modal-overlay" id="proofModal">
+        <div class="modal-content">
+            <button onclick="document.getElementById('proofModal').style.display='none'" class="btn-close-img"><i class="fas fa-times"></i></button>
+            <img id="proofImageDisplay" src="" class="proof-img">
+            <div style="padding: 15px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text-dark);">
+                Transaction Proof (Payment Receipt)
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
+            authDomain: "stashio-6b332.firebaseapp.com",
+            databaseURL: "https://stashio-6b332-default-rtdb.firebaseio.com",
+            projectId: "stashio-6b332",
+            storageBucket: "stashio-6b332.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+
+        let allHistory = [];
+        let filteredHistory = [];
+
+        window.onload = () => {
+            // Set Default Date to TODAY
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = today;
+            document.getElementById('dateTo').value = today;
+
+            // Fetch History from Firebase (Filtered by SHOP_ID)
+            onValue(ref(db, 'due_history'), (snapshot) => {
+                document.getElementById('loading').style.display = 'none';
+                allHistory = [];
+                if (snapshot.exists()) {
+                    allHistory = Object.entries(snapshot.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(h => h.shop_id === SHOP_ID) // MAGIC LOGIC: Shop Isolation
+                        .reverse();
+                }
+                loadHistory(); 
+            });
+        };
+
+        window.loadHistory = () => {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const listEl = document.getElementById('historyList');
+
+            if(!dateFrom || !dateTo) {
+                alert("Please select both dates.");
+                return;
+            }
+
+            const startStr = new Date(dateFrom).setHours(0,0,0,0);
+            const endStr = new Date(dateTo).setHours(23,59,59,999);
+
+            filteredHistory = allHistory.filter(h => {
+                const hDate = new Date(h.date).getTime();
+                return hDate >= startStr && hDate <= endStr;
+            });
+
+            renderList();
+        };
+
+        function renderList() {
+            const listEl = document.getElementById('historyList');
+            listEl.innerHTML = '';
+
+            if (filteredHistory.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;">No records found for this date.</div>`;
+                return;
+            }
+
+            filteredHistory.forEach(h => {
+                const d = new Date(h.date);
+                
+                let badgeClass = 'badge-created';
+                let iconHtml = '<i class="fas fa-file-invoice"></i>';
+                
+                if(h.action === 'Received') {
+                    badgeClass = 'badge-received';
+                    iconHtml = '<i class="fas fa-arrow-down"></i>';
+                } else if(h.action === 'Paid') {
+                    badgeClass = 'badge-paid';
+                    iconHtml = '<i class="fas fa-arrow-up"></i>';
+                }
+
+                const html = `
+                <div class="history-card">
+                    <div class="hc-top">
+                        <div>
+                            <div class="hc-name">${h.name}</div>
+                            <div class="hc-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                        <div class="badge ${badgeClass}">${iconHtml} ${h.action}</div>
+                    </div>
+
+                    <div class="hc-mid">
+                        <div>
+                            <div class="hc-amt-lbl">Amount</div>
+                            <div class="hc-amt-val">৳${h.amount}</div>
+                        </div>
+                        
+                        ${h.balance_left !== undefined ? `
+                        <div class="hc-bal">
+                            <span style="font-size: 10px; color: var(--text-light); font-weight: 600; display: block;">Balance Left</span>
+                            ৳${h.balance_left}
+                        </div>` : ''}
+                    </div>
+
+                    ${h.proof_image ? `
+                    <div>
+                        <button onclick="viewProof('${h.proof_image}')" class="btn-proof"><i class="fas fa-image" style="color: var(--primary);"></i> View Proof</button>
+                    </div>` : ''}
+                </div>`;
+                
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        window.viewProof = (url) => {
+            document.getElementById('proofImageDisplay').src = url;
+            document.getElementById('proofModal').style.display = 'flex';
+        };
+
+        // --- PDF EXPORT (BENGALI SUPPORT) ---
+        window.downloadPDF = () => {
+            if(filteredHistory.length === 0) {
+                alert("No records to download!");
+                return;
+            }
+
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '20px';
+            tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
+            
+            let html = `
+                <h2 style="text-align:center; font-size: 24px; margin-bottom: 5px;">${SHOP_NAME}</h2>
+                <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #666;">Due Ledger Report (বাকির হিসাব)<br>Date: ${dateFrom} to ${dateTo}</p>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead style="background-color: #4F46E5; color: white;">
+                        <tr>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Date</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Name / Customer</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Action</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Amount</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Balance Left</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            filteredHistory.forEach(h => {
+                const d = new Date(h.date).toLocaleDateString();
+                const bal = h.balance_left !== undefined ? `৳${h.balance_left}` : '-';
+
+                html += `
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${d}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${h.name}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${h.action}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">৳${h.amount}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; color: ${h.balance_left > 0 ? 'red' : 'green'};">${bal}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            tempDiv.innerHTML = html;
+            
+            html2pdf().set({
+                margin: 10, filename: `Due_History_${dateFrom}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(tempDiv).save();
+        };
+    </script>
+</body>
+                                                              </html>
