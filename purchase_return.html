@@ -12,13 +12,7 @@
         const activeShopId = localStorage.getItem('activeShopId');
         if (!loggedInUser) window.location.replace("index.html");
         else if (!activeShopId) window.location.replace("dashboard.html");
-
-        const myRole = localStorage.getItem('myRole') || 'staff';
-        const myPerms = JSON.parse(localStorage.getItem('myPermissions') || '{}');
-        if (myRole !== 'owner' && myPerms['purchase_return.html'] !== true) {
-            alert("Access Denied! 🚫\nএই পেজে প্রবেশ করার অনুমতি আপনার নেই।");
-            window.location.replace("home.html");
-        }
+        // Access Denied script removed from here to fix the blocking bug
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -281,7 +275,7 @@
 
     <script type="module">
         // মডুলার ফায়ারবেস ইমপোর্ট
-        import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, get } from './firebase_config.js';
+        import { dbFirestore, doc, getDoc, rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, get } from './firebase_config.js';
         import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId'); 
@@ -294,7 +288,30 @@
         let allSuppliers = []; 
         let cart = {}; 
 
-        window.onload = () => {
+        window.onload = async () => {
+            // --- SECURITY CHECK (MOVED FROM HEAD) ---
+            const userPhone = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+            try {
+                const shopDoc = await getDoc(doc(dbFirestore, "shops", SHOP_ID));
+                if(shopDoc.exists()) {
+                    const shopData = shopDoc.data();
+                    let realRole = 'staff';
+                    if (shopData.roles && shopData.roles[userPhone]) realRole = shopData.roles[userPhone];
+                    if (shopData.createdBy === userPhone) realRole = 'owner';
+
+                    let hasAccess = false;
+                    if (realRole === 'owner') hasAccess = true;
+                    if (shopData.permissions && shopData.permissions[userPhone] && shopData.permissions[userPhone]['purchase_return.html'] === true) hasAccess = true;
+
+                    if (!hasAccess) {
+                        alert("Access Denied! 🚫\nএই পেজে প্রবেশ করার অনুমতি আপনার নেই।");
+                        window.location.replace("home.html");
+                        return; // Stop execution
+                    }
+                }
+            } catch(e) { console.error("Auth check failed", e); }
+
+            // Everything below runs only if they have access
             document.getElementById('sellDate').valueAsDate = new Date();
             document.getElementById('invoiceNo').value = "PRTN-" + Math.floor(1000 + Math.random() * 9000);
 
