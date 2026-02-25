@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Product List - Stashio</title>
+    
+    <meta name="theme-color" content="#4F46E5">
+
+    <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        :root {
+            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Header Area */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            padding: 20px 20px 35px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
+            position: sticky; top: 0; z-index: 50;
+        }
+        
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+        
+        .header-actions { display: flex; gap: 8px; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; text-decoration: none; }
+        .btn-header:active { transform: scale(0.95); }
+
+        /* Search Bar */
+        .search-container { display: flex; gap: 10px; position: relative; }
+        .search-box { flex: 1; position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 14px; border: none; outline: none; font-size: 13px; font-family: inherit; box-shadow: 0 5px 15px rgba(0,0,0,0.1); color: var(--text-dark); }
+        .btn-scan { background: var(--text-dark); color: white; width: 45px; border-radius: 14px; border: none; cursor: pointer; font-size: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: 0.2s; }
+        .btn-scan:active { transform: scale(0.95); }
+
+        /* Product List */
+        .product-list { padding: 15px; display: flex; flex-direction: column; gap: 10px; margin-top: -15px; }
+        
+        .product-card {
+            background: var(--white); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); position: relative; transition: 0.2s;
+        }
+        
+        .product-img { width: 45px; height: 45px; border-radius: 10px; object-fit: cover; background: #f8fafc; border: 1px solid #f1f5f9; }
+        
+        .product-info { flex: 1; min-width: 0; }
+        .product-name { font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .product-brand { font-size: 10px; color: var(--primary); font-weight: 600; margin-bottom: 4px; display: block; }
+        .product-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 10px; }
+        
+        .badge { padding: 2px 6px; border-radius: 6px; font-weight: 600; }
+        .badge-stock { background: #f1f5f9; color: var(--text-light); }
+        .badge-stock.low { background: #fef2f2; color: var(--danger); }
+        .badge-price { background: #e0e7ff; color: var(--primary); }
+        .badge-buy { background: #dcfce3; color: var(--success); }
+
+        /* Load More Button */
+        .load-more-btn { background: white; border: 1px solid #e5e7eb; color: var(--primary); font-weight: bold; padding: 10px; border-radius: 10px; text-align: center; margin: 10px 15px; cursor: pointer; display: none; box-shadow: var(--shadow); }
+
+        /* 3-Dot Menu */
+        .menu-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: transparent; color: #9ca3af; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .menu-btn:active { background: #f1f5f9; color: var(--text-dark); }
+        
+        .dropdown-menu {
+            display: none; position: absolute; right: 15px; top: 40px; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid #f1f5f9; z-index: 20; min-width: 140px; overflow: hidden; animation: fadeIn 0.2s ease-out;
+        }
+        .dropdown-menu.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .dropdown-item { width: 100%; text-align: left; padding: 10px 15px; border: none; background: white; font-size: 12px; font-weight: 600; color: var(--text-dark); cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f8fafc; font-family: inherit; }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:active { background: #f8fafc; }
+        .dropdown-item.delete { color: var(--danger); }
+
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+        
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 16px; font-weight: 700; margin: 0; }
+        .btn-close { background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; color: var(--text-light); cursor: pointer; }
+
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        
+        /* Form Inputs */
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
+        .input-field { width: 100%; padding: 10px 12px; border: 2px solid #f1f5f9; border-radius: 10px; background: #f8fafc; outline: none; font-size: 13px; font-family: inherit; transition: 0.3s; color: var(--text-dark); }
+        .input-field:focus { border-color: var(--primary); background: white; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* Image Upload Box */
+        .img-upload-box { width: 100px; height: 100px; border: 2px dashed #cbd5e1; border-radius: 16px; margin: 0 auto 15px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; background: #f8fafc; }
+        .img-upload-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; }
+        .img-upload-box i { font-size: 24px; color: #9ca3af; margin-bottom: 5px; }
+        .img-upload-box span { font-size: 10px; font-weight: 600; color: #9ca3af; }
+
+        /* Toggle Switches */
+        .setting-box { background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+        .setting-header { display: flex; justify-content: space-between; align-items: center; }
+        .setting-title { font-size: 12px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+        
+        .toggle-switch { position: relative; width: 36px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(16px); }
+        
+        .setting-content { display: none; margin-top: 10px; }
+        .setting-content.active { display: block; animation: fadeIn 0.3s; }
+
+        .btn-submit { width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(236, 72, 153, 0.3); transition: 0.2s; margin-top: 10px; }
+        .btn-submit:active { transform: scale(0.98); }
+
+        /* Scanner Modal */
+        #scannerModal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #reader { width: 100%; max-width: 350px; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); }
+        .btn-close-scanner { margin-top: 30px; background: white; color: var(--danger); border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+
+        /* Quick Stock Modal */
+        .stock-control { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
+        .btn-qty { width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-minus { background: #fef2f2; color: var(--danger); }
+        .btn-plus { background: #dcfce3; color: var(--success); }
+        .stock-input { width: 80px; text-align: center; border: none; border-bottom: 2px solid #cbd5e1; font-size: 28px; font-weight: 800; color: var(--text-dark); outline: none; background: transparent; padding-bottom: 5px; }
+        .stock-input:focus { border-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-top">
+            <div class="header-title">
+                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Product List</span>
+            </div>
+            <div class="header-actions">
+                <a href="unit_admin.html" class="btn-header"><i class="fas fa-ruler"></i></a>
+                <button onclick="downloadPDF()" class="btn-header" style="background: rgba(239, 68, 68, 0.2);"><i class="fas fa-file-pdf"></i></button>
+                <button onclick="openModal('add')" class="btn-header"><i class="fas fa-plus"></i> Add</button>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by name, brand or barcode...">
+            </div>
+            <button onclick="startScanner('search')" class="btn-scan"><i class="fas fa-barcode"></i></button>
+        </div>
+    </div>
+
+    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading Inventory...
+    </div>
+
+    <div class="product-list" id="productList"></div>
+    <div id="loadMoreBtn" class="load-more-btn" onclick="loadMoreProducts()">Load More Products</div>
+
+
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Product</h3>
+                <button onclick="closeModal('productModal')" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="editProductId">
+
+                    <div class="img-upload-box" onclick="document.getElementById('imgInput').click()">
+                        <img id="previewImage" src="">
+                        <i id="placeholderIcon" class="fas fa-cloud-upload-alt"></i>
+                        <span id="uploadText">Upload Image</span>
+                        <input type="file" id="imgInput" accept="image/*" hidden onchange="compressAndUpload(this)">
+                        <input type="hidden" id="uploadedImageUrl">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Product Name</label>
+                        <input type="text" id="pName" class="input-field" required placeholder="e.g. Matador Ballpen">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Brand / Company Name</label>
+                        <input type="text" id="pBrand" class="input-field" placeholder="e.g. Matador, Pran, RFL">
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label>Buy Price (৳)</label>
+                            <input type="number" id="pBuyPrice" class="input-field" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Sell Price (৳)</label>
+                            <input type="number" id="pSellPrice" class="input-field" style="border-color: var(--primary); font-weight: bold;" required>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label>Stock Qty</label>
+                            <input type="number" id="pStock" class="input-field" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Unit</label>
+                            <select id="pUnit" class="input-field" required>
+                                <option value="" disabled selected>Select Unit</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Barcode / SKU</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="pBarcode" class="input-field" placeholder="Scan or type" style="font-family: monospace;">
+                            <button type="button" onclick="startScanner('input')" style="background: var(--text-dark); color: white; border: none; border-radius: 10px; width: 45px; cursor: pointer;"><i class="fas fa-qrcode"></i></button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                        <label style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; display: block;">Advanced Settings</label>
+                        
+                        <div class="setting-box">
+                            <div class="setting-header">
+                                <span class="setting-title"><i class="fas fa-boxes text-blue-500"></i> Wholesale Price</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggleWholesale" onchange="toggleField('fieldWholesale')">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="fieldWholesale" class="setting-content">
+                                <input type="number" id="pWholesalePrice" class="input-field" placeholder="Enter Wholesale Price">
+                            </div>
+                        </div>
+
+                        <div class="setting-box">
+                            <div class="setting-header">
+                                <span class="setting-title"><i class="fas fa-bell text-orange-500"></i> Low Stock Alert</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggleAlert" onchange="toggleField('fieldAlert')">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="fieldAlert" class="setting-content">
+                                <input type="number" id="pAlertQty" class="input-field" placeholder="Min Qty (Default 5)">
+                            </div>
+                        </div>
+
+                        <div class="setting-box">
+                            <div class="setting-header">
+                                <span class="setting-title"><i class="fas fa-calendar-times text-danger"></i> Expire Date</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggleExpiry" onchange="toggleField('fieldExpiry')">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="fieldExpiry" class="setting-content">
+                                <input type="date" id="pExpireDate" class="input-field">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" id="saveBtn" class="btn-submit">Save Product</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="stockModal">
+        <div class="modal-content" style="max-width: 300px; padding: 20px; text-align: center;">
+            <div style="width: 50px; height: 50px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 10px auto;">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 5px;">Update Stock</h3>
+            <p id="stockModalProductName" style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;"></p>
+            
+            <input type="hidden" id="stockUpdateId">
+            
+            <div class="stock-control">
+                <button onclick="adjustStock(-1)" class="btn-qty btn-minus"><i class="fas fa-minus"></i></button>
+                <input type="number" id="newStockInput" class="stock-input">
+                <button onclick="adjustStock(1)" class="btn-qty btn-plus"><i class="fas fa-plus"></i></button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="closeModal('stockModal')" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: #f1f5f9; font-weight: 600; cursor: pointer;">Cancel</button>
+                <button onclick="confirmStockUpdate()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: 600; cursor: pointer;">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scannerModal">
+        <div id="reader"></div>
+        <button onclick="stopScanner()" class="btn-close-scanner">Close Camera</button>
+    </div>
+
+    <script type="module">
+        import { rtdb, ref, push, update, remove, onValue } from './firebase_config.js';
+
+        const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+
+        let allProducts = [];
+        let displayedProducts = [];
+        let itemsPerPage = 20;
+        let currentPage = 1;
+
+        let html5QrcodeScanner = null;
+        let scanTarget = null;
+
+        window.onload = () => {
+            // Load Units from DB
+            onValue(ref(rtdb, `settings/units`), (snapshot) => {
+                const select = document.getElementById('pUnit');
+                select.innerHTML = '<option value="" disabled selected>Select Unit</option>';
+                if(snapshot.exists()) {
+                    const units = snapshot.val();
+                    Object.keys(units).forEach(key => {
+                        const opt = document.createElement('option');
+                        opt.value = units[key].name;
+                        opt.innerText = units[key].name;
+                        select.appendChild(opt);
+                    });
+                }
+            });
+
+            // Local Storage (Fast UI)
+            const cachedProducts = localStorage.getItem(`products_${SHOP_ID}`);
+            if(cachedProducts) {
+                allProducts = JSON.parse(cachedProducts);
+                initPagination(allProducts);
+            }
+
+            // Real-time Firebase Sync
+            onValue(ref(rtdb, 'product_list'), (snapshot) => {
+                document.getElementById('loading').style.display = 'none';
+                if (snapshot.exists()) {
+                    allProducts = Object.entries(snapshot.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(p => p.shop_id === SHOP_ID)
+                        .reverse();
+                    
+                    localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(allProducts));
+                    
+                    // Re-init pagination if not searching
+                    if(document.getElementById('searchInput').value.trim() === '') {
+                        initPagination(allProducts);
+                    }
+                } else {
+                    allProducts = [];
+                    localStorage.removeItem(`products_${SHOP_ID}`);
+                    document.getElementById('productList').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);">No products found. Add some!</div>';
+                }
+            });
+        };
+
+        // --- INFINITE SCROLL / PAGINATION LOGIC ---
+        function initPagination(products) {
+            currentPage = 1;
+            displayedProducts = products;
+            document.getElementById('productList').innerHTML = '';
+            
+            if(displayedProducts.length === 0) {
+                document.getElementById('productList').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);">No products available.</div>';
+                document.getElementById('loadMoreBtn').style.display = 'none';
+                return;
+            }
+            
+            renderProducts(displayedProducts.slice(0, itemsPerPage));
+            
+            if(displayedProducts.length > itemsPerPage) {
+                document.getElementById('loadMoreBtn').style.display = 'block';
+            } else {
+                document.getElementById('loadMoreBtn').style.display = 'none';
+            }
+        }
+
+        window.loadMoreProducts = () => {
+            const startIndex = currentPage * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const nextBatch = displayedProducts.slice(startIndex, endIndex);
+            
+            renderProducts(nextBatch, true); // true means append
+            currentPage++;
+            
+            if(endIndex >= displayedProducts.length) {
+                document.getElementById('loadMoreBtn').style.display = 'none';
+            }
+        };
+
+        function renderProducts(products, append = false) {
+            const listEl = document.getElementById('productList');
+            if(!append) listEl.innerHTML = '';
+            
+            products.forEach((p) => {
+                const imgUrl = p.image || 'https://via.placeholder.com/100?text=Item';
+                const alertQty = p.alert_qty || 5;
+                const isLowStock = p.stock <= alertQty;
+                
+                const html = `
+                <div class="product-card">
+                    <img src="${imgUrl}" class="product-img">
+                    <div class="product-info">
+                        <div class="product-name">${p.name}</div>
+                        ${p.brand ? `<span class="product-brand"><i class="fas fa-tag"></i> ${p.brand}</span>` : ''}
+                        <div class="product-meta">
+                            <span class="badge badge-stock ${isLowStock ? 'low' : ''}">Stock: ${p.stock} ${p.unit}</span>
+                            <span class="badge badge-buy">Buy: ৳${p.buy_price}</span>
+                            <span class="badge badge-price">Sell: ৳${p.sell_price}</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="toggleMenu('menu-${p.id}')" class="menu-btn"><i class="fas fa-ellipsis-v"></i></button>
+                    
+                    <div id="menu-${p.id}" class="dropdown-menu">
+                        <button onclick="openEditModal('${p.id}')" class="dropdown-item"><i class="fas fa-edit" style="color:var(--primary)"></i> Edit</button>
+                        <button onclick="openStockModal('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${p.stock})" class="dropdown-item"><i class="fas fa-layer-group" style="color:var(--success)"></i> Quick Stock</button>
+                        <button onclick="deleteProduct('${p.id}')" class="dropdown-item delete"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                </div>`;
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- MENU TOGGLE ---
+        window.toggleMenu = (id) => {
+            const menu = document.getElementById(id);
+            const isActive = menu.classList.contains('active');
+            document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('active'));
+            if (!isActive) menu.classList.add('active');
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.menu-btn') && !e.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('active'));
+            }
+        });
+
+        // --- IMAGE COMPRESSION & UPLOAD ---
+        window.compressAndUpload = async (input) => {
+            const file = input.files[0];
+            if (!file) return;
+
+            const uploadText = document.getElementById('uploadText');
+            uploadText.innerText = "Compressing...";
+            uploadText.style.color = "var(--warning)";
+
+            // Image Compression Logic
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Resize Logic (Max 400px width to keep size < 50kb)
+                    const MAX_WIDTH = 400;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress to JPEG with 0.6 quality
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    // Convert back to File Object for ImgBB
+                    const blob = await (await fetch(dataUrl)).blob();
+                    const compressedFile = new File([blob], "product_image.jpg", { type: "image/jpeg" });
+                    
+                    // Upload to ImgBB
+                    uploadText.innerText = "Uploading...";
+                    uploadText.style.color = "var(--primary)";
+                    const formData = new FormData(); 
+                    formData.append("image", compressedFile);
+
+                    try {
+                        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
+                        const data = await res.json();
+                        
+                        if (data.success) {
+                            document.getElementById('uploadedImageUrl').value = data.data.url;
+                            document.getElementById('previewImage').src = data.data.url;
+                            document.getElementById('previewImage').style.display = "block";
+                            document.getElementById('placeholderIcon').style.display = "none";
+                            uploadText.innerText = "Uploaded ✅";
+                            uploadText.style.color = "var(--success)";
+                        }
+                    } catch (e) { 
+                        uploadText.innerText = "Failed ❌"; 
+                        uploadText.style.color = "var(--danger)"; 
+                    }
+                }
+            };
+        };
+
+        // --- FORM SUBMIT (Save Product) ---
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const productId = document.getElementById('editProductId').value;
+            
+            const productData = {
+                shop_id: SHOP_ID, 
+                name: document.getElementById('pName').value,
+                brand: document.getElementById('pBrand').value, // Brand Field Added
+                buy_price: Number(document.getElementById('pBuyPrice').value),
+                sell_price: Number(document.getElementById('pSellPrice').value),
+                stock: Number(document.getElementById('pStock').value),
+                unit: document.getElementById('pUnit').value,
+                image: document.getElementById('uploadedImageUrl').value,
+                barcode: document.getElementById('pBarcode').value,
+                
+                // Advanced Settings
+                is_wholesale: document.getElementById('toggleWholesale').checked,
+                wholesale_price: document.getElementById('toggleWholesale').checked ? Number(document.getElementById('pWholesalePrice').value) : 0,
+                has_alert: document.getElementById('toggleAlert').checked,
+                alert_qty: document.getElementById('toggleAlert').checked ? Number(document.getElementById('pAlertQty').value) : 5,
+                has_expiry: document.getElementById('toggleExpiry').checked,
+                expire_date: document.getElementById('toggleExpiry').checked ? document.getElementById('pExpireDate').value : "",
+            };
+
+            try {
+                if (productId) {
+                    await update(ref(rtdb, `product_list/${productId}`), productData);
+                } else {
+                    productData.created_at = Date.now();
+                    await push(ref(rtdb, 'product_list'), productData);
+                }
+                closeModal('productModal');
+            } catch (err) { alert("Error saving: " + err.message); } 
+            finally { btn.innerText = originalText; btn.disabled = false; }
+        });
+
+        // --- DELETE PRODUCT (Permanently) ---
+        window.deleteProduct = async (id) => {
+            if(!confirm("Are you sure you want to PERMANENTLY delete this product? This cannot be undone.")) return;
+            try { 
+                await remove(ref(rtdb, `product_list/${id}`)); 
+            } catch (e) { alert("Delete failed: " + e.message); }
+        };
+
+        // --- BARCODE SCANNER ---
+        window.startScanner = (target) => {
+            scanTarget = target;
+            document.getElementById('scannerModal').style.display = 'flex';
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            
+            const config = { fps: 15, qrbox: { width: 300, height: 150 }, disableFlip: false };
+            
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, (decodedText) => {
+                window.stopScanner();
+                const audio = new Audio('https://www.soundjay.com/button/beep-07.wav'); audio.play().catch(e=>{});
+
+                if(scanTarget === 'search') {
+                    const s = document.getElementById('searchInput');
+                    s.value = decodedText;
+                    s.dispatchEvent(new Event('input'));
+                } else {
+                    document.getElementById('pBarcode').value = decodedText;
+                }
+            }).catch(err => { alert("Camera error: " + err); window.stopScanner(); });
+        };
+
+        window.stopScanner = () => {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => document.getElementById('scannerModal').style.display = 'none');
+            } else { document.getElementById('scannerModal').style.display = 'none'; }
+        };
+
+        // --- SEARCH ---
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            if(term === '') {
+                initPagination(allProducts);
+            } else {
+                const filtered = allProducts.filter(p => 
+                    p.name.toLowerCase().includes(term) || 
+                    (p.brand && p.brand.toLowerCase().includes(term)) || 
+                    (p.barcode && p.barcode.toString().toLowerCase().includes(term))
+                );
+                initPagination(filtered);
+            }
+        });
+
+        // --- MODAL CONTROLS ---
+        window.openModal = (type) => {
+            document.getElementById('productForm').reset();
+            document.getElementById('editProductId').value = "";
+            document.getElementById('modalTitle').innerText = "Add Product";
+            
+            ['fieldWholesale', 'fieldAlert', 'fieldExpiry'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+            
+            document.getElementById('previewImage').style.display = "none";
+            document.getElementById('placeholderIcon').style.display = "block";
+            document.getElementById('uploadText').innerText = "Upload Image";
+            document.getElementById('uploadText').style.color = "#9ca3af";
+            
+            document.getElementById('productModal').style.display = 'flex';
+        };
+
+        window.openEditModal = (id) => {
+            const p = allProducts.find(prod => prod.id === id);
+            if (!p) return;
+            
+            document.getElementById('editProductId').value = id;
+            document.getElementById('modalTitle').innerText = "Edit Product";
+            
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pBrand').value = p.brand || "";
+            document.getElementById('pBuyPrice').value = p.buy_price;
+            document.getElementById('pSellPrice').value = p.sell_price;
+            document.getElementById('pStock').value = p.stock;
+            document.getElementById('pUnit').value = p.unit;
+            document.getElementById('pBarcode').value = p.barcode || "";
+            document.getElementById('uploadedImageUrl').value = p.image || "";
+
+            if(p.image) {
+                document.getElementById('previewImage').src = p.image;
+                document.getElementById('previewImage').style.display = "block";
+                document.getElementById('placeholderIcon').style.display = "none";
+                document.getElementById('uploadText').innerText = "Change Image";
+            }
+
+            setToggle('toggleWholesale', 'fieldWholesale', p.is_wholesale, () => document.getElementById('pWholesalePrice').value = p.wholesale_price);
+            setToggle('toggleAlert', 'fieldAlert', p.has_alert, () => document.getElementById('pAlertQty').value = p.alert_qty);
+            setToggle('toggleExpiry', 'fieldExpiry', p.has_expiry, () => document.getElementById('pExpireDate').value = p.expire_date);
+
+            document.getElementById('productModal').style.display = 'flex';
+        };
+
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+        
+        window.toggleField = (id) => { 
+            document.getElementById(id).classList.toggle('active'); 
+        };
+
+        function setToggle(chkId, divId, val, callback) {
+            document.getElementById(chkId).checked = !!val;
+            if(val) { 
+                document.getElementById(divId).classList.add('active'); 
+                if(callback) callback(); 
+            } else { 
+                document.getElementById(divId).classList.remove('active'); 
+            }
+        }
+
+        // --- QUICK STOCK ---
+        window.openStockModal = (id, name, stock) => {
+            document.getElementById('stockUpdateId').value = id;
+            document.getElementById('stockModalProductName').innerText = name;
+            document.getElementById('newStockInput').value = stock;
+            document.getElementById('stockModal').style.display = 'flex';
+        };
+
+        window.adjustStock = (amt) => {
+            const inp = document.getElementById('newStockInput');
+            inp.value = Number(inp.value) + amt;
+        };
+
+        window.confirmStockUpdate = async () => {
+            const id = document.getElementById('stockUpdateId').value;
+            const stock = Number(document.getElementById('newStockInput').value);
+            await update(ref(rtdb, `product_list/${id}`), { stock: stock });
+            closeModal('stockModal');
+        };
+
+        // --- PDF EXPORT (Preview logic) ---
+        window.downloadPDF = () => {
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '20px';
+            tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
+            
+            let html = `
+                <h2 style="text-align:center; font-size: 24px; margin-bottom: 5px;">${SHOP_NAME}</h2>
+                <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #666;">Inventory Report | Date: ${new Date().toLocaleDateString()}</p>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead style="background-color: #4F46E5; color: white;">
+                        <tr>
+                            <th style="padding: 10px; border: 1px solid #ddd;">#</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Product / পণ্য</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Brand</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Stock / স্টক</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Buy / ক্রয়</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Sell / বিক্রয়</th>
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Total Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            let totalVal = 0;
+            allProducts.forEach((p, i) => {
+                let val = p.stock * p.sell_price;
+                totalVal += val;
+                html += `
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${i+1}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${p.name}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${p.brand || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${p.stock} ${p.unit}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${p.buy_price}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${p.sell_price}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${val}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight: bold; background-color: #f3f4f6;">
+                            <td colspan="6" style="padding: 10px; border: 1px solid #ddd; text-align: right;">Total / সর্বমোট:</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${totalVal} ৳</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+            tempDiv.innerHTML = html;
+            
+            html2pdf().set({
+                margin: 10, filename: 'Inventory_Report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
+                window.open(pdfUrl, '_blank');
+            });
+        };
+    </script>
+</body>
+</html>

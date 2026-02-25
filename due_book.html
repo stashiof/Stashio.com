@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Due Book (Ledger) - Stashio</title>
+    
+    <meta name="theme-color" content="#4F46E5">
+
+    <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Dynamic Header Area */
+        .app-header {
+            position: relative; padding: 20px 20px 45px 20px; color: white; 
+            border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
+            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            overflow: hidden;
+        }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
+        
+        .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+        .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-pdf:active { transform: scale(0.95); }
+
+        body.has-theme .app-header { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: none; border-bottom: 1px solid rgba(255,255,255,0.3); }
+        body.has-theme .header-bg { display: none; }
+
+        /* Filter Section */
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; flex-direction: column; gap: 10px; border: 1px solid #f8fafc; }
+        .input-group { flex: 1; }
+        .input-group label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
+        .input-group input { width: 100%; padding: 12px 15px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 13px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); transition: 0.3s; }
+        .input-group input:focus { border-color: var(--primary); background: white; }
+        
+        /* Summary */
+        .summary-bar { display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 15px; gap: 10px; }
+        .sum-box { flex: 1; background: var(--white); padding: 15px; border-radius: 14px; text-align: center; box-shadow: var(--shadow); border-top: 3px solid transparent; border-left: 1px solid #f8fafc; border-right: 1px solid #f8fafc; border-bottom: 1px solid #f8fafc; }
+        .sum-box.recv { border-top-color: var(--success); }
+        .sum-box.pay { border-top-color: var(--danger); }
+        .sum-title { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+        .sum-val { font-size: 18px; font-weight: 800; margin-top: 4px; }
+
+        /* List */
+        .due-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
+        .due-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); position: relative; overflow: hidden; border-left: 4px solid transparent; border-top: 1px solid #f8fafc; border-right: 1px solid #f8fafc; border-bottom: 1px solid #f8fafc; }
+        .due-card.receive { border-left-color: var(--success); }
+        .due-card.pay { border-left-color: var(--danger); }
+        
+        .dc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; }
+        .dc-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+        .dc-type { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
+        .type-recv { background: #dcfce3; color: var(--success); }
+        .type-pay { background: #fee2e2; color: var(--danger); }
+
+        .dc-body { display: flex; justify-content: space-between; align-items: center; }
+        .dc-total { font-size: 11px; color: var(--text-light); font-weight: 600; }
+        .dc-due-amt { font-size: 18px; font-weight: 800; color: var(--text-dark); }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-action { flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; border: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-update { background: var(--primary); color: white; }
+        .btn-history { background: #f8fafc; color: var(--text-dark); border: 1px solid #e5e7eb; }
+        .btn-action:active { transform: scale(0.96); }
+
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(3px); }
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .btn-close:active { background: #f1f5f9; }
+        
+        /* Timeline */
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #e5e7eb; }
+        .tl-item { position: relative; margin-bottom: 15px; }
+        .tl-dot { position: absolute; left: -21px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); border: 2px solid white; box-shadow: 0 0 0 2px var(--primary); }
+        .tl-content { background: #f8fafc; padding: 10px 12px; border-radius: 10px; border: 1px solid #f1f5f9; }
+
+        .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-submit:disabled { background: #cbd5e1; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header" id="header-container">
+        <div class="header-bg"></div>
+        <div id="dynamicThemeContainer"></div>
+        <div class="header-top">
+            <div class="header-title">
+                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Due Book (Ledger)</span>
+            </div>
+            <button onclick="downloadPDF()" class="btn-pdf" id="btnPdf"><i class="fas fa-file-pdf"></i> Save PDF</button>
+        </div>
+    </div>
+
+    <div class="summary-bar">
+        <div class="sum-box recv">
+            <div class="sum-title text-success">To Receive (পাব)</div>
+            <div class="sum-val text-success" id="sumRecv">৳0</div>
+        </div>
+        <div class="sum-box pay">
+            <div class="sum-title text-danger">To Pay (দিব)</div>
+            <div class="sum-val text-danger" id="sumPay">৳0</div>
+        </div>
+    </div>
+
+    <div class="filter-card">
+        <div class="input-group">
+            <input type="text" id="searchName" placeholder="🔍 Search Customer / Supplier..." list="contactList">
+            <datalist id="contactList"></datalist>
+        </div>
+    </div>
+
+    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading Ledger...
+    </div>
+
+    <div class="due-list" id="dueList"></div>
+
+    <div class="modal-overlay" id="payModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="font-size: 15px; font-weight: 700; margin: 0;" id="payTitle">Update Payment</h3>
+                <button onclick="document.getElementById('payModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="payForm">
+                    <input type="hidden" id="payDueId">
+                    <input type="hidden" id="payDueType">
+                    <input type="hidden" id="payDueName">
+                    <input type="hidden" id="payCurrentAmt">
+
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <p style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">Current Due</p>
+                        <h2 style="font-size: 24px; color: var(--text-dark); margin: 0;" id="payDisplayAmt">৳0</h2>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 15px;">
+                        <label id="payInputLabel">Amount to Update (৳)</label>
+                        <input type="number" id="payAmount" required style="font-size: 16px; font-weight: bold; border-color: var(--primary); text-align: center;">
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="paySubmitBtn">Confirm Update</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="font-size: 15px; font-weight: 700; margin: 0;">Transaction History</h3>
+                <button onclick="document.getElementById('historyModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="timeline" id="historyTimeline"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // মডুলার ফায়ারবেস ইমপোর্ট
+        import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, push, update, get } from './firebase_config.js';
+        // runTransaction এর জন্য আলাদা ইমপোর্ট
+        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+
+        let allDues = [];
+        let allHistory = [];
+        let globalPdfTemplateCode = "";
+
+        window.onload = () => {
+            // Theme sync
+            rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
+                const themeCode = snap.exists() ? snap.val().code : null;
+                if (themeCode && themeCode.trim() !== "") {
+                    document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
+                    document.body.classList.add('has-theme');
+                } else {
+                    document.getElementById('dynamicThemeContainer').innerHTML = "";
+                    document.body.classList.remove('has-theme');
+                }
+            });
+
+            // Load PDF Template
+            rtdbOnValue(rtdbRef(rtdb, `global_settings/pdf_due_template`), (snap) => {
+                if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
+            });
+
+            // Load Contacts for Search Suggestions
+            rtdbOnValue(rtdbRef(rtdb, 'contacts'), (snap) => {
+                const list = document.getElementById('contactList');
+                list.innerHTML = '';
+                if(snap.exists()){
+                    const data = snap.val();
+                    if(data.customers) Object.values(data.customers).forEach(c => { if(c.shop_id === SHOP_ID) list.innerHTML += `<option value="${c.name}">`; });
+                    if(data.suppliers) Object.values(data.suppliers).forEach(c => { if(c.shop_id === SHOP_ID) list.innerHTML += `<option value="${c.name}">`; });
+                }
+            });
+
+            // Load History Data (Background)
+            rtdbOnValue(rtdbRef(rtdb, 'due_history'), (snap) => {
+                allHistory = [];
+                if(snap.exists()) {
+                    allHistory = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).reverse();
+                }
+            });
+
+            // Load Main Due Book (Offline First)
+            const cachedDues = localStorage.getItem(`due_book_${SHOP_ID}`);
+            if(cachedDues) {
+                allDues = JSON.parse(cachedDues);
+                renderDues();
+            }
+
+            // Realtime Sync Due Book
+            rtdbOnValue(rtdbRef(rtdb, 'due_book'), (snapshot) => {
+                document.getElementById('loading').style.display = 'none';
+                allDues = [];
+                if (snapshot.exists()) {
+                    allDues = Object.entries(snapshot.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(d => d.shop_id === SHOP_ID && d.current_due > 0) // Only active dues
+                        .reverse();
+                    
+                    localStorage.setItem(`due_book_${SHOP_ID}`, JSON.stringify(allDues));
+                } else {
+                    localStorage.removeItem(`due_book_${SHOP_ID}`);
+                }
+                renderDues(); 
+            });
+        };
+
+        // Real-time Search Filter
+        document.getElementById('searchName').addEventListener('input', renderDues);
+
+        function renderDues() {
+            const listEl = document.getElementById('dueList');
+            const searchTerm = document.getElementById('searchName').value.toLowerCase().trim();
+            listEl.innerHTML = '';
+
+            let totalRecv = 0;
+            let totalPay = 0;
+
+            let filteredDues = allDues;
+            if(searchTerm) {
+                filteredDues = allDues.filter(d => d.name && d.name.toLowerCase().includes(searchTerm));
+            }
+
+            if (filteredDues.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-book-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No active dues found.</div>`;
+            } else {
+                filteredDues.forEach(d => {
+                    if(d.type === 'receive') totalRecv += Number(d.current_due);
+                    else totalPay += Number(d.current_due);
+
+                    const isRecv = d.type === 'receive';
+                    const typeLabel = isRecv ? 'Receive (পাব)' : 'Pay (দিব)';
+                    const typeClass = isRecv ? 'type-recv' : 'type-pay';
+                    const cardClass = isRecv ? 'receive' : 'pay';
+                    const btnColor = isRecv ? 'var(--success)' : 'var(--danger)';
+
+                    const html = `
+                    <div class="due-card ${cardClass}">
+                        <div class="dc-header">
+                            <div class="dc-name">${d.name || 'Unknown'}</div>
+                            <div class="dc-type ${typeClass}">${typeLabel}</div>
+                        </div>
+                        <div class="dc-body">
+                            <div class="dc-total">Total Bill: ৳${Number(d.total_amount || 0).toLocaleString()}</div>
+                            <div class="dc-due-amt" style="color:${btnColor}">৳${Number(d.current_due).toLocaleString()}</div>
+                        </div>
+                        <div class="btn-group">
+                            <button onclick="openHistory('${d.id}')" class="btn-action btn-history"><i class="fas fa-history"></i> History</button>
+                            <button onclick="openPayModal('${d.id}', '${d.type}', '${d.name.replace(/'/g, "\\'")}', ${d.current_due})" class="btn-action btn-update" style="background:${btnColor}">
+                                <i class="fas ${isRecv ? 'fa-hand-holding-usd' : 'fa-money-bill-wave'}"></i> Update
+                            </button>
+                        </div>
+                    </div>`;
+                    listEl.insertAdjacentHTML('beforeend', html);
+                });
+            }
+
+            // Update Top Boxes (Only overall totals)
+            let overallRecv = 0, overallPay = 0;
+            allDues.forEach(d => {
+                if(d.type === 'receive') overallRecv += Number(d.current_due);
+                else overallPay += Number(d.current_due);
+            });
+            document.getElementById('sumRecv').innerText = `৳${overallRecv.toLocaleString()}`;
+            document.getElementById('sumPay').innerText = `৳${overallPay.toLocaleString()}`;
+        }
+
+        // --- PAYMENT LOGIC ---
+        window.openPayModal = (id, type, name, currentAmt) => {
+            document.getElementById('payDueId').value = id;
+            document.getElementById('payDueType').value = type;
+            document.getElementById('payDueName').value = name;
+            document.getElementById('payCurrentAmt').value = currentAmt;
+            
+            document.getElementById('payTitle').innerText = type === 'receive' ? `Receive from ${name}` : `Pay to ${name}`;
+            document.getElementById('payInputLabel').innerText = type === 'receive' ? 'Amount Received (৳)' : 'Amount Paid (৳)';
+            document.getElementById('payDisplayAmt').innerText = `৳${currentAmt.toLocaleString()}`;
+            document.getElementById('payAmount').value = '';
+
+            document.getElementById('payModal').style.display = 'flex';
+        };
+
+        document.getElementById('payForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('paySubmitBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            const id = document.getElementById('payDueId').value;
+            const type = document.getElementById('payDueType').value;
+            const name = document.getElementById('payDueName').value;
+            const currentAmt = Number(document.getElementById('payCurrentAmt').value);
+            const payAmt = Number(document.getElementById('payAmount').value);
+
+            if(payAmt <= 0 || payAmt > currentAmt) {
+                alert("Invalid amount! Cannot be more than current due.");
+                btn.innerHTML = 'Confirm Update'; btn.disabled = false; return;
+            }
+
+            const newDue = currentAmt - payAmt;
+            const actionText = type === 'receive' ? 'Received' : 'Paid';
+
+            try {
+                // 1. Update Due Book
+                await update(rtdbRef(rtdb, `due_book/${id}`), { 
+                    current_due: newDue, 
+                    updated_at: Date.now() 
+                });
+
+                // 2. Add to Due History
+                await push(rtdbRef(rtdb, 'due_history'), {
+                    due_id: id, shop_id: SHOP_ID, name: name, type: type,
+                    action: actionText, amount: payAmt, balance_left: newDue, date: Date.now()
+                });
+
+                // 3. Update Cash Box Automatically!
+                const cashType = type === 'receive' ? 'cash_in' : 'cash_out';
+                const modifier = type === 'receive' ? payAmt : -payAmt;
+
+                await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + modifier);
+                
+                await push(rtdbRef(rtdb, 'cash_transactions'), {
+                    shop_id: SHOP_ID, type: cashType, source: 'due_ledger',
+                    amount: payAmt, note: `Due ${actionText}: ${name}`, created_at: Date.now()
+                });
+
+                document.getElementById('payModal').style.display = 'none';
+                // No alert needed, UI updates in real-time
+
+            } catch (err) {
+                alert("Error updating: " + err.message);
+            } finally {
+                btn.innerHTML = 'Confirm Update'; btn.disabled = false;
+            }
+        });
+
+        // --- HISTORY LOGIC ---
+        window.openHistory = (id) => {
+            const tl = document.getElementById('historyTimeline');
+            tl.innerHTML = '';
+            
+            const specificHistory = allHistory.filter(h => h.due_id === id);
+            
+            if(specificHistory.length === 0) {
+                tl.innerHTML = '<p style="text-align:center; color:#9ca3af; padding: 20px;">No transaction records found.</p>';
+            } else {
+                specificHistory.forEach(h => {
+                    const d = new Date(h.date);
+                    const color = h.type === 'receive' ? (h.action==='Received'?'green':'blue') : (h.action==='Paid'?'red':'blue');
+
+                    tl.innerHTML += `
+                        <div class="tl-item">
+                            <div class="tl-dot"></div>
+                            <div class="tl-content">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <strong style="font-size:12px; color:var(--text-dark);">${h.action}</strong>
+                                    <span style="font-size:10px; color:#9ca3af;">${d.toLocaleDateString()} ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:12px;">
+                                    <span style="color:${color}; font-weight:bold;">৳${Number(h.amount).toLocaleString()}</span>
+                                    <span style="color:#6b7280; font-weight: 600;">Bal: ৳${h.balance_left !== undefined ? Number(h.balance_left).toLocaleString() : '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('historyModal').style.display = 'flex';
+        };
+
+        // --- PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
+        window.downloadPDF = () => {
+            if(allDues.length === 0) { alert("No records to generate PDF!"); return; }
+
+            const btn = document.getElementById('btnPdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            const searchTerm = document.getElementById('searchName').value.trim();
+            const dateStr = new Date().toLocaleDateString('en-GB');
+
+            // Build Rows
+            let rowsHtml = '';
+            let sumR = 0, sumP = 0;
+            
+            let listToPrint = allDues;
+            if(searchTerm) listToPrint = allDues.filter(d => d.name && d.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+            listToPrint.forEach(d => {
+                if(d.type === 'receive') sumR += Number(d.current_due);
+                else sumP += Number(d.current_due);
+
+                const cDate = new Date(d.created_at || Date.now()).toLocaleDateString('en-GB');
+                const typeTxt = d.type === 'receive' ? '<span style="color:green; font-weight:bold;">Receive</span>' : '<span style="color:red; font-weight:bold;">Pay</span>';
+
+                rowsHtml += `
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${cDate}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight:600;">${d.name || 'Unknown'}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${typeTxt}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right;">৳${Number(d.total_amount).toLocaleString()}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-weight:bold;">৳${Number(d.current_due).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+
+            // Default Template
+            const defaultTemplate = `
+                <div style="font-family: 'Hind Siliguri', sans-serif; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 style="font-size: 24px; margin-bottom: 5px; color: #1f2937;">{{SHOP_NAME}}</h2>
+                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Due Ledger Report (বকেয়া খাতা)</p>
+                        <p style="font-size: 12px; font-weight: bold; margin-top: 5px;">Date: {{DATE_RANGE}} | ${searchTerm ? 'Filtered: '+searchTerm : 'All Active Dues'}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                        <thead style="background-color: #4F46E5; color: white;">
+                            <tr>
+                                <th style="padding: 10px; border: 1px solid #ddd;">Created Date</th>
+                                <th style="padding: 10px; border: 1px solid #ddd;">Name</th>
+                                <th style="padding: 10px; border: 1px solid #ddd;">Type</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Total Bill</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Current Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>{{TABLE_ROWS}}</tbody>
+                    </table>
+                    <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+                        <div style="width:250px; background:#f9fafb; padding:15px; border-radius:8px; border:1px solid #ddd;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:green; font-weight:bold;">
+                                <span>Total Receivable:</span><span>৳{{TOTAL_RECEIVABLE}}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; color:red; font-weight:bold;">
+                                <span>Total Payable:</span><span>৳{{TOTAL_PAYABLE}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            let finalTemplate = globalPdfTemplateCode ? globalPdfTemplateCode : defaultTemplate;
+            
+            finalTemplate = finalTemplate.replace(/{{SHOP_NAME}}/g, SHOP_NAME);
+            finalTemplate = finalTemplate.replace(/{{DATE_RANGE}}/g, dateStr);
+            finalTemplate = finalTemplate.replace(/{{TABLE_ROWS}}/g, rowsHtml);
+            finalTemplate = finalTemplate.replace(/{{TOTAL_RECEIVABLE}}/g, sumR.toLocaleString());
+            finalTemplate = finalTemplate.replace(/{{TOTAL_PAYABLE}}/g, sumP.toLocaleString());
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = finalTemplate;
+            
+            html2pdf().set({
+                margin: 10, filename: `Due_Ledger_${dateStr.replace(/\\//g, '-')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
+                window.open(pdfUrl, '_blank');
+                btn.innerHTML = originalText;
+            });
+        };
+    </script>
+</body>
+</html>

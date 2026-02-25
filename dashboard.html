@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stashio - Select Shop Dashboard</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
+    <script>
+        // Check all possible storage keys we used for login
+        const loggedInUserPhone = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        
+        // If NO user is found, kick them out immediately to index.html
+        if (!loggedInUserPhone) {
+            window.location.replace("index.html");
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4F46E5;         /* Indigo 600 */
+            --primary-hover: #4338ca;   /* Indigo 700 */
+            --secondary: #ec4899;       /* Pink 500 */
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --text-dark: #1f2937;       /* Gray 800 */
+            --text-light: #6b7280;      /* Gray 500 */
+            --danger: #ef4444;          /* Red 500 */
+            --success: #10b981;         /* Emerald 500 */
+            --warning: #f59e0b;         /* Amber 500 */
+            --border-color: #f3f4f6;    /* Gray 100 */
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Poppins', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Better for mobile scrolling */
+        }
+
+        /* App Container Layout */
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            min-height: 100vh;
+            background: var(--glass-bg);
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Responsive constraints for larger screens */
+        @media (min-width: 480px) {
+            body { align-items: center; }
+            .app-container { 
+                min-height: auto; 
+                height: 90vh; 
+                border-radius: 35px; 
+                overflow: hidden; 
+            }
+        }
+
+        /* Top Bar Styling */
+        .top-bar { 
+            padding: 35px 25px 20px; 
+            text-align: center; 
+            border-bottom: 1px solid var(--border-color); 
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        .rgb-text {
+            font-size: 24px; 
+            font-weight: 800; 
+            margin: 0;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--warning), var(--primary));
+            background-size: 300%; 
+            -webkit-background-clip: text; 
+            background-clip: text; 
+            color: transparent;
+            animation: glowAnim 6s linear infinite;
+        }
+
+        @keyframes glowAnim { 
+            0% { background-position: 0%; } 
+            100% { background-position: 300%; } 
+        }
+        
+        .user-info p { 
+            margin: 5px 0 0; 
+            font-size: 13px; 
+            color: var(--text-light); 
+            font-weight: 500;
+        }
+
+        /* Main Content Container */
+        .container { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 25px 20px 40px; 
+            background: #ffffff;
+        }
+        
+        /* Custom Scrollbar for container */
+        .container::-webkit-scrollbar { width: 5px; }
+        .container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Add New Shop Card */
+        .add-shop-card { 
+            border: 2px dashed #cbd5e1; 
+            border-radius: 20px; 
+            padding: 20px; 
+            text-align: center; 
+            cursor: pointer; 
+            margin-bottom: 25px;
+            transition: all 0.3s ease; 
+            background: #f8fafc; 
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-shop-card:hover { border-color: var(--primary); background: #eff6ff; }
+        .add-shop-card:active { transform: scale(0.97); }
+        .add-shop-card i { 
+            color: var(--primary); 
+            font-size: 28px; 
+            margin-bottom: 10px; 
+            transition: transform 0.3s;
+        }
+        .add-shop-card:hover i { transform: rotate(90deg); }
+        .add-shop-card h3 { font-size: 15px; color: var(--primary); font-weight: 700; }
+        .add-shop-card p { font-size: 12px; margin-top: 4px; }
+
+        /* Shop List Container */
+        .shop-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 18px; 
+        }
+        
+        /* Individual Shop Card */
+        .shop-card { 
+            background: #fff; 
+            border-radius: 20px; 
+            padding: 15px; 
+            box-shadow: var(--shadow-sm); 
+            border: 1px solid #f1f5f9;
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .shop-card:hover { box-shadow: var(--shadow-md); border-color: #e2e8f0; }
+        
+        .shop-img { 
+            width: 65px; 
+            height: 65px; 
+            border-radius: 14px; 
+            object-fit: cover; 
+            background: #f3f4f6; 
+            border: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+        
+        .shop-details { flex: 1; min-width: 0; }
+        .shop-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+        .shop-name { 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: var(--text-dark); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            max-width: 180px;
+        }
+        
+        .shop-role { 
+            font-size: 10px; 
+            background: #e0e7ff; 
+            color: var(--primary); 
+            padding: 3px 10px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .shop-desc { 
+            font-size: 12px; 
+            color: var(--text-light); 
+            display: -webkit-box; 
+            -webkit-line-clamp: 1; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+            margin-bottom: 12px; 
+        }
+        
+        /* Enter Button inside Card */
+        .btn-enter { 
+            width: 100%;
+            padding: 10px 15px; 
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.2); 
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-enter:hover { box-shadow: 0 6px 15px rgba(236, 72, 153, 0.3); }
+        .btn-enter:active { transform: scale(0.97); }
+        
+        /* Settings Gear Icon */
+        .settings-icon { 
+            color: #cbd5e1; 
+            cursor: pointer; 
+            font-size: 18px; 
+            transition: 0.2s; 
+            padding: 5px;
+        }
+        .settings-icon:hover { color: var(--primary); transform: rotate(45deg); }
+
+        /* Loader Animation */
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+            display: none;
+        }
+        .custom-loader {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e7ff;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        /* Modal Overlay & Content */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(17, 24, 39, 0.7); 
+            backdrop-filter: blur(6px); 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+        }
+        
+        .modal-content { 
+            background: #ffffff; 
+            padding: 30px 25px; 
+            border-radius: 28px; 
+            width: 90%; 
+            max-width: 380px; 
+            position: relative; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        
+        @keyframes modalPopUp { 
+            from { transform: scale(0.9) translateY(20px); opacity: 0; } 
+            to { transform: scale(1) translateY(0); opacity: 1; } 
+        }
+        
+        .close-btn { 
+            position: absolute; 
+            top: 20px; 
+            right: 25px; 
+            font-size: 24px; 
+            cursor: pointer; 
+            color: #9ca3af; 
+            transition: 0.2s;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f3f4f6;
+        }
+        .close-btn:hover { background: #fee2e2; color: var(--danger); }
+        
+        /* Modal Form Inputs */
+        .input-group { margin-bottom: 18px; position: relative; }
+        .input-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 2px solid #e5e7eb; 
+            background: #f9fafb; 
+            border-radius: 14px; 
+            font-size: 14px; 
+            outline: none; 
+            transition: all 0.3s ease; 
+            color: var(--text-dark); 
+            font-family: 'Poppins', sans-serif;
+        }
+        .input-group input:focus, .input-group textarea:focus { 
+            border-color: var(--primary); 
+            background: #ffffff; 
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+        
+        /* Image Upload Custom UI inside Modal */
+        .image-upload-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .image-upload-wrapper:hover { border-color: var(--primary); }
+        
+        /* Buttons inside Modal */
+        .modal-btn { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: white; 
+            border: none; 
+            border-radius: 14px; 
+            font-size: 15px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            margin-top: 10px;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+        .modal-btn:active { transform: scale(0.98); }
+        .modal-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .btn-danger { 
+            width: 100%; 
+            padding: 14px; 
+            background: transparent; 
+            color: var(--danger); 
+            border: 2px solid var(--danger); 
+            border-radius: 14px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            transition: all 0.3s ease; 
+        }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        
+        /* Status Text */
+        .status-msg { text-align: center; font-size: 13px; font-weight: 600; margin-top: 15px; min-height: 20px; }
+        
+        /* Empty State Illustration */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .empty-state i { font-size: 50px; color: #cbd5e1; margin-bottom: 15px; }
+        .empty-state h4 { font-size: 16px; color: var(--text-dark); margin-bottom: 5px; }
+        .empty-state p { font-size: 13px; color: var(--text-light); }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="top-bar">
+            <div class="user-info">
+                <h2 id="welcomeName" class="rgb-text">Hi, User</h2>
+                <p>Welcome! Select a shop to manage.</p>
+            </div>
+        </div>
+
+        <div class="container">
+            
+            <div class="add-shop-card" onclick="openModal('create')">
+                <i class="fas fa-store"></i>
+                <h3>Create New Shop</h3>
+                <p>Start a new business space</p>
+            </div>
+
+            <div id="loader" class="loader-container">
+                <div class="custom-loader"></div>
+                <p style="color: var(--text-light); font-size: 13px; font-weight: 500;">Loading your shops...</p>
+            </div>
+
+            <div id="shopList" class="shop-list">
+                </div>
+        </div>
+    </div>
+
+
+    <div id="shopModal" class="modal">
+        <div class="modal-content">
+            <div class="close-btn" onclick="closeModal('shopModal')"><i class="fas fa-times"></i></div>
+            
+            <h2 id="modalTitle" style="margin-top:0; margin-bottom: 25px; color:var(--text-dark); font-size: 22px; font-weight: 800;">New Shop</h2>
+            
+            <div class="image-upload-wrapper" onclick="document.getElementById('shopImage').click()">
+                <div id="uploadPlaceholder">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+                    <p style="font-size: 12px; font-weight: 600; color: var(--text-light); margin:0;" id="uploadText">Tap to Upload Shop Logo</p>
+                </div>
+                <img id="imgPreview" src="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            </div>
+            <input type="file" id="shopImage" accept="image/*" style="display: none;" onchange="compressAndUploadLogo(this)">
+            <input type="hidden" id="uploadedLogoUrl">
+
+            <div class="input-group">
+                <label>Shop Name <span style="color:red">*</span></label>
+                <input type="text" id="shopName" placeholder="e.g. Allahardan Stationery" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Tagline / Description</label>
+                <textarea id="shopDesc" rows="2" placeholder="e.g. Best wholesale shop in town"></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label>Physical Address <span style="color:red">*</span></label>
+                <textarea id="shopAddress" rows="2" placeholder="Enter full address" required></textarea>
+            </div>
+            
+            <input type="hidden" id="editShopId">
+            
+            <button id="modalActionBtn" class="modal-btn" onclick="saveShop()">Create Shop</button>
+            
+            <div id="deleteBtnContainer" style="display: none;">
+                <button id="btnDelete" class="btn-danger" onclick="initiateDelete()">
+                    <i class="fas fa-trash-alt" style="margin-right: 8px;"></i> Delete Shop Permanently
+                </button>
+            </div>
+
+            <div id="modalStatus" class="status-msg"></div>
+        </div>
+    </div>
+
+
+    <div id="otpModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <div class="close-btn" onclick="closeModal('otpModal')"><i class="fas fa-times"></i></div>
+            
+            <div style="background: #fee2e2; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 30px; color: var(--danger);"></i>
+            </div>
+            
+            <h2 style="color:var(--text-dark); font-size: 22px; font-weight: 800; margin-bottom: 10px;">Security Alert</h2>
+            
+            <p style="font-size: 13px; color: var(--text-light); margin-bottom: 25px; line-height: 1.5;">
+                To delete this shop, please verify your identity. A 4-digit code has been sent to:<br>
+                <b id="deleteOtpEmailShow" style="color: var(--primary); font-size: 14px;"></b>
+            </p>
+            
+            <div class="input-group">
+                <input type="number" id="deleteOtpInput" placeholder="Enter 4-Digit OTP" style="text-align: center; letter-spacing: 8px; font-weight: 800; font-size: 20px; color: var(--text-dark);">
+            </div>
+            
+            <button id="btnConfirmDelete" class="modal-btn" style="background: linear-gradient(135deg, var(--danger), #dc2626); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);" onclick="confirmDeleteShop()">
+                Confirm Deletion
+            </button>
+            
+            <div id="otpModalStatus" class="status-msg"></div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Modular Firebase Imports
+        import { dbFirestore, doc, getDoc, collection, addDoc, getDocs, updateDoc, deleteDoc } from './firebase_config.js';
+
+        // External APIs
+        const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432"; 
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwoC5HV-g8E5W3LY4tw4I63OUtIIK5e7kEDMW5Dk8XTn9BmBFyLR6sOGCd1JHo9HdLx/exec";
+
+        // Global Variables
+        const activeUserPhone = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeUserName = localStorage.getItem('tempUserName') || sessionStorage.getItem('tempUserName') || localStorage.getItem('userName') || "User";
+        
+        let generatedDeleteOtp = 0;
+        let shopToDelete = null;
+
+        window.onload = function() {
+            if (!activeUserPhone) { 
+                window.location.replace("index.html"); 
+                return; 
+            }
+            
+            document.getElementById('welcomeName').innerText = "Hi, " + activeUserName;
+            loadShops();
+        };
+
+        // --- FETCH SHOPS LOGIC ---
+        async function loadShops() {
+            const listDiv = document.getElementById('shopList');
+            const loader = document.getElementById('loader');
+            
+            listDiv.innerHTML = ""; 
+            loader.style.display = "flex"; 
+
+            try {
+                const querySnapshot = await getDocs(collection(dbFirestore, "shops"));
+                loader.style.display = "none";
+                let shopCount = 0;
+
+                querySnapshot.forEach((doc) => {
+                    const shop = doc.data();
+                    
+                    const isCreator = (shop.createdBy === activeUserPhone);
+                    const isMember = (shop.members && shop.members.includes(activeUserPhone));
+
+                    if (isCreator || isMember) {
+                        shopCount++;
+                        
+                        let role = "Employee";
+                        if (isCreator) role = "Owner";
+                        else if (shop.roles && shop.roles[activeUserPhone]) {
+                            role = shop.roles[activeUserPhone];
+                        }
+
+                        const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
+                        const defaultImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.name)}&background=4F46E5&color=fff&size=150`;
+
+                        const cardHTML = `
+                            <div class="shop-card">
+                                <img src="${shop.image || defaultImg}" class="shop-img" alt="Shop Logo">
+                                <div class="shop-details">
+                                    <div class="shop-header">
+                                        <span class="shop-role">${displayRole}</span>
+                                        ${isCreator ? `<i class="fas fa-cog settings-icon" title="Shop Settings" onclick="openModal('edit', '${doc.id}')"></i>` : ''}
+                                    </div>
+                                    <div class="shop-name">${shop.name}</div>
+                                    <div class="shop-desc">${shop.description || 'No description provided.'}</div>
+                                    <button class="btn-enter" onclick="enterShop('${doc.id}', '${shop.name.replace(/'/g, "\\'")}')">
+                                        Enter Dashboard <i class="fas fa-sign-in-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        listDiv.innerHTML += cardHTML;
+                    }
+                });
+
+                if (shopCount === 0) {
+                    listDiv.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-store-slash"></i>
+                            <h4>No Shops Found</h4>
+                            <p>You don't have any shops connected to this number. Create one to get started!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                loader.style.display = "none"; 
+                console.error("Error loading shops:", error);
+                listDiv.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle text-danger"></i><h4>Connection Error</h4><p>Failed to load data. Check internet.</p></div>`;
+            }
+        }
+
+        // --- ENTER SHOP LOGIC ---
+        window.enterShop = (shopId, shopName) => {
+            localStorage.setItem('tempUserPhone', activeUserPhone); 
+            localStorage.setItem('tempUserName', activeUserName);
+            localStorage.setItem('activeShopId', shopId);
+            localStorage.setItem('activeShopName', shopName);
+            
+            document.body.style.opacity = "0.5";
+            document.body.style.transition = "opacity 0.3s";
+            
+            setTimeout(() => { window.location.href = "home.html"; }, 300);
+        };
+
+        // --- MODAL HANDLING ---
+        window.openModal = (mode, shopId = null) => {
+            const title = document.getElementById('modalTitle');
+            const btn = document.getElementById('modalActionBtn');
+            const deleteContainer = document.getElementById('deleteBtnContainer');
+            
+            document.getElementById('shopName').value = "";
+            document.getElementById('shopAddress').value = "";
+            document.getElementById('shopDesc').value = "";
+            document.getElementById('shopImage').value = "";
+            document.getElementById('uploadedLogoUrl').value = "";
+            
+            document.getElementById('uploadPlaceholder').style.display = "block";
+            document.getElementById('imgPreview').style.display = "none";
+            document.getElementById('imgPreview').src = "";
+            document.getElementById('uploadText').innerText = "Tap to Upload Shop Logo";
+            document.getElementById('uploadText').style.color = "var(--text-light)";
+            
+            setStatus('modalStatus', '', 'black');
+            document.getElementById('btnDelete').disabled = false;
+
+            if (mode === 'create') {
+                title.innerText = "Create New Shop";
+                btn.innerText = "Create Shop";
+                btn.onclick = saveShop;
+                document.getElementById('editShopId').value = "";
+                deleteContainer.style.display = "none"; 
+            } else if (mode === 'edit') {
+                title.innerText = "Edit Shop Settings";
+                btn.innerText = "Update Shop Details";
+                btn.onclick = updateShop;
+                document.getElementById('editShopId').value = shopId;
+                shopToDelete = shopId; 
+                deleteContainer.style.display = "block"; 
+                
+                fetchShopDataForEdit(shopId);
+            }
+            
+            document.getElementById('shopModal').style.display = "flex";
+        };
+
+        window.closeModal = (modalId) => { 
+            document.getElementById(modalId).style.display = "none"; 
+        };
+
+        function setStatus(elementId, text, color) {
+            const el = document.getElementById(elementId);
+            el.innerText = text;
+            el.style.color = color;
+        }
+
+        // --- CLIENT-SIDE IMAGE COMPRESSION ---
+        window.compressAndUploadLogo = async (input) => {
+            const file = input.files[0];
+            if (!file) return;
+
+            const uploadText = document.getElementById('uploadText');
+            uploadText.innerText = "Compressing...";
+            uploadText.style.color = "var(--warning)";
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const MAX_WIDTH = 300;
+                    let width = img.width; let height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8); 
+                    const blob = await (await fetch(dataUrl)).blob();
+                    const compressedFile = new File([blob], "shop_logo.jpg", { type: "image/jpeg" });
+                    
+                    uploadText.innerText = "Uploading...";
+                    uploadText.style.color = "var(--primary)";
+                    const fd = new FormData(); fd.append("image", compressedFile);
+
+                    try {
+                        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                        const d = await res.json();
+                        if (d.success) {
+                            document.getElementById('uploadedLogoUrl').value = d.data.url;
+                            document.getElementById('imgPreview').src = d.data.url;
+                            document.getElementById('imgPreview').style.display = "block";
+                            document.getElementById('uploadPlaceholder').style.display = "none";
+                        }
+                    } catch (e) { 
+                        uploadText.innerText = "Upload Failed ❌"; 
+                        uploadText.style.color = "var(--danger)";
+                    }
+                }
+            };
+        };
+
+        // --- SAVE NEW SHOP ---
+        async function saveShop() {
+            const name = document.getElementById('shopName').value.trim();
+            const desc = document.getElementById('shopDesc').value.trim();
+            const address = document.getElementById('shopAddress').value.trim();
+            const imageUrl = document.getElementById('uploadedLogoUrl').value;
+            const btn = document.getElementById('modalActionBtn');
+
+            if (!name || !address) { 
+                setStatus('modalStatus', "Please provide Shop Name and Address!", "var(--danger)"); 
+                return; 
+            }
+
+            setStatus('modalStatus', "Creating your shop...", "var(--warning)"); 
+            btn.disabled = true;
+
+            try {
+                const newShopRef = await addDoc(collection(dbFirestore, "shops"), {
+                    name: name, 
+                    description: desc, 
+                    address: address, 
+                    image: imageUrl,
+                    createdAt: new Date().getTime(), 
+                    createdBy: activeUserPhone, 
+                    members: [activeUserPhone], 
+                    roles: { [activeUserPhone]: "owner" }
+                });
+
+                // Update User Document to include this shop ID
+                const userDocRef = doc(dbFirestore, "users", activeUserPhone);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    let userShops = userDoc.data().shops || [];
+                    userShops.push(newShopRef.id);
+                    await updateDoc(userDocRef, { shops: userShops });
+                }
+
+                setStatus('modalStatus', "Shop Created Successfully! ✅", "var(--success)");
+                
+                setTimeout(() => { 
+                    closeModal('shopModal'); 
+                    loadShops(); 
+                }, 1500);
+
+            } catch (e) { 
+                setStatus('modalStatus', "Error: " + e.message, "var(--danger)"); 
+            } finally { 
+                btn.disabled = false; 
+            }
+        }
+
+        // --- EDIT SHOP LOGIC ---
+        async function fetchShopDataForEdit(id) {
+            setStatus('modalStatus', "Fetching details...", "var(--text-light)");
+            
+            try {
+                const docRef = doc(dbFirestore, "shops", id);
+                const docSnap = await getDoc(docRef);
+                
+                if(docSnap.exists()) {
+                    const d = docSnap.data();
+                    document.getElementById('shopName').value = d.name;
+                    document.getElementById('shopDesc').value = d.description || "";
+                    document.getElementById('shopAddress').value = d.address || "";
+                    
+                    if(d.image) {
+                        document.getElementById('uploadPlaceholder').style.display = "none";
+                        document.getElementById('imgPreview').style.display = "block";
+                        document.getElementById('imgPreview').src = d.image;
+                        document.getElementById('uploadedLogoUrl').value = d.image;
+                    }
+                    setStatus('modalStatus', "", "black");
+                }
+            } catch(err) {
+                setStatus('modalStatus', "Failed to load data.", "var(--danger)");
+            }
+        }
+
+        async function updateShop() {
+            const id = document.getElementById('editShopId').value;
+            const name = document.getElementById('shopName').value.trim();
+            const desc = document.getElementById('shopDesc').value.trim();
+            const address = document.getElementById('shopAddress').value.trim();
+            const imageUrl = document.getElementById('uploadedLogoUrl').value;
+            const btn = document.getElementById('modalActionBtn');
+
+            if (!name || !address) { 
+                setStatus('modalStatus', "Name & Address cannot be empty!", "var(--danger)"); 
+                return; 
+            }
+
+            setStatus('modalStatus', "Updating details...", "var(--warning)"); 
+            btn.disabled = true;
+
+            try {
+                const shopRef = doc(dbFirestore, "shops", id);
+                await updateDoc(shopRef, { 
+                    name: name, 
+                    description: desc, 
+                    address: address,
+                    image: imageUrl,
+                    updatedAt: new Date().getTime()
+                });
+                
+                if(localStorage.getItem('activeShopId') === id) {
+                    localStorage.setItem('activeShopName', name);
+                }
+
+                setStatus('modalStatus', "Shop Updated! ✅", "var(--success)");
+                setTimeout(() => { 
+                    closeModal('shopModal'); 
+                    loadShops(); 
+                }, 1500);
+
+            } catch (e) { 
+                setStatus('modalStatus', "Error: " + e.message, "var(--danger)"); 
+            } finally { 
+                btn.disabled = false; 
+            }
+        }
+
+        // --- SECURE DELETE SHOP LOGIC ---
+        window.initiateDelete = async () => {
+            const btnDelete = document.getElementById('btnDelete');
+            btnDelete.disabled = true;
+            setStatus('modalStatus', "Preparing security check...", "var(--warning)");
+
+            try {
+                const userDoc = await getDoc(doc(dbFirestore, "users", activeUserPhone));
+                if (userDoc.exists() && userDoc.data().email) {
+                    sendDeleteOtp(userDoc.data().email);
+                } else {
+                    setStatus('modalStatus', "Security Error: No email linked to your account.", "var(--danger)");
+                    btnDelete.disabled = false;
+                }
+            } catch(err) {
+                setStatus('modalStatus', "Database error! Try again.", "var(--danger)");
+                btnDelete.disabled = false;
+            }
+        };
+
+        function sendDeleteOtp(email) {
+            setStatus('modalStatus', "Sending OTP to email...", "var(--warning)");
+            generatedDeleteOtp = Math.floor(1000 + Math.random() * 9000); 
+
+            fetch(scriptURL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, otp: generatedDeleteOtp, name: activeUserName })
+            }).then(() => {
+                closeModal('shopModal'); 
+                document.getElementById('deleteOtpEmailShow').innerText = email; 
+                document.getElementById('otpModalStatus').innerText = "";
+                document.getElementById('deleteOtpInput').value = "";
+                document.getElementById('btnConfirmDelete').disabled = false;
+                document.getElementById('otpModal').style.display = 'flex'; 
+            }).catch(err => {
+                setStatus('modalStatus', "Failed to send OTP! Check internet.", "var(--danger)");
+                document.getElementById('btnDelete').disabled = false;
+            });
+        }
+
+        window.confirmDeleteShop = async () => {
+            const inputOtp = document.getElementById('deleteOtpInput').value;
+            const btnConfirm = document.getElementById('btnConfirmDelete');
+
+            if (inputOtp == generatedDeleteOtp) {
+                btnConfirm.disabled = true;
+                setStatus('otpModalStatus', "Deleting shop... Please wait.", "var(--warning)");
+
+                try {
+                    await deleteDoc(doc(dbFirestore, "shops", shopToDelete));
+                    
+                    setStatus('otpModalStatus', "Shop deleted permanently.", "var(--success)");
+                    
+                    if(localStorage.getItem('activeShopId') === shopToDelete) {
+                        localStorage.removeItem('activeShopId');
+                        localStorage.removeItem('activeShopName');
+                    }
+
+                    setTimeout(() => {
+                        closeModal('otpModal');
+                        loadShops(); 
+                    }, 2000);
+                } catch(err) {
+                    setStatus('otpModalStatus', "Deletion failed! " + err.message, "var(--danger)");
+                    btnConfirm.disabled = false;
+                }
+            } else {
+                setStatus('otpModalStatus', "Incorrect PIN! Try again.", "var(--danger)");
+                document.getElementById('deleteOtpInput').value = "";
+            }
+        };
+    </script>
+</body>
+</html>

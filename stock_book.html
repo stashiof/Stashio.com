@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stock Book - Stashio</title>
+    
+    <meta name="theme-color" content="#4F46E5">
+
+    <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --secondary: #ec4899;
+            --bg-color: #f3f4f6;
+            --white: #ffffff;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --border-radius: 16px;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Dynamic Header Area */
+        .app-header {
+            position: relative; padding: 20px 20px 45px 20px; color: white; 
+            border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
+            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            overflow: hidden;
+        }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
+        
+        .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+        
+        .header-actions { display: flex; gap: 8px; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-header:active { transform: scale(0.95); }
+
+        body.has-theme .app-header { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: none; border-bottom: 1px solid rgba(255,255,255,0.3); }
+        body.has-theme .header-bg { display: none; }
+
+        /* Analytics Dashboard */
+        .analytics-container { margin: -30px 15px 15px 15px; position: relative; z-index: 60; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-card { background: var(--white); padding: 15px; border-radius: 14px; box-shadow: var(--shadow); text-align: center; border: 1px solid #f8fafc; }
+        .stat-card.full { grid-column: span 2; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        
+        .stat-title { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: 800; color: var(--text-dark); }
+        .stat-card.full .stat-title { color: #d1fae5; margin-bottom: 0; }
+        .stat-card.full .stat-value { color: white; font-size: 24px; }
+        .text-red { color: var(--danger) !important; }
+
+        /* Filters & Search */
+        .filter-section { padding: 0 15px; margin-bottom: 15px; display: flex; gap: 10px; }
+        .search-box { flex: 1; position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: 1px solid #e5e7eb; outline: none; font-size: 13px; font-family: inherit; background: #f8fafc; color: var(--text-dark); transition: 0.3s; }
+        .search-box input:focus { border-color: var(--primary); background: white; }
+        .filter-select { background: var(--white); border: 1px solid #e5e7eb; padding: 0 10px; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--primary); outline: none; font-family: inherit; cursor: pointer; transition: 0.3s; }
+        .filter-select:focus { border-color: var(--primary); }
+
+        /* Product List */
+        .product-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .stock-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); position: relative; overflow: hidden; border-left: 4px solid var(--success); display: flex; gap: 12px; align-items: center; border-top: 1px solid #f8fafc; border-right: 1px solid #f8fafc; border-bottom: 1px solid #f8fafc; }
+        .stock-card.low-stock { border-left-color: var(--danger); background: #fef2f2; }
+        .stock-card.high-value { border-left-color: var(--warning); }
+        
+        .stock-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; background: #f8fafc; border: 1px solid #f1f5f9; }
+        .stock-info { flex: 1; min-width: 0; }
+        .stock-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; justify-content: space-between; }
+        .stock-brand { font-size: 10px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 4px; }
+        
+        .stock-stats { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; }
+        .qty-box { text-align: center; }
+        .qty-num { font-size: 18px; font-weight: 800; color: var(--text-dark); line-height: 1; }
+        .qty-unit { font-size: 10px; color: var(--text-light); font-weight: 600; text-transform: uppercase; }
+        .low-stock .qty-num { color: var(--danger); }
+        
+        .val-box { text-align: right; }
+        .val-text { font-size: 10px; color: var(--text-light); font-weight: 600; text-transform: uppercase; }
+        .val-amt { font-size: 14px; font-weight: 800; color: var(--primary); }
+
+        .btn-history { background: #f8fafc; border: 1px solid #e5e7eb; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--text-dark); cursor: pointer; transition: 0.2s; }
+        .btn-history:active { background: #e5e7eb; }
+
+        .load-more-btn { background: white; border: 1px solid #e5e7eb; color: var(--primary); font-weight: bold; padding: 10px; border-radius: 10px; text-align: center; margin: 10px 15px; cursor: pointer; display: none; box-shadow: var(--shadow); }
+
+        /* History Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; }
+        .btn-close:active { background: #f1f5f9; }
+        
+        .timeline { padding: 20px; overflow-y: auto; flex: 1; }
+        .timeline-item { display: flex; gap: 15px; margin-bottom: 20px; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: 15px; top: 30px; bottom: -20px; width: 2px; background: #e5e7eb; }
+        .timeline-item:last-child::before { display: none; }
+        
+        .tl-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; position: relative; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tl-icon.in { background: var(--success); }
+        .tl-icon.out { background: var(--danger); }
+        
+        .tl-content { flex: 1; background: #f8fafc; padding: 10px 15px; border-radius: 12px; border: 1px solid #f1f5f9; }
+        .tl-title { font-size: 12px; font-weight: 700; color: var(--text-dark); display: flex; justify-content: space-between; }
+        .tl-date { font-size: 10px; color: var(--text-light); margin-top: 3px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header" id="header-container">
+        <div class="header-bg"></div>
+        <div id="dynamicThemeContainer"></div>
+        <div class="header-top">
+            <div class="header-title">
+                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Stock Analytics</span>
+            </div>
+            <div class="header-actions">
+                <button onclick="downloadStockPDF()" class="btn-header" id="btnPdf"><i class="fas fa-file-pdf"></i> Save PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-container">
+        <div class="stat-card full">
+            <div>
+                <div class="stat-title">Total Stock Value</div>
+                <div class="stat-value" id="valTotalAsset">৳0</div>
+            </div>
+            <i class="fas fa-chart-pie" style="font-size: 32px; opacity: 0.5;"></i>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Total Items</div>
+            <div class="stat-value" id="valTotalItems">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title text-red"><i class="fas fa-exclamation-triangle"></i> Low Stock</div>
+            <div class="stat-value text-red" id="valLowStock">0</div>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by name, brand...">
+        </div>
+        <select id="filterSelect" class="filter-select" onchange="applyFilters()">
+            <option value="all">All Items</option>
+            <option value="low">Low Stock</option>
+            <option value="value">Highest Value</option>
+        </select>
+    </div>
+
+    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Analyzing Stock...
+    </div>
+
+    <div class="product-list" id="stockList"></div>
+    <div id="loadMoreBtn" class="load-more-btn" onclick="loadMoreProducts()">Load More Products</div>
+
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size: 14px;">Stock History</h3>
+                    <p id="historyProductName" style="font-size: 11px; color: var(--text-light); margin-top: 2px; font-weight: 600;"></p>
+                </div>
+                <button onclick="document.getElementById('historyModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="timeline" id="historyTimeline">
+                </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // মডুলার ফায়ারবেস ইমপোর্ট
+        import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get } from './firebase_config.js';
+
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+
+        let allProducts = [];
+        let displayedProducts = [];
+        let itemsPerPage = 20;
+        let currentPage = 1;
+
+        window.onload = () => {
+            // Theme Sync
+            rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
+                const themeCode = snap.exists() ? snap.val().code : null;
+                if (themeCode && themeCode.trim() !== "") {
+                    document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
+                    document.body.classList.add('has-theme');
+                } else {
+                    document.getElementById('dynamicThemeContainer').innerHTML = "";
+                    document.body.classList.remove('has-theme');
+                }
+            });
+
+            // Offline First Load
+            const cachedProducts = localStorage.getItem(`stock_${SHOP_ID}`);
+            if(cachedProducts) {
+                allProducts = JSON.parse(cachedProducts);
+                updateDashboard(allProducts);
+                applyFilters();
+            }
+
+            // Realtime Sync
+            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snapshot) => {
+                document.getElementById('loading').style.display = 'none';
+                if (snapshot.exists()) {
+                    allProducts = Object.entries(snapshot.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
+                        
+                    localStorage.setItem(`stock_${SHOP_ID}`, JSON.stringify(allProducts));
+                    
+                    updateDashboard(allProducts);
+                    applyFilters(); 
+                } else {
+                    document.getElementById('stockList').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);"><i class="fas fa-box-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No stock data found.</div>';
+                }
+            });
+        };
+
+        function updateDashboard(data) {
+            let totalValue = 0;
+            let lowStockCount = 0;
+
+            data.forEach(p => {
+                totalValue += (p.stock * (p.buy_price || 0));
+                if(p.stock <= (p.alert_qty || 5)) lowStockCount++;
+            });
+
+            document.getElementById('valTotalAsset').innerText = `৳${totalValue.toLocaleString()}`;
+            document.getElementById('valTotalItems').innerText = data.length.toLocaleString();
+            document.getElementById('valLowStock').innerText = lowStockCount;
+        }
+
+        window.applyFilters = () => {
+            const term = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filterType = document.getElementById('filterSelect').value;
+
+            let filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(term) || 
+                (p.brand && p.brand.toLowerCase().includes(term)) || 
+                (p.barcode && p.barcode.toString().includes(term))
+            );
+
+            if(filterType === 'low') {
+                filtered = filtered.filter(p => p.stock <= (p.alert_qty || 5));
+            } else if(filterType === 'value') {
+                filtered.sort((a, b) => (b.stock * b.buy_price) - (a.stock * a.buy_price));
+            } else {
+                filtered.sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            initPagination(filtered);
+        };
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+        // --- INFINITE SCROLL LOGIC ---
+        function initPagination(products) {
+            currentPage = 1;
+            displayedProducts = products;
+            document.getElementById('stockList').innerHTML = '';
+            
+            if(displayedProducts.length === 0) {
+                document.getElementById('stockList').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;">No items match your search.</div>';
+                document.getElementById('loadMoreBtn').style.display = 'none';
+                return;
+            }
+            
+            renderStock(displayedProducts.slice(0, itemsPerPage));
+            
+            if(displayedProducts.length > itemsPerPage) {
+                document.getElementById('loadMoreBtn').style.display = 'block';
+            } else {
+                document.getElementById('loadMoreBtn').style.display = 'none';
+            }
+        }
+
+        window.loadMoreProducts = () => {
+            const startIndex = currentPage * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const nextBatch = displayedProducts.slice(startIndex, endIndex);
+            
+            renderStock(nextBatch, true); 
+            currentPage++;
+            
+            if(endIndex >= displayedProducts.length) {
+                document.getElementById('loadMoreBtn').style.display = 'none';
+            }
+        };
+
+        function renderStock(products, append = false) {
+            const listEl = document.getElementById('stockList');
+            if(!append) listEl.innerHTML = '';
+            
+            products.forEach((p) => {
+                const imgUrl = p.image || 'https://via.placeholder.com/100?text=Item';
+                const isLowStock = p.stock <= (p.alert_qty || 5);
+                const assetValue = p.stock * (p.buy_price || 0);
+                const isHighValue = assetValue > 10000; 
+                
+                let cardClass = 'stock-card';
+                if(isLowStock) cardClass += ' low-stock';
+                else if(isHighValue) cardClass += ' high-value';
+
+                const html = `
+                <div class="${cardClass}">
+                    <img src="${imgUrl}" class="stock-img">
+                    <div class="stock-info">
+                        <div class="stock-name">
+                            <span>${p.name} ${isLowStock ? '<i class="fas fa-exclamation-circle text-red ml-1"></i>' : ''}</span>
+                        </div>
+                        ${p.brand ? `<span class="stock-brand"><i class="fas fa-tag"></i> ${p.brand}</span>` : ''}
+                        
+                        <div class="stock-stats">
+                            <div class="qty-box">
+                                <div class="qty-num">${p.stock}</div>
+                                <div class="qty-unit">${p.unit || 'pcs'}</div>
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <button onclick="fetchHistory('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="btn-history"><i class="fas fa-history"></i> History</button>
+                            </div>
+
+                            <div class="val-box">
+                                <div class="val-text">Asset Value</div>
+                                <div class="val-amt">৳${assetValue.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- HISTORY FETCHING (Simulated/Aggregated from DB with SHOP_ID filtering) ---
+        window.fetchHistory = async (productId, productName) => {
+            const modal = document.getElementById('historyModal');
+            const timeline = document.getElementById('historyTimeline');
+            document.getElementById('historyProductName').innerText = productName;
+            
+            timeline.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin text-primary"></i> Loading logs...</div>';
+            modal.style.display = 'flex';
+
+            try {
+                const [purchaseSnap, salesSnap] = await Promise.all([
+                    get(rtdbRef(rtdb, 'purchase_history')),
+                    get(rtdbRef(rtdb, 'sales_history'))
+                ]);
+
+                let historyLogs = [];
+
+                if(purchaseSnap.exists()) {
+                    Object.values(purchaseSnap.val()).forEach(purchase => {
+                        if (purchase.shop_id === SHOP_ID) {
+                            const item = purchase.items?.find(i => i.id === productId);
+                            if(item) {
+                                historyLogs.push({
+                                    type: 'in', date: purchase.created_at || new Date(purchase.date).getTime(),
+                                    qty: item.qty, rate: item.purchaseRate, ref: `Purchase: ${purchase.challan_no || 'N/A'}`
+                                });
+                            }
+                        }
+                    });
+                }
+
+                if(salesSnap.exists()) {
+                    Object.values(salesSnap.val()).forEach(sale => {
+                        if (sale.shop_id === SHOP_ID) {
+                            const item = sale.items?.find(i => i.id === productId);
+                            if(item) {
+                                historyLogs.push({
+                                    type: 'out', date: sale.created_at || new Date(sale.date).getTime(),
+                                    qty: item.qty, rate: item.sellRate, ref: `Sale: ${sale.invoice_no || 'N/A'}`
+                                });
+                            }
+                        }
+                    });
+                }
+
+                historyLogs.sort((a, b) => b.date - a.date);
+
+                if(historyLogs.length === 0) {
+                    timeline.innerHTML = '<div style="text-align:center; color:#9ca3af; font-size:12px; margin-top:20px;">No transaction history found for this item.</div>';
+                    return;
+                }
+
+                timeline.innerHTML = '';
+                historyLogs.forEach(log => {
+                    const isPurch = log.type === 'in';
+                    const d = new Date(log.date);
+                    timeline.innerHTML += `
+                        <div class="timeline-item">
+                            <div class="tl-icon ${isPurch ? 'in' : 'out'}"><i class="fas ${isPurch ? 'fa-arrow-down' : 'fa-arrow-up'}"></i></div>
+                            <div class="tl-content">
+                                <div class="tl-title">
+                                    <span style="color: ${isPurch ? 'var(--success)' : 'var(--danger)'}">${isPurch ? 'Stock IN' : 'Stock OUT'} (+${log.qty})</span>
+                                    <span>৳${log.rate}/pc</span>
+                                </div>
+                                <div class="tl-date">${log.ref} • ${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+            } catch(e) {
+                timeline.innerHTML = '<div style="text-align:center; color:red; font-size:12px;">Error loading history.</div>';
+            }
+        };
+
+        // --- PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
+        window.downloadStockPDF = () => {
+            const currentList = allProducts.filter(p => document.getElementById('filterSelect').value === 'low' ? p.stock <= (p.alert_qty||5) : true);
+
+            if(currentList.length === 0) {
+                alert("No records to generate PDF!"); return;
+            }
+
+            const btn = document.getElementById('btnPdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '20px';
+            tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
+            
+            let html = `
+                <h2 style="text-align:center; font-size: 24px; margin-bottom: 5px; color:#1f2937;">${SHOP_NAME}</h2>
+                <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #6b7280;">Detailed Stock Report<br><span style="font-size: 12px; font-weight: bold;">Date: ${new Date().toLocaleDateString('en-GB')}</span></p>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead style="background-color: #10b981; color: white;">
+                        <tr>
+                            <th style="padding: 10px; border: 1px solid #ddd;">#</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Product & Brand</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Current Stock</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Avg. Buy Price</th>
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Asset Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            let totalVal = 0;
+            
+            currentList.forEach((p, i) => {
+                let val = p.stock * (p.buy_price || 0);
+                totalVal += val;
+                const brandHtml = p.brand ? `<br><span style="font-size:9px; color:#6b7280;">(${p.brand})</span>` : '';
+                
+                html += `
+                    <tr style="${p.stock <= (p.alert_qty||5) ? 'background-color: #fef2f2;' : ''}">
+                        <td style="padding: 10px; border: 1px solid #ddd;">${i+1}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">${p.name} ${p.stock <= (p.alert_qty||5) ? '(Low)' : ''} ${brandHtml}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; color:${p.stock <= (p.alert_qty||5) ? 'red' : 'black'};">${p.stock} ${p.unit || 'pcs'}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${p.buy_price || 0}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${val.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight: bold; background-color: #f3f4f6;">
+                            <td colspan="4" style="padding: 10px; border: 1px solid #ddd; text-align: right;">Total Stock Value / মোট ভ্যালু:</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-size:14px; color:#10b981;">${totalVal.toLocaleString()} ৳</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+            tempDiv.innerHTML = html;
+            
+            html2pdf().set({
+                margin: 10, filename: 'Stock_Analytics_Report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
+                window.open(pdfUrl, '_blank');
+                btn.innerHTML = originalText;
+            });
+        };
+    </script>
+</body>
+</html>

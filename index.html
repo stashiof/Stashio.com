@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stashio - Smart Shop Manager</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4F46E5; /* Indigo */
+            --secondary: #ec4899; /* Pink */
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass: rgba(255, 255, 255, 0.95);
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            min-height: 100vh;
+            background: var(--glass);
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        @media (min-width: 480px) {
+            .app-container {
+                min-height: auto;
+                height: 85vh;
+                border-radius: 30px;
+            }
+        }
+
+        .view {
+            padding: 40px 30px;
+            width: 100%;
+            position: absolute;
+            transition: all 0.4s ease-in-out;
+            opacity: 0;
+            transform: translateX(50px);
+            pointer-events: none;
+            display: none;
+        }
+
+        .view.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 { color: var(--text-dark); font-size: 28px; font-weight: 700; margin-bottom: 5px; letter-spacing: -0.5px; }
+        p { color: var(--text-light); font-size: 14px; margin-bottom: 30px; }
+        
+        .brand-logo {
+            font-size: 40px;
+            background: -webkit-linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-group i {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            color: #9ca3af; font-size: 18px; transition: 0.3s;
+        }
+        
+        input {
+            width: 100%; padding: 16px 16px 16px 45px; border: 2px solid #f3f4f6;
+            background: #f9fafb; border-radius: 16px; font-size: 16px; outline: none; transition: 0.3s; color: var(--text-dark);
+        }
+
+        input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1); }
+        input:focus + i { color: var(--primary); }
+
+        .btn-primary {
+            width: 100%; padding: 16px; background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3); transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { background: #d1d5db; box-shadow: none; cursor: not-allowed; }
+
+        .links { display: flex; justify-content: space-between; margin-top: 25px; font-size: 14px; }
+        .link-text { color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none; transition: 0.3s; }
+        .link-text:hover { opacity: 0.8; }
+
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center; z-index: 1000; display: none;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid #e5e7eb; border-top: 5px solid var(--primary);
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 2000; width: 90%; max-width: 350px; }
+        .toast {
+            background: #333; color: white; padding: 12px 20px; border-radius: 12px; margin-top: 10px;
+            display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; font-size: 14px;
+        }
+        .toast.error { background: #ef4444; }
+        .toast.success { background: #10b981; }
+        .toast i { margin-right: 10px; font-size: 18px; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div id="view-login" class="view active">
+            <div style="text-align: center;">
+                <i class="fas fa-cube brand-logo"></i>
+                <h2>Welcome Back</h2>
+                <p>Login to manage your shop</p>
+            </div>
+            
+            <div class="input-group">
+                <input type="tel" id="loginPhone" placeholder="Mobile Number" maxlength="11">
+                <i class="fas fa-phone-alt"></i>
+            </div>
+            
+            <div class="input-group">
+                <input type="password" id="loginPin" placeholder="6-Digit PIN" maxlength="6">
+                <i class="fas fa-lock"></i>
+            </div>
+            
+            <button class="btn-primary" onclick="handleLogin()" id="btnLoginBtn">
+                LOGIN <i class="fas fa-arrow-right" style="margin-left:8px;"></i>
+            </button>
+            
+            <div class="links">
+                <span class="link-text" onclick="switchView('view-register')">Create Account</span>
+                <span class="link-text" style="color: #f59e0b;" onclick="switchView('view-forgot')">Forgot PIN?</span>
+            </div>
+        </div>
+
+        <div id="view-register" class="view">
+            <h2>New Account</h2>
+            <p>Join Stashio today</p>
+            
+            <div class="input-group">
+                <input type="text" id="regName" placeholder="Full Name">
+                <i class="fas fa-user"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="tel" id="regPhone" placeholder="Mobile Number" maxlength="11">
+                <i class="fas fa-phone"></i>
+            </div>
+            
+            <div class="input-group">
+                <input type="email" id="regEmail" placeholder="Email (For OTP)">
+                <i class="fas fa-envelope"></i>
+            </div>
+            
+            <button class="btn-primary" id="btnSendOtp" onclick="validateAndSendOtp()">SEND OTP CODE</button>
+            
+            <div class="links" style="justify-content: center;">
+                <span class="link-text" onclick="switchView('view-login')">Already have an account? Login</span>
+            </div>
+        </div>
+
+        <div id="view-otp" class="view">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-envelope-open-text" style="font-size: 50px; color: var(--primary);"></i>
+            </div>
+            <h2>Verify Code</h2>
+            <p>We sent a code to <br><b id="otpEmailShow" style="color: var(--primary);"></b></p>
+            
+            <div class="input-group">
+                <input type="number" id="inputOtp" placeholder="Enter 4-Digit OTP" style="text-align: center; letter-spacing: 5px; font-weight: bold;">
+                <i class="fas fa-key"></i>
+            </div>
+            
+            <button class="btn-primary" onclick="verifyOtp()">VERIFY & PROCEED</button>
+            <div class="links" style="justify-content: center;">
+                <span class="link-text" onclick="switchView('view-login')" style="color: #ef4444;">Cancel</span>
+            </div>
+        </div>
+
+        <div id="view-pin" class="view">
+            <h2>Secure Account</h2>
+            <p>Set a 6-digit PIN for login</p>
+            
+            <div class="input-group">
+                <input type="password" id="newPin" placeholder="New PIN (6 Digits)" maxlength="6">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            
+            <div class="input-group">
+                <input type="password" id="confirmPin" placeholder="Confirm PIN" maxlength="6">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            
+            <button class="btn-primary" onclick="savePin()">SAVE & LOGIN</button>
+        </div>
+
+        <div id="view-forgot" class="view">
+            <h2>Reset PIN</h2>
+            <p>Enter your registered mobile number</p>
+            
+            <div class="input-group">
+                <input type="tel" id="forgotPhone" placeholder="Mobile Number">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            
+            <button class="btn-primary" id="btnResetOtp" onclick="checkPhoneAndSendOtp()">SEND RESET CODE</button>
+            
+            <div class="links" style="justify-content: center;">
+                <span class="link-text" onclick="switchView('view-login')">Back to Login</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="loader"><div class="spinner"></div></div>
+    <div id="toast-container"></div>
+
+<script type="module">
+    // Modular Firebase Imports
+    import { dbFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from './firebase_config.js';
+
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwoC5HV-g8E5W3LY4tw4I63OUtIIK5e7kEDMW5Dk8XTn9BmBFyLR6sOGCd1JHo9HdLx/exec";
+    
+    let generatedOtp = 0;
+    let tempUser = {};
+    let currentFlow = "";
+
+    // Auto Login Check
+    window.onload = function() {
+        if (localStorage.getItem('activeShopId') && localStorage.getItem('userPhone')) {
+            window.location.href = "home.html";
+        } else if (sessionStorage.getItem('tempUserPhone')) {
+            window.location.href = "dashboard.html";
+        }
+    };
+
+    window.switchView = (viewId) => {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+    };
+
+    window.toggleLoader = (show) => { 
+        document.getElementById('loader').style.display = show ? 'flex' : 'none'; 
+    };
+
+    window.showToast = (msg, type = 'default') => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+        toast.innerHTML = `<i class="fas fa-${icon}"></i> ${msg}`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+    };
+
+    // --- NEW VALIDATION FUNCTION (Checks both Phone & Email via Modular SDK) ---
+    window.validateAndSendOtp = async () => {
+        const name = document.getElementById('regName').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const email = document.getElementById('regEmail').value.trim().toLowerCase();
+        
+        if (!name || !phone || !email) return window.showToast("Please fill all fields!", "error");
+        
+        window.toggleLoader(true);
+        const btn = document.getElementById('btnSendOtp');
+        btn.disabled = true;
+
+        try {
+            // Check 1: Phone Number Exists?
+            const phoneDocRef = doc(dbFirestore, "users", phone);
+            const phoneDoc = await getDoc(phoneDocRef);
+            if(phoneDoc.exists()) {
+                window.toggleLoader(false); btn.disabled = false;
+                return window.showToast("Phone number already registered! Please login.", "error");
+            }
+
+            // Check 2: Email Exists?
+            const usersRef = collection(dbFirestore, "users");
+            const emailQuery = query(usersRef, where("email", "==", email));
+            const querySnapshot = await getDocs(emailQuery);
+            if(!querySnapshot.empty) {
+                window.toggleLoader(false); btn.disabled = false;
+                return window.showToast("This email is already used in another account!", "error");
+            }
+
+            // If unique, proceed to send OTP
+            tempUser = { name, phone, email };
+            triggerOtpEmail('register', email, name, btn);
+
+        } catch (error) {
+            window.toggleLoader(false); btn.disabled = false;
+            window.showToast("Database checking error!", "error");
+        }
+    };
+
+    function triggerOtpEmail(flow, email, name, btn) {
+        currentFlow = flow;
+        generatedOtp = Math.floor(1000 + Math.random() * 9000);
+        
+        fetch(scriptURL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, otp: generatedOtp, name: name || "User" })
+        }).then(() => {
+            window.toggleLoader(false);
+            window.switchView('view-otp');
+            document.getElementById('otpEmailShow').innerText = email;
+            btn.disabled = false;
+            window.showToast("OTP sent to email!", "success");
+        }).catch(err => {
+            window.toggleLoader(false); btn.disabled = false;
+            window.showToast("Failed to send OTP! Check connection.", "error");
+        });
+    }
+
+    // For Reset PIN
+    window.checkPhoneAndSendOtp = async () => {
+        const phone = document.getElementById('forgotPhone').value;
+        if (!phone) return window.showToast("Enter mobile number!", "error");
+        
+        window.toggleLoader(true);
+        const btn = document.getElementById('btnResetOtp');
+        btn.disabled = true;
+
+        try {
+            const userDocRef = doc(dbFirestore, "users", phone);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                tempUser = { phone: phone, email: data.email };
+                triggerOtpEmail('reset', data.email, data.name, btn);
+            } else {
+                window.toggleLoader(false); btn.disabled = false;
+                window.showToast("Account not found!", "error");
+            }
+        } catch(e) {
+            window.toggleLoader(false); btn.disabled = false;
+            window.showToast("Error checking account.", "error");
+        }
+    };
+
+    window.verifyOtp = () => {
+        if (document.getElementById('inputOtp').value == generatedOtp) {
+            window.showToast("Verified Successfully!", "success");
+            window.switchView('view-pin');
+        } else {
+            window.showToast("Incorrect Code!", "error");
+        }
+    };
+
+    window.savePin = async () => {
+        const pin = document.getElementById('newPin').value;
+        const confirm = document.getElementById('confirmPin').value;
+        
+        if (pin.length !== 6 || pin !== confirm) return window.showToast("PIN must be 6 digits & match!", "error");
+
+        window.toggleLoader(true);
+
+        let dataToSave = { pin: pin, updatedAt: new Date().toISOString() };
+
+        if (currentFlow === 'register') {
+            dataToSave.name = tempUser.name;
+            dataToSave.phone = tempUser.phone;
+            dataToSave.email = tempUser.email;
+            dataToSave.createdAt = new Date().toISOString();
+            dataToSave.shops = []; // Empty array for new user
+        }
+
+        try {
+            const userDocRef = doc(dbFirestore, "users", tempUser.phone);
+            await setDoc(userDocRef, dataToSave, { merge: true });
+            window.toggleLoader(false);
+            window.showToast("Success! Please Login.", "success");
+            window.switchView('view-login');
+        } catch(e) {
+            window.toggleLoader(false);
+            window.showToast("Error saving PIN.", "error");
+        }
+    };
+
+    window.handleLogin = async () => {
+        const phone = document.getElementById('loginPhone').value;
+        const pin = document.getElementById('loginPin').value;
+
+        if (!phone || !pin) return window.showToast("Enter Phone & PIN!", "error");
+
+        window.toggleLoader(true);
+
+        try {
+            const userDocRef = doc(dbFirestore, "users", phone);
+            const docSnap = await getDoc(userDocRef);
+            
+            window.toggleLoader(false);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.pin == pin) {
+                    sessionStorage.setItem('tempUserPhone', phone);
+                    sessionStorage.setItem('tempUserName', data.name);
+                    window.showToast("Login Successful!", "success");
+                    setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
+                } else { window.showToast("Incorrect PIN!", "error"); }
+            } else { window.showToast("Account Not Found!", "error"); }
+        } catch(e) {
+            window.toggleLoader(false); window.showToast("Login Error!", "error");
+        }
+    };
+
+    // PWA Support
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
+        });
+    }
+</script>
+</body>
+</html>

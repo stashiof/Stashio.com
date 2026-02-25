@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Contacts - Stashio</title>
+    
+    <meta name="theme-color" content="#4F46E5">
+
+    <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Dynamic Header Area */
+        .app-header {
+            position: relative; padding: 20px 20px 40px 20px; color: white; 
+            border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
+            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            overflow: hidden;
+        }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
+        
+        .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+        .btn-add { background: rgba(255,255,255,0.2); border: none; padding: 8px 15px; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; }
+
+        body.has-theme .app-header { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: none; border-bottom: 1px solid rgba(255,255,255,0.3); }
+        body.has-theme .header-bg { display: none; }
+
+        /* Tabs */
+        .tabs-container { position: relative; z-index: 10; display: flex; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 4px; margin-top: 10px; }
+        .tab-btn { flex: 1; text-align: center; padding: 8px 0; border-radius: 10px; font-size: 12px; font-weight: 600; color: white; cursor: pointer; transition: 0.3s; opacity: 0.7; }
+        .tab-btn.active { background: white; color: var(--primary); opacity: 1; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        /* Search */
+        .search-container { margin: -20px 15px 15px 15px; position: relative; z-index: 60; }
+        .search-box { position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 14px 15px 14px 40px; border-radius: 16px; border: none; outline: none; font-size: 13px; font-family: inherit; box-shadow: var(--shadow); }
+
+        /* Contact List */
+        .contact-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
+        .contact-card { background: var(--white); border-radius: 16px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow); transition: 0.2s; cursor: pointer; border: 1px solid #f1f5f9; }
+        .contact-card:active { transform: scale(0.98); }
+        
+        .contact-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #f1f5f9; border: 2px solid #e0e7ff; }
+        .contact-info { flex: 1; min-width: 0; }
+        .contact-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .contact-phone { font-size: 11px; color: var(--text-light); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .contact-meta { font-size: 10px; font-weight: 600; margin-top: 4px; display: inline-block; padding: 2px 8px; border-radius: 6px; background: #f0f5ff; color: var(--primary); }
+
+        .contact-actions { display: flex; gap: 8px; }
+        .action-btn { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; text-decoration: none; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-call { background: #dcfce3; color: var(--success); }
+        .btn-mail { background: #fef3c7; color: var(--warning); }
+
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 16px; font-weight: 700; margin: 0; }
+        .btn-close { background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; color: var(--text-light); cursor: pointer; }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        
+        /* Form Inputs */
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
+        .input-field { width: 100%; padding: 12px 15px; border: 2px solid #f1f5f9; border-radius: 12px; background: #f8fafc; outline: none; font-size: 13px; font-family: inherit; transition: 0.3s; color: var(--text-dark); }
+        .input-field:focus { border-color: var(--primary); background: white; }
+        
+        .img-upload-box { width: 90px; height: 90px; border: 2px dashed #cbd5e1; border-radius: 50%; margin: 0 auto 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; background: #f8fafc; }
+        .img-upload-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; }
+        .img-upload-box i { font-size: 20px; color: #9ca3af; margin-bottom: 5px; }
+
+        .btn-submit { width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 15px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(236, 72, 153, 0.3); transition: 0.2s; margin-top: 10px; }
+        .btn-submit:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
+
+        /* Profile/History Modal */
+        .profile-header { text-align: center; padding-bottom: 15px; border-bottom: 1px dashed #e5e7eb; margin-bottom: 15px; }
+        .profile-img-large { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #e0e7ff; margin: 0 auto 10px auto; }
+        .profile-name { font-size: 18px; font-weight: 700; color: var(--text-dark); }
+        .profile-role { font-size: 11px; font-weight: 600; color: var(--primary); background: #e0e7ff; padding: 2px 10px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+        
+        .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .action-row button { flex: 1; padding: 10px; border-radius: 12px; border: none; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px; }
+        .btn-edit-full { background: #f0f5ff; color: var(--primary); }
+        .btn-delete-full { background: #fef2f2; color: var(--danger); }
+
+        /* Timeline History */
+        .history-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text-dark); display: flex; align-items: center; gap: 5px; }
+        .timeline { border-left: 2px solid #e5e7eb; padding-left: 15px; margin-left: 10px; }
+        .timeline-item { position: relative; margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 10px; }
+        .timeline-item::before { content: ''; position: absolute; left: -22px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); border: 2px solid white; }
+        .tl-date { font-size: 10px; color: var(--text-light); font-weight: 600; margin-bottom: 4px; }
+        .tl-desc { font-size: 12px; font-weight: 700; color: var(--text-dark); }
+        .tl-row { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 11px; }
+        
+        .tl-amt { font-weight: 700; color: var(--success); }
+        .tl-due { color: var(--danger); font-weight: 600; }
+        .tl-paid { color: var(--blue); font-weight: 600; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
+    </style>
+</head>
+<body>
+
+    <div class="app-header" id="header-container">
+        <div class="header-bg"></div>
+        <div id="dynamicThemeContainer"></div>
+        <div class="header-top">
+            <div class="header-title">
+                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Contacts Book</span>
+            </div>
+            <button onclick="openModal('add')" class="btn-add"><i class="fas fa-plus"></i> Add</button>
+        </div>
+
+        <div class="tabs-container">
+            <div class="tab-btn active" id="tab-customers" onclick="switchTab('customers')">Customers</div>
+            <div class="tab-btn" id="tab-suppliers" onclick="switchTab('suppliers')">Suppliers</div>
+            <div class="tab-btn" id="tab-employees" onclick="switchTab('employees')">Staff/Team</div>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by name, phone...">
+        </div>
+    </div>
+
+    <div class="contact-list" id="contactList">
+        <div class="empty-state"><i class="fas fa-spinner fa-spin text-2xl mb-2 text-primary"></i><br>Loading...</div>
+    </div>
+
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Contact</h3>
+                <button onclick="closeModal('contactModal')" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="contactForm">
+                    <input type="hidden" id="editContactId">
+
+                    <div class="img-upload-box" onclick="document.getElementById('imgInput').click()">
+                        <img id="previewImage" src="">
+                        <i id="placeholderIcon" class="fas fa-camera"></i>
+                        <input type="file" id="imgInput" accept="image/*" hidden onchange="compressAndUpload(this)">
+                        <input type="hidden" id="uploadedImageUrl">
+                    </div>
+                    <p id="uploadStatus" style="text-align:center; font-size:10px; color:var(--primary); margin-top:-15px; margin-bottom:15px;"></p>
+
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="cName" class="input-field" required placeholder="Enter name">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Mobile Number / Login ID</label>
+                        <input type="text" id="cPhone" class="input-field" required placeholder="01XXXXXXXXX">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Address</label>
+                        <input type="text" id="cAddress" class="input-field" placeholder="Full address">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Email (Optional)</label>
+                        <input type="email" id="cEmail" class="input-field" placeholder="example@mail.com">
+                    </div>
+
+                    <div id="dynamicFields">
+                        <div class="input-group supplier-field hidden">
+                            <label>Items Supplied / Company</label>
+                            <input type="text" id="cItems" class="input-field" placeholder="e.g. Stationery, Pran, RFL">
+                        </div>
+
+                        <div class="employee-field hidden">
+                            <div class="input-group">
+                                <label>Position / Role</label>
+                                <input type="text" id="cPosition" class="input-field" placeholder="e.g. Salesman, Manager">
+                            </div>
+                            <div class="input-group">
+                                <label>Monthly Salary (৳)</label>
+                                <input type="number" id="cSalary" class="input-field" placeholder="Amount">
+                            </div>
+                            <p style="font-size:10px; color:var(--warning); margin-top:5px;"><i class="fas fa-info-circle"></i> Note: Adding a staff member here will automatically grant them basic App Access based on their phone number.</p>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="saveBtn" class="btn-submit">Save Contact</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Profile Overview</h3>
+                <button onclick="closeModal('profileModal')" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="profile-header">
+                    <img id="profImg" src="" class="profile-img-large">
+                    <div class="profile-name" id="profName">Name</div>
+                    <div class="profile-role" id="profRole">Customer</div>
+                    
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 10px; line-height: 1.5;">
+                        <i class="fas fa-phone-alt"></i> <span id="profPhone"></span><br>
+                        <i class="fas fa-map-marker-alt"></i> <span id="profAddress"></span>
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    <button class="btn-edit-full" id="btnEditProfile"><i class="fas fa-edit"></i> Edit Info</button>
+                    <button class="btn-delete-full" id="btnDeleteProfile"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+
+                <div class="history-section">
+                    <div class="history-title"><i class="fas fa-history text-primary"></i> <span id="historyHeading">Recent Activity</span></div>
+                    <div class="timeline" id="historyTimeline">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // মডুলার ফায়ারবেস ইমপোর্ট
+        import { rtdb, dbFirestore, doc, getDoc, updateDoc, arrayUnion, ref as rtdbRef, push, update, onValue, get, remove } from './firebase_config.js';
+
+        const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
+        const SHOP_ID = localStorage.getItem('activeShopId');
+
+        let currentTab = 'customers'; 
+        let contactsData = { customers: [], suppliers: [], employees: [] };
+        let activeProfileId = null;
+
+        window.onload = () => {
+            // Theme sync
+            onValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
+                const themeCode = snap.exists() ? snap.val().code : null;
+                if (themeCode && themeCode.trim() !== "") {
+                    document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
+                    document.body.classList.add('has-theme');
+                } else {
+                    document.getElementById('dynamicThemeContainer').innerHTML = "";
+                    document.body.classList.remove('has-theme');
+                }
+            });
+
+            loadData('customers');
+            loadData('suppliers');
+            loadData('employees');
+        };
+
+        function loadData(type) {
+            // Offline Cache
+            const cachedData = localStorage.getItem(`contacts_${SHOP_ID}_${type}`);
+            if(cachedData) {
+                contactsData[type] = JSON.parse(cachedData);
+                if(currentTab === type) renderList();
+            }
+
+            // Realtime Sync
+            onValue(rtdbRef(rtdb, `contacts/${type}`), (snapshot) => {
+                if (snapshot.exists()) {
+                    const filteredData = Object.entries(snapshot.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(c => c.shop_id === SHOP_ID)
+                        .reverse();
+                    
+                    contactsData[type] = filteredData;
+                    localStorage.setItem(`contacts_${SHOP_ID}_${type}`, JSON.stringify(filteredData));
+                } else {
+                    contactsData[type] = [];
+                    localStorage.removeItem(`contacts_${SHOP_ID}_${type}`);
+                }
+                
+                if(currentTab === type) renderList(); 
+            });
+        }
+
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            const searchPlaceholders = { 'customers': 'Search customers...', 'suppliers': 'Search suppliers...', 'employees': 'Search staff/team...' };
+            document.getElementById('searchInput').placeholder = searchPlaceholders[tab];
+            document.getElementById('searchInput').value = '';
+            
+            renderList();
+        };
+
+        function renderList(searchQuery = '') {
+            const listEl = document.getElementById('contactList');
+            const data = contactsData[currentTab];
+            
+            let filtered = data;
+            if(searchQuery) {
+                filtered = data.filter(c => c.name.toLowerCase().includes(searchQuery) || (c.phone && c.phone.includes(searchQuery)));
+            }
+
+            if(filtered.length === 0) {
+                listEl.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open mb-3" style="color:#cbd5e1; font-size:40px;"></i><br>No records found in this category.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = '';
+            filtered.forEach(c => {
+                const img = c.image || 'https://via.placeholder.com/100?text=User';
+                
+                let metaHtml = '';
+                if(currentTab === 'suppliers' && c.items) metaHtml = `<span class="contact-meta">${c.items}</span>`;
+                if(currentTab === 'employees' && c.position) metaHtml = `<span class="contact-meta">${c.position}</span>`;
+
+                const html = `
+                <div class="contact-card" onclick="openProfile('${c.id}')">
+                    <img src="${img}" class="contact-img">
+                    <div class="contact-info">
+                        <div class="contact-name">${c.name}</div>
+                        <div class="contact-phone"><i class="fas fa-phone-alt"></i> ${c.phone || 'No phone'}</div>
+                        ${metaHtml}
+                    </div>
+                    <div class="contact-actions" onclick="event.stopPropagation()">
+                        <a href="tel:${c.phone}" class="action-btn btn-call"><i class="fas fa-phone"></i></a>
+                        ${c.email ? `<a href="mailto:${c.email}" class="action-btn btn-mail"><i class="fas fa-envelope"></i></a>` : ''}
+                    </div>
+                </div>`;
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderList(e.target.value.toLowerCase().trim());
+        });
+
+        // Add/Edit Modal Logic
+        window.openModal = (mode, id = null) => {
+            document.getElementById('contactForm').reset();
+            document.getElementById('editContactId').value = "";
+            document.getElementById('previewImage').style.display = "none";
+            document.getElementById('placeholderIcon').style.display = "block";
+            document.getElementById('uploadedImageUrl').value = "";
+            document.getElementById('uploadStatus').innerText = "";
+            
+            document.querySelectorAll('.supplier-field, .employee-field').forEach(el => el.style.display = 'none');
+            
+            let titleText = currentTab === 'employees' ? 'Staff/Team' : currentTab.slice(0,-1).charAt(0).toUpperCase() + currentTab.slice(1,-1);
+
+            if(currentTab === 'suppliers') document.querySelector('.supplier-field').style.display = 'block';
+            if(currentTab === 'employees') document.querySelector('.employee-field').style.display = 'block';
+
+            if(mode === 'add') {
+                document.getElementById('modalTitle').innerText = `Add New ${titleText}`;
+            } else if (mode === 'edit' && id) {
+                document.getElementById('modalTitle').innerText = `Edit ${titleText}`;
+                const c = contactsData[currentTab].find(x => x.id === id);
+                if(c) {
+                    document.getElementById('editContactId').value = c.id;
+                    document.getElementById('cName').value = c.name || '';
+                    document.getElementById('cPhone').value = c.phone || '';
+                    document.getElementById('cAddress').value = c.address || '';
+                    document.getElementById('cEmail').value = c.email || '';
+                    
+                    if(currentTab === 'suppliers') document.getElementById('cItems').value = c.items || '';
+                    if(currentTab === 'employees') {
+                        document.getElementById('cPosition').value = c.position || '';
+                        document.getElementById('cSalary').value = c.salary || '';
+                    }
+
+                    if(c.image) {
+                        document.getElementById('previewImage').src = c.image;
+                        document.getElementById('previewImage').style.display = "block";
+                        document.getElementById('placeholderIcon').style.display = "none";
+                        document.getElementById('uploadedImageUrl').value = c.image;
+                    }
+                }
+            }
+            document.getElementById('contactModal').style.display = 'flex';
+        };
+
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        // CLIENT-SIDE IMAGE COMPRESSION (Max 400px, Quality 0.6)
+        window.compressAndUpload = async (input) => {
+            const file = input.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('uploadStatus');
+            status.innerText = "Compressing Image...";
+            status.style.color = "var(--warning)";
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const MAX_WIDTH = 400;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // 60% quality compression
+                    
+                    const blob = await (await fetch(dataUrl)).blob();
+                    const compressedFile = new File([blob], "profile.jpg", { type: "image/jpeg" });
+                    
+                    status.innerText = "Uploading to Server...";
+                    status.style.color = "var(--primary)";
+                    const fd = new FormData(); 
+                    fd.append("image", compressedFile);
+
+                    try {
+                        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                        const d = await res.json();
+                        if (d.success) {
+                            document.getElementById('uploadedImageUrl').value = d.data.url;
+                            document.getElementById('previewImage').src = d.data.url;
+                            document.getElementById('previewImage').style.display = "block";
+                            document.getElementById('placeholderIcon').style.display = "none";
+                            status.innerText = "Uploaded Successfully ✅";
+                            status.style.color = "var(--success)";
+                        }
+                    } catch (e) { 
+                        status.innerText = "Upload Failed ❌"; 
+                        status.style.color = "var(--danger)";
+                    }
+                }
+            };
+        };
+
+        // SAVE CONTACT & AUTO APP ACCESS FOR EMPLOYEES
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; 
+            btn.disabled = true;
+
+            const id = document.getElementById('editContactId').value;
+            const phoneVal = document.getElementById('cPhone').value;
+            const nameVal = document.getElementById('cName').value;
+            const imgVal = document.getElementById('uploadedImageUrl').value;
+            const posVal = document.getElementById('cPosition').value;
+            
+            const data = {
+                shop_id: SHOP_ID,
+                name: nameVal,
+                phone: phoneVal,
+                address: document.getElementById('cAddress').value,
+                email: document.getElementById('cEmail').value,
+                image: imgVal,
+                updated_at: Date.now()
+            };
+
+            if(currentTab === 'suppliers') data.items = document.getElementById('cItems').value;
+            if(currentTab === 'employees') {
+                data.position = posVal;
+                data.salary = Number(document.getElementById('cSalary').value) || 0;
+            }
+
+            try {
+                // 1. Save to Realtime Database
+                if(id) {
+                    await update(rtdbRef(rtdb, `contacts/${currentTab}/${id}`), data);
+                } else {
+                    data.created_at = Date.now();
+                    await push(rtdbRef(rtdb, `contacts/${currentTab}`), data);
+                }
+
+                // 2. AUTO APP-ACCESS INTEGRATION FOR EMPLOYEES (Firestore)
+                if (currentTab === 'employees' && phoneVal) {
+                    const shopRef = doc(dbFirestore, "shops", SHOP_ID);
+                    const staffData = { 
+                        name: nameVal, 
+                        joinDate: new Date().toISOString().split('T')[0], 
+                        image: imgVal || 'https://via.placeholder.com/150',
+                        customTitle: posVal || ""
+                    };
+                    
+                    const updateData = {};
+                    updateData.members = arrayUnion(phoneVal);
+                    // Default to staff unless 'manager' is in title
+                    const assignedRole = (posVal && posVal.toLowerCase().includes('manager')) ? 'manager' : 'staff';
+                    updateData[`roles.${phoneVal}`] = assignedRole;
+                    updateData[`staff_info.${phoneVal}`] = staffData;
+                    
+                    await updateDoc(shopRef, updateData);
+
+                    // Also give user doc access
+                    const userDocRef = doc(dbFirestore, "users", phoneVal);
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists()) {
+                        await updateDoc(userDocRef, { shops: arrayUnion(SHOP_ID) });
+                    }
+                }
+
+                closeModal('contactModal');
+            } catch (err) { 
+                alert("Error saving data: " + err.message); 
+            } finally { 
+                btn.innerText = "Save Contact"; 
+                btn.disabled = false; 
+            }
+        });
+
+        // PROFILE VIEW & DETAILED HISTORY FETCHING
+        window.openProfile = async (id) => {
+            const c = contactsData[currentTab].find(x => x.id === id);
+            if(!c) return;
+            activeProfileId = id;
+
+            document.getElementById('profImg').src = c.image || 'https://via.placeholder.com/150?text=User';
+            document.getElementById('profName').innerText = c.name;
+            document.getElementById('profPhone').innerText = c.phone || 'No Phone';
+            document.getElementById('profAddress').innerText = c.address || 'No Address';
+            
+            let roleText = currentTab === 'employees' ? 'Staff' : currentTab.slice(0,-1).charAt(0).toUpperCase() + currentTab.slice(1,-1);
+            if(currentTab === 'suppliers' && c.items) roleText += ` • ${c.items}`;
+            if(currentTab === 'employees' && c.position) roleText += ` • ${c.position}`;
+            document.getElementById('profRole').innerText = roleText;
+
+            document.getElementById('btnEditProfile').onclick = () => {
+                closeModal('profileModal');
+                openModal('edit', id);
+            };
+            document.getElementById('btnDeleteProfile').onclick = () => deleteContact(id);
+
+            const timeline = document.getElementById('historyTimeline');
+            timeline.innerHTML = '<div class="empty-state" style="padding:10px;"><i class="fas fa-spinner fa-spin text-primary"></i> Fetching records...</div>';
+            
+            document.getElementById('profileModal').style.display = 'flex';
+
+            try {
+                let logs = [];
+                
+                // 1. CUSTOMER HISTORY (From Sales Book)
+                if (currentTab === 'customers') {
+                    document.getElementById('historyHeading').innerText = "Purchase & Ledger History";
+                    const snap = await get(rtdbRef(rtdb, 'sales_history'));
+                    if(snap.exists()) {
+                        Object.values(snap.val()).forEach(sale => {
+                            if(sale.shop_id === SHOP_ID && (sale.customer === c.name || sale.customer_name === c.name || sale.customer_phone === c.phone)) {
+                                logs.push({ 
+                                    date: sale.created_at || new Date(sale.date).getTime(), 
+                                    ref: `Invoice: #${sale.invoice_no}`, 
+                                    amt: sale.total_amount,
+                                    paid: sale.paid_amount || 0,
+                                    due: sale.due_amount || 0
+                                });
+                            }
+                        });
+                    }
+                } 
+                // 2. SUPPLIER HISTORY (From Purchase Book)
+                else if (currentTab === 'suppliers') {
+                    document.getElementById('historyHeading').innerText = "Supply & Payment History";
+                    const snap = await get(rtdbRef(rtdb, 'purchase_history'));
+                    if(snap.exists()) {
+                        Object.values(snap.val()).forEach(purch => {
+                            if(purch.shop_id === SHOP_ID && purch.supplier === c.name) {
+                                logs.push({ 
+                                    date: purch.created_at || new Date(purch.date).getTime(), 
+                                    ref: `Challan: #${purch.challan_no}`, 
+                                    amt: purch.total_amount,
+                                    paid: purch.paid_amount || 0,
+                                    due: purch.due_amount || 0
+                                });
+                            }
+                        });
+                    }
+                } 
+                // 3. EMPLOYEE HISTORY (From Firestore & Local)
+                else if (currentTab === 'employees') {
+                    document.getElementById('historyHeading').innerText = "Employment & Access Info";
+                    logs.push({ 
+                        date: c.created_at || Date.now(), 
+                        ref: "Profile Created", 
+                        amt: c.salary ? `${c.salary} /mo` : 'N/A',
+                        paid: null, due: null
+                    });
+                    
+                    // Fetch App Access Status
+                    const shopDoc = await getDoc(doc(dbFirestore, "shops", SHOP_ID));
+                    if(shopDoc.exists()) {
+                        const shopData = shopDoc.data();
+                        if(shopData.roles && shopData.roles[c.phone]) {
+                            logs.push({
+                                date: Date.now(),
+                                ref: "App Access Granted",
+                                amt: `Role: ${shopData.roles[c.phone].toUpperCase()}`,
+                                paid: null, due: null
+                            });
+                        }
+                    }
+                }
+
+                // Sort by newest first
+                logs.sort((a,b) => b.date - a.date); 
+                
+                if(logs.length === 0) {
+                    timeline.innerHTML = '<p style="font-size:12px; color:#9ca3af; text-align:center; padding: 20px;">No transaction history found yet.</p>';
+                } else {
+                    timeline.innerHTML = '';
+                    logs.forEach(l => {
+                        const d = new Date(l.date).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                        
+                        let financeHtml = '';
+                        if(l.paid !== null && l.due !== null) {
+                            financeHtml = `
+                                <div class="tl-row">
+                                    <span class="tl-paid">Paid: ৳${l.paid}</span>
+                                    ${l.due > 0 ? `<span class="tl-due">Due: ৳${l.due}</span>` : `<span style="color:var(--success); font-weight:600;"><i class="fas fa-check-circle"></i> Clear</span>`}
+                                </div>
+                            `;
+                        }
+
+                        timeline.innerHTML += `
+                        <div class="timeline-item">
+                            <div class="tl-date"><i class="far fa-clock"></i> ${d}</div>
+                            <div class="tl-row">
+                                <span class="tl-desc">${l.ref}</span>
+                                <span class="tl-amt">${l.amt === 'N/A' || isNaN(l.amt) ? l.amt : `৳${Number(l.amt).toLocaleString()}`}</span>
+                            </div>
+                            ${financeHtml}
+                        </div>`;
+                    });
+                }
+            } catch(e) { 
+                console.error(e);
+                timeline.innerHTML = '<p style="font-size:12px; color:red; text-align:center;">Error fetching history.</p>'; 
+            }
+        };
+
+        window.deleteContact = async (id) => {
+            if(!confirm(`Are you sure you want to permanently delete this record?`)) return;
+            try {
+                await remove(rtdbRef(rtdb, `contacts/${currentTab}/${id}`));
+                closeModal('profileModal');
+            } catch(e) { alert("Failed to delete record."); }
+        };
+
+    </script>
+</body>
+</html>
