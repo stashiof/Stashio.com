@@ -8,11 +8,11 @@
     <meta name="theme-color" content="#ef4444">
 
     <script>
+        // শুধু লগইন চেক করবে, পারমিশন চেক ডাটাবেস থেকে হবে
         const loggedInUser = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
         if (!loggedInUser) window.location.replace("index.html");
         else if (!activeShopId) window.location.replace("dashboard.html");
-        // Access Denied script removed to prevent false blocks
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -95,7 +95,6 @@
         .input-field:focus { border-color: var(--primary); background: white; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        /* Custom Dropdown */
         .custom-dropdown-container { position: relative; }
         .custom-dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1000; display: none; margin-top: 5px; }
         .dropdown-item-cust { padding: 12px 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; display: flex; justify-content: space-between; }
@@ -132,6 +131,7 @@
 <body>
 
     <div id="view-selection" class="view-container active">
+        
         <div class="app-header" id="header-container-selection">
             <div class="header-bg"></div>
             <div id="dynamicThemeContainer-selection"></div>
@@ -170,6 +170,7 @@
     </div>
 
     <div id="view-checkout" class="view-container">
+        
         <div class="app-header" id="header-container-checkout" style="padding-bottom: 25px;">
             <div class="header-bg"></div>
             <div id="dynamicThemeContainer-checkout"></div>
@@ -292,10 +293,11 @@
     </div>
 
     <script type="module">
-        import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, get } from './firebase_config.js';
+        import { rtdb, dbFirestore, doc, getDoc, ref as rtdbRef, push, update, onValue as rtdbOnValue, get as rtdbGet } from './firebase_config.js';
         import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId'); 
+        const myPhone = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
 
         let allProducts = [];
         let displayedProducts = [];
@@ -306,40 +308,55 @@
         let cart = {}; 
         let html5QrcodeScanner = null;
 
-        window.onload = () => {
+        window.onload = async () => {
+            // --- SECURITY CHECK (Safe Check from Database) ---
+            try {
+                const docSnap = await getDoc(doc(dbFirestore, "shops", SHOP_ID));
+                if(docSnap.exists()) {
+                    const shopData = docSnap.data();
+                    let realRole = 'staff';
+                    if (shopData.roles && shopData.roles[myPhone]) realRole = shopData.roles[myPhone];
+                    if (shopData.createdBy === myPhone || shopData.phone === myPhone) realRole = 'owner';
+
+                    let hasAccess = false;
+                    if (realRole === 'owner') hasAccess = true;
+                    if (shopData.permissions && shopData.permissions[myPhone] && shopData.permissions[myPhone]['sales_return.html'] === true) hasAccess = true;
+
+                    if(!hasAccess) {
+                        alert("Access Denied! 🚫\nএই পেজে প্রবেশ করার অনুমতি আপনার নেই।");
+                        window.location.replace("home.html");
+                        return; // Stop execution
+                    }
+                }
+            } catch (error) {
+                console.error("Security check failed:", error);
+            }
+
+            // Normal Initialization continues if access granted
             document.getElementById('sellDate').valueAsDate = new Date();
             document.getElementById('invoiceNo').value = "RTN-" + Math.floor(100000 + Math.random() * 900000);
 
+            // Theme Sync
             rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                 const themeCode = snap.exists() ? snap.val().code : null;
                 if (themeCode && themeCode.trim() !== "") {
                     document.getElementById('dynamicThemeContainer-selection').innerHTML = themeCode;
                     document.getElementById('dynamicThemeContainer-checkout').innerHTML = themeCode;
                     document.body.classList.add('has-theme');
-                } else {
-                    document.getElementById('dynamicThemeContainer-selection').innerHTML = "";
-                    document.getElementById('dynamicThemeContainer-checkout').innerHTML = "";
-                    document.body.classList.remove('has-theme');
                 }
             });
 
-            const cachedProducts = localStorage.getItem(`products_${SHOP_ID}`);
-            if(cachedProducts) {
-                allProducts = JSON.parse(cachedProducts);
-                initPagination(allProducts);
-            }
-
+            // Sync Products
             rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
                 if (snap.exists()) {
                     allProducts = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
-                    localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(allProducts));
-                    
                     if(document.getElementById('searchInput').value.trim() === '') {
                         initPagination(allProducts);
                     }
                 }
             });
 
+            // Fetch Customers for Dropdown
             rtdbOnValue(rtdbRef(rtdb, 'contacts/customers'), (snap) => {
                 allCustomers = [{ name: 'Local (Walk-in)', phone: '' }]; 
                 if(snap.exists()){
@@ -348,6 +365,7 @@
             });
         };
 
+        // --- INFINITE SCROLL LOGIC ---
         function initPagination(products) {
             currentPage = 1;
             displayedProducts = products;
@@ -360,12 +378,8 @@
             }
             
             renderProductGrid(displayedProducts.slice(0, itemsPerPage));
-            
-            if(displayedProducts.length > itemsPerPage) {
-                document.getElementById('loadMoreBtn').style.display = 'block';
-            } else {
-                document.getElementById('loadMoreBtn').style.display = 'none';
-            }
+            if(displayedProducts.length > itemsPerPage) document.getElementById('loadMoreBtn').style.display = 'block';
+            else document.getElementById('loadMoreBtn').style.display = 'none';
         }
 
         window.loadMoreProducts = () => {
@@ -376,11 +390,10 @@
             renderProductGrid(nextBatch, true); 
             currentPage++;
             
-            if(endIndex >= displayedProducts.length) {
-                document.getElementById('loadMoreBtn').style.display = 'none';
-            }
+            if(endIndex >= displayedProducts.length) document.getElementById('loadMoreBtn').style.display = 'none';
         };
 
+        // Custom Dropdown Logic
         const custInput = document.getElementById('customerName');
         const custDropdown = document.getElementById('customerDropdown');
         function renderCustomerDropdown(filterText = '') {
@@ -506,7 +519,7 @@
                     refund_amount: finalPayable, deduction: deduction, refund_method: method, created_at: Date.now()
                 });
 
-                // 2. Restock Items (BUG FIXED: String to Number conversion)
+                // 2. Restock Items (Add to Stock safely)
                 const updates = {};
                 Object.values(cart).forEach(item => { 
                     updates[`product_list/${item.id}/stock`] = Number(item.stock) + Number(item.qty); 
@@ -519,7 +532,7 @@
                     await push(rtdbRef(rtdb, 'cash_transactions'), { shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return', amount: finalPayable, note: `Refund to ${customerName}`, created_at: Date.now() });
                 } else if(method === 'Adjust Due') {
                     if(customerName !== "Local (Walk-in)") {
-                        const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
+                        const dueSnap = await rtdbGet(rtdbRef(rtdb, 'due_book'));
                         if(dueSnap.exists()) {
                             let targetId = null; let currentDue = 0;
                             Object.entries(dueSnap.val()).forEach(([id, val]) => { 
@@ -554,7 +567,11 @@
             const tbody = document.getElementById('rTableBody'); tbody.innerHTML = '';
             Object.values(cart).forEach(item => {
                 const brandHtml = item.brand ? `<br><span style="font-size:9px; color:#6b7280;">(${item.brand})</span>` : '';
-                tbody.innerHTML += `<tr><td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">${item.name} ${brandHtml}</td><td style="text-align: center;">${item.qty}</td><td style="text-align: right; font-weight: bold;">৳${item.qty * item.sellRate}</td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">${item.name} ${brandHtml}</td>
+                    <td style="text-align: center;">${item.qty}</td>
+                    <td style="text-align: right; font-weight: bold;">৳${item.qty * item.sellRate}</td>
+                </tr>`;
             });
             document.getElementById('rSubtotal').innerText = "৳" + window.checkoutSummary.subtotal;
             document.getElementById('rDeduction').innerText = "- ৳" + window.checkoutSummary.deduction;
