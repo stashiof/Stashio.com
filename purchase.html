@@ -493,7 +493,7 @@
             document.getElementById('btnToCheckout').disabled = count === 0;
         }
 
-        window.goToCheckout = () => { renderCartItems(); calculateSummary(); showView('view-checkout'); };
+                window.goToCheckout = () => { renderCartItems(); calculateSummary(true); showView('view-checkout'); };
 
         function renderCartItems() {
             const list = document.getElementById('cartItemsList');
@@ -529,25 +529,31 @@
             let newQty = manualValue ? Number(manualValue) : cart[id].qty + change;
             if(newQty <= 0) { if(confirm("Remove this item?")) delete cart[id]; } 
             else { cart[id].qty = newQty; }
-            renderCartItems(); calculateSummary(); updateCartCount();
+            renderCartItems(); calculateSummary(true); updateCartCount();
         };
 
-        window.updateCartRate = (id, value) => { cart[id].purchaseRate = Number(value) || 0; renderCartItems(); calculateSummary(); };
-        window.removeCartItem = (id) => { delete cart[id]; renderCartItems(); calculateSummary(); updateCartCount(); }
+        window.updateCartRate = (id, value) => { cart[id].purchaseRate = Number(value) || 0; renderCartItems(); calculateSummary(true); };
+        
+        window.removeCartItem = (id) => { delete cart[id]; renderCartItems(); calculateSummary(true); updateCartCount(); }
 
-        window.calculateSummary = () => {
+        window.calculateSummary = (autoFill = false) => {
             let total = 0;
             Object.values(cart).forEach(item => { total += item.qty * item.purchaseRate; });
             document.getElementById('grandTotalDisplay').innerText = `৳${total}`;
             
-            const paidStr = document.getElementById('paidInput').value;
-            const paid = paidStr === '' ? total : Number(paidStr); 
-            if(paidStr === '') document.getElementById('paidInput').value = total;
+            const paidInput = document.getElementById('paidInput');
             
+            if(autoFill || paidInput.value === '') {
+                paidInput.value = total;
+            }
+            
+            const paid = Number(paidInput.value);
             const due = total - paid;
+            
             document.getElementById('dueDisplay').innerText = `৳${due > 0 ? due : 0}`;
-            window.checkoutSummary = { total, paid, due };
+            window.checkoutSummary = { total, paid, due: due > 0 ? due : 0 };
         };
+
 
         window.confirmPurchase = async () => {
             if(Object.keys(cart).length === 0) return alert("Cart is empty!");
