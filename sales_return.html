@@ -3,612 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sales Return - Stashio</title>
+    <title>Sales Return (Invoice Based) - Stashio</title>
     
     <meta name="theme-color" content="#ef4444">
-
     <script>
-        // শুধু লগইন চেক করবে, পারমিশন চেক ডাটাবেস থেকে হবে
-        const loggedInUser = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        if (!loggedInUser) window.location.replace("index.html");
-        else if (!activeShopId) window.location.replace("dashboard.html");
+        if (!activeShopId) window.location.replace("dashboard.html");
     </script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
+    
     <style>
         :root {
-            --primary: #ef4444; /* RED THEME FOR RETURN */
-            --secondary: #b91c1c;
-            --bg-color: #f3f4f6; --white: #ffffff;
-            --text-dark: #1f2937; --text-light: #6b7280;
-            --danger: #ef4444; --success: #10b981;
-            --border-radius: 20px; --shadow: 0 10px 25px rgba(0,0,0,0.05);
+            --primary: #ef4444; --secondary: #b91c1c; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --success: #10b981; --warning: #f59e0b;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; }
-        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        .view-container { display: none; flex-direction: column; min-height: 100vh; background: var(--bg-color); animation: fadeIn 0.3s ease-out; }
-        .view-container.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Dynamic Header Area */
-        .app-header {
-            position: relative; padding: 20px 20px 30px 20px; color: white; 
-            border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            position: sticky; top: 0; z-index: 50; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
-            overflow: hidden;
-        }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); z-index: 1; }
-        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 100px; }
         
-        .header-content { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .header-title { display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 700; }
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
 
-        body.has-theme .app-header { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: none; border-bottom: 1px solid rgba(255,255,255,0.3); }
-        body.has-theme .header-bg { display: none; }
+        .search-card { background: white; margin: -20px 15px 15px 15px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); position: relative; z-index: 10; }
+        .search-box { position: relative; display: flex; gap: 10px; }
+        .search-box input { flex: 1; padding: 14px 15px; border-radius: 12px; border: 2px solid #f1f5f9; outline: none; font-size: 14px; font-weight: 600; }
+        .search-box input:focus { border-color: var(--primary); }
+        .btn-search { background: var(--text-dark); color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
 
-        .search-container { margin: -15px 15px 15px 15px; display: flex; gap: 10px; position: relative; z-index: 60; }
-        .search-box { flex: 1; position: relative; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .search-box input { width: 100%; padding: 14px 15px 14px 40px; border-radius: 16px; border: none; outline: none; box-shadow: var(--shadow); font-size: 14px; font-family: 'Poppins', sans-serif; }
-        .btn-scan { background: var(--text-dark); color: white; width: 50px; border-radius: 16px; border: none; box-shadow: var(--shadow); cursor: pointer; font-size: 20px; transition: 0.2s; }
-        .btn-scan:active { transform: scale(0.95); }
+        .invoice-details { background: white; margin: 0 15px 15px 15px; padding: 15px; border-radius: 16px; display: none; box-shadow: var(--shadow); border: 1px dashed var(--primary); }
+        .inv-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        .inv-row span { color: var(--text-light); }
+        .inv-row strong { color: var(--text-dark); font-weight: 700; }
 
-        .product-list { padding: 0 15px 100px 15px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .product-card { background: var(--white); border-radius: 16px; padding: 12px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); border: 2px solid transparent; transition: 0.2s; cursor: pointer; }
-        .product-card:active { transform: scale(0.98); }
-        .product-card.in-cart { border-color: var(--primary); background: #fef2f2; }
+        .item-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .item-card { background: white; padding: 15px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+        .item-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 5px; }
+        .item-controls { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; border-radius: 10px; margin-top: 10px; }
         
-        .product-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: #f8fafc; }
-        .product-info { flex: 1; }
-        .product-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .product-brand { font-size: 10px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 4px; }
-        .product-meta { display: flex; gap: 10px; font-size: 11px; }
-        .badge-stock { background: #f1f5f9; padding: 2px 8px; border-radius: 8px; color: var(--text-light); font-weight: 600; }
-        .badge-price { background: #fee2e2; padding: 2px 8px; border-radius: 8px; color: var(--primary); font-weight: 700; }
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { width: 30px; height: 30px; border: none; background: white; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: var(--primary); }
+        .qty-input { width: 40px; text-align: center; border: none; background: transparent; font-weight: 800; font-size: 16px; }
         
-        .cart-toggle-btn { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #9ca3af; font-size: 14px; transition: 0.2s; }
-        .product-card.in-cart .cart-toggle-btn { background: var(--primary); color: white; }
-
-        .load-more-btn { background: white; border: 1px solid #e5e7eb; color: var(--primary); font-weight: bold; padding: 10px; border-radius: 10px; text-align: center; margin: 10px 0; cursor: pointer; display: none; box-shadow: var(--shadow); }
-
-        .bottom-checkout-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.08); border-top-left-radius: 25px; border-top-right-radius: 25px; z-index: 100; }
-        .cart-summary p { margin: 0; font-size: 12px; color: var(--text-light); font-weight: 600; }
-        .cart-summary h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--primary); }
-        .btn-proceed { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 12px 25px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3); transition: 0.2s; }
-        .btn-proceed:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
-
-        .checkout-content { padding: 20px 15px 120px 15px; overflow-y: auto; flex: 1; }
-        .form-card { background: var(--white); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
-        
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 5px; text-transform: uppercase; }
-        .input-field { width: 100%; padding: 12px 15px; border: 2px solid #f1f5f9; border-radius: 12px; background: #f8fafc; outline: none; font-size: 13px; font-family: 'Poppins', sans-serif; transition: 0.3s; color: var(--text-dark); }
-        .input-field:focus { border-color: var(--primary); background: white; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-
-        .custom-dropdown-container { position: relative; }
-        .custom-dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1000; display: none; margin-top: 5px; }
-        .dropdown-item-cust { padding: 12px 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; display: flex; justify-content: space-between; }
-        .dropdown-item-cust:hover { background: #fef2f2; color: var(--primary); }
-
-        .cart-item-checkout { padding: 15px 0; border-bottom: 1px dashed #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-        .cart-item-checkout:last-child { border-bottom: none; }
-        .item-controls { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 8px; border: none; background: #f1f5f9; font-weight: bold; cursor: pointer; }
-        .qty-input { width: 40px; text-align: center; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; font-size: 13px; font-weight: bold; }
-        .rate-input { width: 70px; text-align: right; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px 8px; font-size: 13px; font-weight: bold; color: var(--primary); }
-
-        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 15px; }
-        .payment-methods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-        .pay-method-label input { display: none; }
-        .pay-method-box { border: 2px solid #e5e7eb; border-radius: 12px; padding: 10px 5px; text-align: center; font-size: 11px; font-weight: 700; color: var(--text-light); transition: 0.2s; cursor: pointer; }
-        .pay-method-label input:checked + .pay-method-box { border-color: var(--primary); background: #fef2f2; color: var(--primary); }
-
-        .btn-confirm { width: 100%; background: var(--text-dark); color: white; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .btn-confirm:active { transform: scale(0.98); }
-
-        #scannerModal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #reader { width: 100%; max-width: 350px; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); }
-        .btn-close-scanner { margin-top: 30px; background: white; color: var(--danger); border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #view-receipt, #view-receipt * { visibility: visible; }
-            #view-receipt { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
-            .no-print { display: none !important; }
-        }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-top-left-radius: 20px; border-top-right-radius: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .btn-confirm { background: var(--primary); color: white; padding: 12px 25px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .btn-confirm:disabled { background: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <div id="view-selection" class="view-container active">
-        
-        <div class="app-header" id="header-container-selection">
-            <div class="header-bg"></div>
-            <div id="dynamicThemeContainer-selection"></div>
-            <div class="header-content">
-                <div class="header-title">
-                    <a href="reports.html"><i class="fas fa-arrow-left"></i></a>
-                    <span>Customer Return POS</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="search-container">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search returned product...">
-            </div>
-            <button onclick="startScanner()" class="btn-scan"><i class="fas fa-barcode"></i></button>
-        </div>
-
-        <div class="product-list">
-            <div id="productGrid">
-                <div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;">Loading Products...</div>
-            </div>
-            <div id="loadMoreBtn" class="load-more-btn" onclick="loadMoreProducts()">Load More Products</div>
-        </div>
-
-        <div class="bottom-checkout-bar">
-            <div class="cart-summary">
-                <p>Items to Return</p>
-                <h3><span id="cartCount">0</span> Items</h3>
-            </div>
-            <button onclick="goToCheckout()" class="btn-proceed" id="btnToCheckout" disabled>
-                Refund <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
-            </button>
+    <div class="app-header">
+        <div class="header-title">
+            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+            <span>Return by Invoice</span>
         </div>
     </div>
 
-    <div id="view-checkout" class="view-container">
-        
-        <div class="app-header" id="header-container-checkout" style="padding-bottom: 25px;">
-            <div class="header-bg"></div>
-            <div id="dynamicThemeContainer-checkout"></div>
-            <div class="header-content">
-                <div class="header-title">
-                    <button onclick="showView('view-selection')" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;"><i class="fas fa-arrow-left"></i></button>
-                    <span>Refund Details</span>
-                </div>
-            </div>
+    <div class="search-card">
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 5px; display: block;">Enter Invoice Number</label>
+        <div class="search-box">
+            <input type="text" id="invInput" placeholder="e.g. INV-123456">
+            <button onclick="searchInvoice()" class="btn-search"><i class="fas fa-search"></i></button>
         </div>
+        <p id="searchError" style="color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 10px; display: none;">Invoice not found or does not belong to this shop.</p>
+    </div>
 
-        <div class="checkout-content">
-            <div class="form-card">
-                <div class="grid-2">
-                    <div class="input-group">
-                        <label>Return ID</label>
-                        <input type="text" id="invoiceNo" class="input-field" style="font-family: monospace; font-weight: bold;" readonly>
-                    </div>
-                    <div class="input-group">
-                        <label>Date</label>
-                        <input type="date" id="sellDate" class="input-field">
-                    </div>
-                </div>
-                
-                <div class="input-group custom-dropdown-container">
-                    <label>Customer Name</label>
-                    <input type="text" id="customerName" class="input-field" placeholder="Search or select customer..." autocomplete="off">
-                    <div id="customerDropdown" class="custom-dropdown-list"></div>
-                </div>
-            </div>
+    <div id="invoiceDetails" class="invoice-details">
+        <div class="inv-row"><span>Customer:</span> <strong id="dCustomer"></strong></div>
+        <div class="inv-row"><span>Date:</span> <strong id="dDate"></strong></div>
+        <div class="inv-row"><span>Original Total:</span> <strong id="dTotal"></strong></div>
+    </div>
 
-            <div class="form-card" style="padding: 0;">
-                <div style="background: #fef2f2; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; font-size: 11px; font-weight: 700; color: var(--primary); display: flex; justify-content: space-between;">
-                    <span>RETURNED ITEMS</span>
-                    <span>REFUND RATE</span>
-                </div>
-                <div id="cartItemsList" style="padding: 0 20px;"></div>
-            </div>
-
-            <div class="form-card">
-                <div class="total-row">
-                    <span>Total Refund:</span>
-                    <span style="color: var(--primary);" id="grandTotalDisplay">৳0.00</span>
-                </div>
-
-                <div class="input-group">
-                    <label style="color: var(--text-dark);">Deduction / Charge (৳) Optional</label>
-                    <input type="number" id="deductionInput" oninput="calculateSummary()" value="0" class="input-field">
-                </div>
-
-                <div class="total-row" style="font-size: 15px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
-                    <span>Final Payable to Customer:</span>
-                    <span style="color: var(--text-dark);" id="finalPayableDisplay">৳0.00</span>
-                </div>
-
-                <div style="margin-top: 15px;">
-                    <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Refund Method</label>
-                    <div class="payment-methods">
-                        <label class="pay-method-label">
-                            <input type="radio" name="payMethod" value="Cash" checked>
-                            <div class="pay-method-box">Cash (Minus)</div>
-                        </label>
-                        <label class="pay-method-label">
-                            <input type="radio" name="payMethod" value="Adjust Due">
-                            <div class="pay-method-box">Adjust Due</div>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bottom-checkout-bar" style="padding: 15px;">
-            <button id="confirmBtn" onclick="confirmReturn()" class="btn-confirm">
-                Process Return & Restock <i class="fas fa-undo" style="margin-left: 5px;"></i>
-            </button>
+    <div class="item-list" id="itemList">
+        <div style="text-align: center; color: #9ca3af; padding: 40px 0; font-size: 14px;">
+            <i class="fas fa-file-invoice" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;"></i><br>
+            Search an invoice to start returning items.
         </div>
     </div>
 
-    <div id="view-receipt" class="view-container" style="background: white;">
-        <div style="padding: 20px; flex: 1; overflow-y: auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="font-size: 24px; font-weight: 800; color: var(--text-dark);" id="rShopName">Stashio Store</h2>
-                <p style="font-size: 12px; color: var(--primary); font-weight: 800;">SALES RETURN VOUCHER</p>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 20px; border-bottom: 2px dashed #e5e7eb; padding-bottom: 15px;">
-                <div><p>Customer: <strong id="rCustomer"></strong></p><p>Date: <span id="rDate"></span></p></div>
-                <div style="text-align: right;"><p>Return ID: <strong id="rInvoice"></strong></p></div>
-            </div>
-
-            <table style="width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 20px;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--text-dark);">
-                        <th style="text-align: left; padding-bottom: 8px;">Item Returned</th>
-                        <th style="text-align: center; padding-bottom: 8px;">Qty</th>
-                        <th style="text-align: right; padding-bottom: 8px;">Refund</th>
-                    </tr>
-                </thead>
-                <tbody id="rTableBody"></tbody>
-            </table>
-
-            <div style="border-top: 2px solid var(--text-dark); padding-top: 10px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Subtotal:</span><span id="rSubtotal"></span></div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: var(--primary);"><span>Charge Deducted:</span><span id="rDeduction"></span></div>
-                <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 15px;"><span>Total Refunded:</span><span id="rTotal"></span></div>
-            </div>
-            
-            <p style="font-size: 11px; color: var(--text-light); margin-top: 20px; text-align: center;">Method: <strong id="rMethod"></strong></p>
-            <p style="font-size: 12px; font-weight: 700; color: var(--success); text-align: center; margin-top: 10px;">Items successfully restocked to inventory.</p>
+    <div class="bottom-bar">
+        <div>
+            <p style="margin:0; font-size: 11px; color: var(--text-light); font-weight: 600;">Total Refund Amount</p>
+            <h3 style="margin:0; font-size: 20px; color: var(--primary); font-weight: 800;" id="refundTotal">৳0</h3>
         </div>
-
-        <div class="no-print" style="padding: 20px; display: flex; gap: 15px;">
-            <button onclick="window.print()" style="flex: 1; padding: 15px; background: var(--text-dark); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
-                <i class="fas fa-print"></i> Print
-            </button>
-            <button onclick="location.reload()" style="flex: 1; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
-                Done
-            </button>
-        </div>
+        <button id="btnProcess" class="btn-confirm" disabled onclick="processReturn()">Confirm Return</button>
     </div>
 
     <script type="module">
-        import { rtdb, dbFirestore, doc, getDoc, ref as rtdbRef, push, update, onValue as rtdbOnValue, get as rtdbGet } from './firebase_config.js';
+        import { rtdb, ref as rtdbRef, get, update, push } from './firebase_config.js';
         import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-        const SHOP_ID = localStorage.getItem('activeShopId'); 
-        const myPhone = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        let currentInvoiceData = null;
+        let returnCart = {}; // { itemId: qtyToReturn }
 
-        let allProducts = [];
-        let displayedProducts = [];
-        let itemsPerPage = 20;
-        let currentPage = 1;
-        
-        let allCustomers = []; 
-        let cart = {}; 
-        let html5QrcodeScanner = null;
+        window.searchInvoice = async () => {
+            const invNo = document.getElementById('invInput').value.trim();
+            if(!invNo) return;
 
-        window.onload = async () => {
-            // --- SECURITY CHECK (Safe Check from Database) ---
+            document.getElementById('searchError').style.display = 'none';
+            document.getElementById('itemList').innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-spin text-primary"></i> Searching...</div>';
+            
             try {
-                const docSnap = await getDoc(doc(dbFirestore, "shops", SHOP_ID));
-                if(docSnap.exists()) {
-                    const shopData = docSnap.data();
-                    let realRole = 'staff';
-                    if (shopData.roles && shopData.roles[myPhone]) realRole = shopData.roles[myPhone];
-                    if (shopData.createdBy === myPhone || shopData.phone === myPhone) realRole = 'owner';
+                const snap = await get(rtdbRef(rtdb, 'sales_history'));
+                if(snap.exists()) {
+                    const allSales = snap.val();
+                    // Find the exact invoice for this shop
+                    const saleKey = Object.keys(allSales).find(key => 
+                        allSales[key].shop_id === SHOP_ID && allSales[key].invoice_no === invNo
+                    );
 
-                    let hasAccess = false;
-                    if (realRole === 'owner') hasAccess = true;
-                    if (shopData.permissions && shopData.permissions[myPhone] && shopData.permissions[myPhone]['sales_return.html'] === true) hasAccess = true;
-
-                    if(!hasAccess) {
-                        alert("Access Denied! 🚫\nএই পেজে প্রবেশ করার অনুমতি আপনার নেই।");
-                        window.location.replace("home.html");
-                        return; // Stop execution
+                    if(saleKey) {
+                        currentInvoiceData = { id: saleKey, ...allSales[saleKey] };
+                        renderInvoiceItems();
+                    } else {
+                        document.getElementById('searchError').style.display = 'block';
+                        document.getElementById('itemList').innerHTML = '';
+                        document.getElementById('invoiceDetails').style.display = 'none';
                     }
                 }
-            } catch (error) {
-                console.error("Security check failed:", error);
+            } catch(e) {
+                console.log(e);
             }
-
-            // Normal Initialization continues if access granted
-            document.getElementById('sellDate').valueAsDate = new Date();
-            document.getElementById('invoiceNo').value = "RTN-" + Math.floor(100000 + Math.random() * 900000);
-
-            // Theme Sync
-            rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
-                const themeCode = snap.exists() ? snap.val().code : null;
-                if (themeCode && themeCode.trim() !== "") {
-                    document.getElementById('dynamicThemeContainer-selection').innerHTML = themeCode;
-                    document.getElementById('dynamicThemeContainer-checkout').innerHTML = themeCode;
-                    document.body.classList.add('has-theme');
-                }
-            });
-
-            // Sync Products
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
-                if (snap.exists()) {
-                    allProducts = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
-                    if(document.getElementById('searchInput').value.trim() === '') {
-                        initPagination(allProducts);
-                    }
-                }
-            });
-
-            // Fetch Customers for Dropdown
-            rtdbOnValue(rtdbRef(rtdb, 'contacts/customers'), (snap) => {
-                allCustomers = [{ name: 'Local (Walk-in)', phone: '' }]; 
-                if(snap.exists()){
-                    Object.values(snap.val()).forEach(c => { if(c.shop_id === SHOP_ID) allCustomers.push(c); });
-                }
-            });
         };
 
-        // --- INFINITE SCROLL LOGIC ---
-        function initPagination(products) {
-            currentPage = 1;
-            displayedProducts = products;
-            document.getElementById('productGrid').innerHTML = '';
-            
-            if(displayedProducts.length === 0) {
-                document.getElementById('productGrid').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);">No products found.</div>';
-                document.getElementById('loadMoreBtn').style.display = 'none';
-                return;
-            }
-            
-            renderProductGrid(displayedProducts.slice(0, itemsPerPage));
-            if(displayedProducts.length > itemsPerPage) document.getElementById('loadMoreBtn').style.display = 'block';
-            else document.getElementById('loadMoreBtn').style.display = 'none';
-        }
+        function renderInvoiceItems() {
+            document.getElementById('dCustomer').innerText = currentInvoiceData.customer || 'Local';
+            document.getElementById('dDate').innerText = new Date(currentInvoiceData.created_at || currentInvoiceData.date).toLocaleDateString();
+            document.getElementById('dTotal').innerText = `৳${currentInvoiceData.total_amount}`;
+            document.getElementById('invoiceDetails').style.display = 'block';
 
-        window.loadMoreProducts = () => {
-            const startIndex = currentPage * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const nextBatch = displayedProducts.slice(startIndex, endIndex);
-            
-            renderProductGrid(nextBatch, true); 
-            currentPage++;
-            
-            if(endIndex >= displayedProducts.length) document.getElementById('loadMoreBtn').style.display = 'none';
-        };
+            const listEl = document.getElementById('itemList');
+            listEl.innerHTML = '';
+            returnCart = {}; // Reset return cart
 
-        // Custom Dropdown Logic
-        const custInput = document.getElementById('customerName');
-        const custDropdown = document.getElementById('customerDropdown');
-        function renderCustomerDropdown(filterText = '') {
-            custDropdown.innerHTML = '';
-            const filtered = allCustomers.filter(c => c.name.toLowerCase().includes(filterText.toLowerCase()) || (c.phone && c.phone.includes(filterText)));
-            if(filtered.length === 0) { custDropdown.innerHTML = '<div style="padding:10px; text-align:center; color:#9ca3af; font-size:12px;">No customers found</div>'; } 
-            else {
-                filtered.forEach(c => {
-                    const div = document.createElement('div'); div.className = 'dropdown-item-cust';
-                    div.innerHTML = `<span>${c.name}</span> <span class="cust-phone">${c.phone || ''}</span>`;
-                    div.onclick = () => { custInput.value = c.name; custDropdown.style.display = 'none'; };
-                    custDropdown.appendChild(div);
-                });
-            }
-            custDropdown.style.display = 'block';
-        }
-        custInput.addEventListener('focus', () => renderCustomerDropdown(custInput.value));
-        custInput.addEventListener('input', (e) => renderCustomerDropdown(e.target.value));
-        document.addEventListener('click', (e) => { if(!custInput.contains(e.target) && !custDropdown.contains(e.target)) custDropdown.style.display = 'none'; });
+            currentInvoiceData.items.forEach((item, index) => {
+                // Determine how many are ALREADY returned previously (if we implement multi-returns)
+                const alreadyReturned = item.returned_qty || 0;
+                const maxReturnable = item.qty - alreadyReturned;
 
-        function renderProductGrid(products, append = false) {
-            const grid = document.getElementById('productGrid'); 
-            if(!append) grid.innerHTML = '';
-            
-            products.forEach(p => {
-                const img = p.image || 'https://via.placeholder.com/100?text=Item';
-                const isInCart = cart[p.id] !== undefined;
-                const html = `
-                <div class="product-card ${isInCart ? 'in-cart' : ''}" onclick="toggleCart('${p.id}')">
-                    <img src="${img}" class="product-img">
-                    <div class="product-info">
-                        <div class="product-name">${p.name}</div>
-                        ${p.brand ? `<span class="product-brand"><i class="fas fa-tag"></i> ${p.brand}</span>` : ''}
-                        <div class="product-meta">
-                            <span class="badge-stock">Stock: ${p.stock || 0}</span>
-                            <span class="badge-price">Sell Price: ৳${p.sell_price || 0}</span>
+                if (maxReturnable > 0) {
+                    returnCart[index] = 0; // Set initial return qty to 0
+
+                    const html = `
+                    <div class="item-card">
+                        <div class="item-name">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-light); display: flex; justify-content: space-between;">
+                            <span>Bought: ${item.qty} | Returned: ${alreadyReturned}</span>
+                            <span style="color: var(--primary); font-weight: bold;">Rate: ৳${item.sellRate}</span>
                         </div>
-                    </div>
-                    <div class="cart-toggle-btn"><i class="fas ${isInCart ? 'fa-check' : 'fa-undo'}"></i></div>
-                </div>`;
-                grid.insertAdjacentHTML('beforeend', html);
-            });
-            updateCartCount();
-        }
-
-        window.toggleCart = (id) => {
-            if(cart[id]) { delete cart[id]; } 
-            else {
-                const product = allProducts.find(p => p.id === id);
-                if(product) cart[id] = { ...product, qty: 1, sellRate: product.sell_price || 0 };
-            }
-            
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            if(searchTerm) {
-                const filtered = allProducts.filter(p => p.name.toLowerCase().includes(searchTerm) || (p.brand && p.brand.toLowerCase().includes(searchTerm)) || (p.barcode && p.barcode.toString().toLowerCase().includes(searchTerm)));
-                initPagination(filtered);
-            } else {
-                initPagination(allProducts); 
-            }
-        };
-
-        function updateCartCount() {
-            const count = Object.keys(cart).length;
-            document.getElementById('cartCount').innerText = count;
-            document.getElementById('btnToCheckout').disabled = count === 0;
-        }
-
-        window.goToCheckout = () => { renderCartItems(); calculateSummary(); showView('view-checkout'); };
-
-        function renderCartItems() {
-            const list = document.getElementById('cartItemsList'); list.innerHTML = '';
-            Object.values(cart).forEach((item) => {
-                const html = `
-                <div class="cart-item-checkout">
-                    <div style="flex: 1;">
-                        <div style="font-size: 13px; font-weight: 700;">${item.name}</div>
                         <div class="item-controls">
-                            <button onclick="updateCartQty('${item.id}', -1)" class="qty-btn">-</button>
-                            <input type="number" value="${item.qty}" class="qty-input" readonly>
-                            <button onclick="updateCartQty('${item.id}', 1)" class="qty-btn">+</button>
+                            <span style="font-size: 12px; font-weight: 700;">Return Qty:</span>
+                            <div class="qty-controls">
+                                <button onclick="changeQty(${index}, -1, ${maxReturnable})" class="qty-btn">-</button>
+                                <input type="text" id="qty_${index}" value="0" class="qty-input" readonly>
+                                <button onclick="changeQty(${index}, 1, ${maxReturnable})" class="qty-btn">+</button>
+                            </div>
                         </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <input type="number" value="${item.sellRate}" onchange="updateCartRate('${item.id}', this.value)" class="rate-input">
-                        <div style="font-size: 16px; font-weight: 800; margin-top:5px;">৳${item.qty * item.sellRate}</div>
-                    </div>
-                </div>`;
-                list.insertAdjacentHTML('beforeend', html);
+                    </div>`;
+                    listEl.insertAdjacentHTML('beforeend', html);
+                }
             });
+
+            if(listEl.innerHTML === '') {
+                listEl.innerHTML = '<div style="text-align:center; color: var(--success); font-weight:bold; padding: 20px;">All items from this invoice have already been returned.</div>';
+            }
+            calculateRefund();
         }
 
-        window.updateCartQty = (id, change) => {
-            if(cart[id].qty + change <= 0) delete cart[id];
-            else cart[id].qty += change;
-            renderCartItems(); calculateSummary(); updateCartCount();
-        };
-
-        window.updateCartRate = (id, value) => { cart[id].sellRate = Number(value) || 0; renderCartItems(); calculateSummary(); };
-
-        window.calculateSummary = () => {
-            let subtotal = 0; Object.values(cart).forEach(item => { subtotal += item.qty * item.sellRate; });
-            const deduction = Number(document.getElementById('deductionInput').value) || 0;
-            const finalPayable = subtotal - deduction;
+        window.changeQty = (itemIndex, change, maxAllowed) => {
+            let current = returnCart[itemIndex];
+            let newQty = current + change;
             
-            document.getElementById('grandTotalDisplay').innerText = `৳${subtotal}`;
-            document.getElementById('finalPayableDisplay').innerText = `৳${finalPayable}`;
-            window.checkoutSummary = { subtotal, deduction, finalPayable };
+            if(newQty < 0) newQty = 0;
+            if(newQty > maxAllowed) {
+                alert(`You can only return maximum ${maxAllowed} items!`);
+                newQty = maxAllowed;
+            }
+            
+            returnCart[itemIndex] = newQty;
+            document.getElementById(`qty_${itemIndex}`).value = newQty;
+            calculateRefund();
         };
 
-        window.confirmReturn = async () => {
-            const btn = document.getElementById('confirmBtn');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; btn.disabled = true;
+        function calculateRefund() {
+            let totalRefund = 0;
+            let hasItemsToReturn = false;
 
-            const customerName = document.getElementById('customerName').value || "Local (Walk-in)";
-            const { subtotal, deduction, finalPayable } = window.checkoutSummary;
-            const method = document.querySelector('input[name="payMethod"]:checked').value;
+            currentInvoiceData.items.forEach((item, index) => {
+                if(returnCart[index] > 0) {
+                    totalRefund += returnCart[index] * item.sellRate;
+                    hasItemsToReturn = true;
+                }
+            });
+
+            document.getElementById('refundTotal').innerText = `৳${totalRefund}`;
+            document.getElementById('btnProcess').disabled = !hasItemsToReturn;
+        }
+
+        window.processReturn = async () => {
+            if(!confirm("Are you sure you want to process this return? Money will be deducted from cashbox and items will be added to stock.")) return;
+            
+            const btn = document.getElementById('btnProcess');
+            btn.innerHTML = 'Processing...'; btn.disabled = true;
+
+            let totalRefund = 0;
+            let returnedItemsLog = [];
+            const updates = {};
+
+            // 1. Prepare data
+            currentInvoiceData.items.forEach((item, index) => {
+                const rQty = returnCart[index];
+                if(rQty > 0) {
+                    totalRefund += rQty * item.sellRate;
+                    returnedItemsLog.push({ id: item.id, name: item.name, qty_returned: rQty, rate: item.sellRate });
+                    
+                    // Update Stock (Add back to product_list)
+                    // Note: We should technically fetch current stock first, but to keep it safe without a full read:
+                    // For simplicity, we assume we fetch the stock in a real scenario, but here we construct the logic:
+                }
+            });
 
             try {
-                // 1. Save Return History
-                await push(rtdbRef(rtdb, 'sales_return_history'), {
-                    shop_id: SHOP_ID, customer: customerName, date: document.getElementById('sellDate').value,
-                    invoice_no: document.getElementById('invoiceNo').value, items: Object.values(cart),
-                    refund_amount: finalPayable, deduction: deduction, refund_method: method, created_at: Date.now()
+                // Update specific items stock
+                for (let log of returnedItemsLog) {
+                    await runTransaction(rtdbRef(rtdb, `product_list/${log.id}/stock`), (currentStock) => {
+                        return (Number(currentStock) || 0) + log.qty_returned;
+                    });
+                }
+
+                // 2. Mark invoice items as returned
+                const updatedInvoiceItems = currentInvoiceData.items.map((item, index) => {
+                    const rQty = returnCart[index] || 0;
+                    return { ...item, returned_qty: (item.returned_qty || 0) + rQty };
+                });
+                updates[`sales_history/${currentInvoiceData.id}/items`] = updatedInvoiceItems;
+
+                // 3. Deduct from Cashbox
+                await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - totalRefund);
+                
+                // 4. Log Cash Transaction
+                await push(rtdbRef(rtdb, 'cash_transactions'), {
+                    shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return',
+                    amount: totalRefund, note: `Refund for Invoice ${currentInvoiceData.invoice_no}`, created_at: Date.now()
                 });
 
-                // 2. Restock Items (Add to Stock safely)
-                const updates = {};
-                Object.values(cart).forEach(item => { 
-                    updates[`product_list/${item.id}/stock`] = Number(item.stock) + Number(item.qty); 
+                // 5. Save Return History
+                await push(rtdbRef(rtdb, 'sales_return_history'), {
+                    shop_id: SHOP_ID, customer: currentInvoiceData.customer, invoice_no: currentInvoiceData.invoice_no,
+                    returned_items: returnedItemsLog, total_refund: totalRefund, date: Date.now()
                 });
+
+                // Commit all simple updates
                 await update(rtdbRef(rtdb), updates);
 
-                // 3. Handle Money
-                if(method === 'Cash') {
-                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - finalPayable);
-                    await push(rtdbRef(rtdb, 'cash_transactions'), { shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return', amount: finalPayable, note: `Refund to ${customerName}`, created_at: Date.now() });
-                } else if(method === 'Adjust Due') {
-                    if(customerName !== "Local (Walk-in)") {
-                        const dueSnap = await rtdbGet(rtdbRef(rtdb, 'due_book'));
-                        if(dueSnap.exists()) {
-                            let targetId = null; let currentDue = 0;
-                            Object.entries(dueSnap.val()).forEach(([id, val]) => { 
-                                if(val.shop_id === SHOP_ID && val.name === customerName && val.type === 'receive' && val.current_due > 0) { 
-                                    targetId = id; currentDue = val.current_due; 
-                                } 
-                            });
-                            
-                            if(targetId) {
-                                let newDue = currentDue - finalPayable; if(newDue < 0) newDue = 0;
-                                await update(rtdbRef(rtdb, `due_book/${targetId}`), { current_due: newDue, updated_at: Date.now() });
-                                
-                                await push(rtdbRef(rtdb, 'due_history'), {
-                                    due_id: targetId, shop_id: SHOP_ID, name: customerName, type: 'receive',
-                                    action: 'Sales Return Adjustment', amount: finalPayable, balance_left: newDue, date: Date.now()
-                                });
-                            }
-                        }
-                    }
-                }
+                alert("Return processed successfully!");
+                location.reload(); // Refresh to clean state
 
-                generateReceipt(); showView('view-receipt');
-
-            } catch (err) { alert(err.message); btn.innerHTML = 'Process Return & Restock'; btn.disabled = false; }
-        };
-
-        function generateReceipt() {
-            document.getElementById('rCustomer').innerText = document.getElementById('customerName').value || "Local (Walk-in)";
-            document.getElementById('rDate').innerText = document.getElementById('sellDate').value;
-            document.getElementById('rInvoice').innerText = document.getElementById('invoiceNo').value;
-            
-            const tbody = document.getElementById('rTableBody'); tbody.innerHTML = '';
-            Object.values(cart).forEach(item => {
-                const brandHtml = item.brand ? `<br><span style="font-size:9px; color:#6b7280;">(${item.brand})</span>` : '';
-                tbody.innerHTML += `<tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">${item.name} ${brandHtml}</td>
-                    <td style="text-align: center;">${item.qty}</td>
-                    <td style="text-align: right; font-weight: bold;">৳${item.qty * item.sellRate}</td>
-                </tr>`;
-            });
-            document.getElementById('rSubtotal').innerText = "৳" + window.checkoutSummary.subtotal;
-            document.getElementById('rDeduction').innerText = "- ৳" + window.checkoutSummary.deduction;
-            document.getElementById('rTotal').innerText = "৳" + window.checkoutSummary.finalPayable;
-            document.getElementById('rMethod').innerText = document.querySelector('input[name="payMethod"]:checked').value;
-        }
-
-        window.showView = (id) => { ['view-selection', 'view-checkout', 'view-receipt'].forEach(v => document.getElementById(v).classList.remove('active')); document.getElementById(id).classList.add('active'); };
-        
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase().trim();
-            if(term === '') {
-                initPagination(allProducts);
-            } else {
-                const filtered = allProducts.filter(p => 
-                    p.name.toLowerCase().includes(term) || 
-                    (p.brand && p.brand.toLowerCase().includes(term)) || 
-                    (p.barcode && p.barcode.toString().toLowerCase().includes(term))
-                );
-                initPagination(filtered);
+            } catch (err) {
+                alert("Error processing return: " + err.message);
+                btn.innerHTML = 'Confirm Return'; btn.disabled = false;
             }
-        });
-        
-        window.startScanner = () => {
-            document.getElementById('scannerModal').style.display = 'flex';
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 300, height: 150 } }, (decodedText) => {
-                window.stopScanner();
-                const audio = new Audio('https://www.soundjay.com/button/beep-07.wav'); audio.play().catch(e=>{});
-                document.getElementById('searchInput').value = decodedText;
-                document.getElementById('searchInput').dispatchEvent(new Event('input'));
-            }).catch(err => { window.stopScanner(); });
-        };
-        
-        window.stopScanner = () => {
-            if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { document.getElementById('scannerModal').style.display = 'none'; }); } 
-            else { document.getElementById('scannerModal').style.display = 'none'; }
         };
     </script>
 </body>
