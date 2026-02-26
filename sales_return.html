@@ -97,7 +97,7 @@
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         let currentInvoiceData = null;
-        let returnCart = {}; // { itemId: qtyToReturn }
+        let returnCart = {}; 
 
         window.searchInvoice = async () => {
             const invNo = document.getElementById('invInput').value.trim();
@@ -110,7 +110,6 @@
                 const snap = await get(rtdbRef(rtdb, 'sales_history'));
                 if(snap.exists()) {
                     const allSales = snap.val();
-                    // Find the exact invoice for this shop
                     const saleKey = Object.keys(allSales).find(key => 
                         allSales[key].shop_id === SHOP_ID && allSales[key].invoice_no === invNo
                     );
@@ -124,9 +123,7 @@
                         document.getElementById('invoiceDetails').style.display = 'none';
                     }
                 }
-            } catch(e) {
-                console.log(e);
-            }
+            } catch(e) { console.log(e); }
         };
 
         function renderInvoiceItems() {
@@ -137,15 +134,14 @@
 
             const listEl = document.getElementById('itemList');
             listEl.innerHTML = '';
-            returnCart = {}; // Reset return cart
+            returnCart = {}; 
 
             currentInvoiceData.items.forEach((item, index) => {
-                // Determine how many are ALREADY returned previously (if we implement multi-returns)
                 const alreadyReturned = item.returned_qty || 0;
                 const maxReturnable = item.qty - alreadyReturned;
 
                 if (maxReturnable > 0) {
-                    returnCart[index] = 0; // Set initial return qty to 0
+                    returnCart[index] = 0; 
 
                     const html = `
                     <div class="item-card">
@@ -204,63 +200,92 @@
         }
 
         window.processReturn = async () => {
-            if(!confirm("Are you sure you want to process this return? Money will be deducted from cashbox and items will be added to stock.")) return;
+            if(!confirm("Are you sure you want to process this return? Money will be deducted and sales book will be updated.")) return;
             
             const btn = document.getElementById('btnProcess');
-            btn.innerHTML = 'Processing...'; btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; 
+            btn.disabled = true;
 
             let totalRefund = 0;
+            let totalProfitDeducted = 0;
             let returnedItemsLog = [];
             const updates = {};
 
-            // 1. Prepare data
+            // 1. Prepare data and calculate deductions
             currentInvoiceData.items.forEach((item, index) => {
                 const rQty = returnCart[index];
                 if(rQty > 0) {
                     totalRefund += rQty * item.sellRate;
-                    returnedItemsLog.push({ id: item.id, name: item.name, qty_returned: rQty, rate: item.sellRate });
                     
-                    // Update Stock (Add back to product_list)
-                    // Note: We should technically fetch current stock first, but to keep it safe without a full read:
-                    // For simplicity, we assume we fetch the stock in a real scenario, but here we construct the logic:
+                    // Calculate profit to deduct (Sell Rate - Buy Rate)
+                    const buyRate = Number(item.buy_price || item.purchaseRate || 0);
+                    const profitPerItem = Number(item.sellRate) - buyRate;
+                    totalProfitDeducted += (profitPerItem * rQty);
+
+                    returnedItemsLog.push({ id: item.id, name: item.name, qty_returned: rQty, rate: item.sellRate });
                 }
             });
 
             try {
-                // Update specific items stock
+                // 2. Add returned items back to Stock
                 for (let log of returnedItemsLog) {
                     await runTransaction(rtdbRef(rtdb, `product_list/${log.id}/stock`), (currentStock) => {
                         return (Number(currentStock) || 0) + log.qty_returned;
                     });
                 }
 
-                // 2. Mark invoice items as returned
+                // 3. Update Invoice Items (Track how many returned)
                 const updatedInvoiceItems = currentInvoiceData.items.map((item, index) => {
                     const rQty = returnCart[index] || 0;
                     return { ...item, returned_qty: (item.returned_qty || 0) + rQty };
                 });
-                updates[`sales_history/${currentInvoiceData.id}/items`] = updatedInvoiceItems;
 
-                // 3. Deduct from Cashbox
-                await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - totalRefund);
+                // 4. Update Original Invoice Totals in Sales Book
+                let newTotal = Number(currentInvoiceData.total_amount) - totalRefund;
+                let currentPaid = Number(currentInvoiceData.paid_amount || 0);
+                let currentDue = Number(currentInvoiceData.due_amount || 0);
+                let newProfit = Number(currentInvoiceData.total_profit || 0) - totalProfitDeducted;
+
+                // Adjust Paid and Due Logics
+                if(totalRefund <= currentPaid) {
+                    currentPaid -= totalRefund; // Deduct from paid amount if fully paid
+                } else {
+                    let remainingRefund = totalRefund - currentPaid;
+                    currentPaid = 0;
+                    currentDue -= remainingRefund; // If they owed money, reduce their due instead of giving cash back
+                    if(currentDue < 0) currentDue = 0;
+                }
+
+                updates[`sales_history/${currentInvoiceData.id}/items`] = updatedInvoiceItems;
+                updates[`sales_history/${currentInvoiceData.id}/total_amount`] = newTotal;
+                updates[`sales_history/${currentInvoiceData.id}/paid_amount`] = currentPaid;
+                updates[`sales_history/${currentInvoiceData.id}/due_amount`] = currentDue;
+                updates[`sales_history/${currentInvoiceData.id}/total_profit`] = newProfit;
+                updates[`sales_history/${currentInvoiceData.id}/has_returns`] = true; // Flag to indicate modified invoice
+
+                // 5. Deduct from Cashbox (Only deduct what was actually paid in cash, not the due part)
+                let actualCashToRefund = totalRefund; 
+                // Note: Realistically if it was a Due, we don't give cash back. We just deduct from Due (done above).
                 
-                // 4. Log Cash Transaction
+                await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - actualCashToRefund);
+                
+                // 6. Log Cash Transaction
                 await push(rtdbRef(rtdb, 'cash_transactions'), {
                     shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return',
-                    amount: totalRefund, note: `Refund for Invoice ${currentInvoiceData.invoice_no}`, created_at: Date.now()
+                    amount: actualCashToRefund, note: `Refund for Invoice ${currentInvoiceData.invoice_no}`, created_at: Date.now()
                 });
 
-                // 5. Save Return History
+                // 7. Save Return History for Records
                 await push(rtdbRef(rtdb, 'sales_return_history'), {
                     shop_id: SHOP_ID, customer: currentInvoiceData.customer, invoice_no: currentInvoiceData.invoice_no,
                     returned_items: returnedItemsLog, total_refund: totalRefund, date: Date.now()
                 });
 
-                // Commit all simple updates
+                // Commit all updates to database
                 await update(rtdbRef(rtdb), updates);
 
-                alert("Return processed successfully!");
-                location.reload(); // Refresh to clean state
+                alert("Return processed successfully! Sales Book has been updated.");
+                location.reload(); 
 
             } catch (err) {
                 alert("Error processing return: " + err.message);
