@@ -216,36 +216,37 @@
                     </div>
 
                     <div class="grid-2">
-                        <div class="input-group">
-                            <label>Buy Price (৳)</label>
-                            <input type="number" id="pBuyPrice" class="input-field" required>
-                        </div>
-                        <div class="input-group">
-                            <label>Sell Price (৳)</label>
-                            <input type="number" id="pSellPrice" class="input-field" style="border-color: var(--primary); font-weight: bold;" required>
-                        </div>
-                    </div>
+    <div class="input-group">
+        <label>Buy Price (৳)</label>
+        <input type="number" id="pBuyPrice" class="input-field" required step="any">
+    </div>
+    <div class="input-group">
+        <label>Sell Price (৳)</label>
+        <input type="number" id="pSellPrice" class="input-field" style="border-color: var(--primary); font-weight: bold;" required step="any">
+    </div>
+</div>
 
-                    <div class="grid-2">
-                        <div class="input-group">
-                            <label>Stock Qty</label>
-                            <input type="number" id="pStock" class="input-field" required>
-                        </div>
-                        <div class="input-group">
-                            <label>Unit</label>
-                            <select id="pUnit" class="input-field" required>
-                                <option value="" disabled selected>Select Unit</option>
-                            </select>
-                        </div>
-                    </div>
+<div class="grid-2">
+    <div class="input-group">
+        <label>Stock Qty</label>
+        <input type="number" id="pStock" class="input-field" required step="any">
+    </div>
+    <div class="input-group">
+        <label>Unit</label>
+        <select id="pUnit" class="input-field" required>
+            <option value="" disabled selected>Select Unit</option>
+        </select>
+    </div>
+</div>
 
-                    <div class="input-group">
-                        <label>Barcode / SKU</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="pBarcode" class="input-field" placeholder="Scan or type" style="font-family: monospace;">
-                            <button type="button" onclick="startScanner('input')" style="background: var(--text-dark); color: white; border: none; border-radius: 10px; width: 45px; cursor: pointer;"><i class="fas fa-qrcode"></i></button>
-                        </div>
-                    </div>
+<div class="input-group">
+    <label>Barcode / SKU</label>
+    <div style="display: flex; gap: 8px;">
+        <input type="text" id="pBarcode" class="input-field" placeholder="Scan or type" style="font-family: monospace;">
+        <button type="button" onclick="startScanner('input')" style="background: var(--text-dark); color: white; border: none; border-radius: 10px; width: 45px; cursor: pointer;"><i class="fas fa-qrcode"></i></button>
+    </div>
+</div>
+
 
                     <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
                         <label style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; display: block;">Advanced Settings</label>
