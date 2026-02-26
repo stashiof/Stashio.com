@@ -8,14 +8,19 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
     
-    <script>
-        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+            <script>
+        // শুধুমাত্র localStorage ব্যবহার করা হচ্ছে
+        const loggedInUser = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
         const activeShopId = localStorage.getItem('activeShopId');
         
         // লগইন বা শপ সিলেক্ট না থাকলে রিডাইরেক্ট
-        if (!loggedInUser) window.location.replace("index.html");
-        else if (!activeShopId) window.location.replace("dashboard.html");
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
     </script>
+ 
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
