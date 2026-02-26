@@ -9,12 +9,19 @@
     <meta name="theme-color" content="#4F46E5">
     <link rel="apple-touch-icon" href="icon-192x192.png">
 
-    <script>
-        const loggedInUserPhone = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        <script>
+        // যদি আগে থেকেই লগইন করা থাকে এবং দোকান সিলেক্ট করা থাকে, তবে সরাসরি home.html এ পাঠিয়ে দেবে
+        if (localStorage.getItem('activeShopId') && localStorage.getItem('userPhone')) {
+            window.location.replace("home.html");
+        }
+
+        // আর যদি লগইন না থাকে, তবে index.html এ পাঠিয়ে দেবে
+        const loggedInUserPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
         if (!loggedInUserPhone) {
             window.location.replace("index.html");
         }
     </script>
+
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -299,7 +306,8 @@
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432"; 
         const scriptURL = "https://script.google.com/macros/s/AKfycbwoC5HV-g8E5W3LY4tw4I63OUtIIK5e7kEDMW5Dk8XTn9BmBFyLR6sOGCd1JHo9HdLx/exec";
 
-        const activeUserPhone = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeUserPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
+
         const activeUserName = localStorage.getItem('tempUserName') || sessionStorage.getItem('tempUserName') || localStorage.getItem('userName') || "User";
         
         let generatedDeleteOtp = 0;
