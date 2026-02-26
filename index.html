@@ -17,8 +17,8 @@
 
     <style>
         :root {
-            --primary: #4F46E5; /* Indigo */
-            --secondary: #ec4899; /* Pink */
+            --primary: #4F46E5; 
+            --secondary: #ec4899; 
             --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --glass: rgba(255, 255, 255, 0.95);
             --text-dark: #1f2937;
@@ -255,10 +255,8 @@
     <div id="toast-container"></div>
 
 <script>
-    // Google Apps Script URL for Email OTP
     const scriptURL = "https://script.google.com/macros/s/AKfycbwoC5HV-g8E5W3LY4tw4I63OUtIIK5e7kEDMW5Dk8XTn9BmBFyLR6sOGCd1JHo9HdLx/exec";
     
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
         authDomain: "stashio-6b332.firebaseapp.com",
@@ -268,55 +266,22 @@
         appId: "1:210525763748:web:372466a48071cb53fc4e31"
     };
 
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     let generatedOtp = 0;
     let tempUser = {};
     let currentFlow = "";
 
-        // Auto Login Check (Permanent Setup)
+    // --- AUTO LOGIN CHECK (Permanent Storage) ---
     window.onload = function() {
         const phone = localStorage.getItem('userPhone');
         const shopId = localStorage.getItem('activeShopId');
 
         if (phone && shopId) {
-            // যদি আগে থেকেই লগইন থাকে এবং দোকান সিলেক্ট করা থাকে
             window.location.replace("home.html");
         } else if (phone) {
-            // যদি লগইন থাকে কিন্তু দোকান সিলেক্ট করা না থাকে
             window.location.replace("dashboard.html");
-        }
-    };
-
-    window.handleLogin = async () => {
-        const phone = document.getElementById('loginPhone').value;
-        const pin = document.getElementById('loginPin').value;
-
-        if (!phone || !pin) return window.showToast("Enter Phone & PIN!", "error");
-
-        window.toggleLoader(true);
-
-        try {
-            const userDocRef = doc(dbFirestore, "users", phone);
-            const docSnap = await getDoc(userDocRef);
-            
-            window.toggleLoader(false);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.pin == pin) {
-                    // স্থায়ীভাবে (Permanent) লগইন ডেটা সেভ করা হচ্ছে
-                    localStorage.setItem('userPhone', phone);
-                    localStorage.setItem('userName', data.name);
-                    
-                    window.showToast("Login Successful!", "success");
-                    setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
-                } else { window.showToast("Incorrect PIN!", "error"); }
-            } else { window.showToast("Account Not Found!", "error"); }
-        } catch(e) {
-            window.toggleLoader(false); window.showToast("Login Error!", "error");
         }
     };
 
@@ -325,9 +290,7 @@
         document.getElementById(viewId).classList.add('active');
     }
 
-    function toggleLoader(show) { 
-        document.getElementById('loader').style.display = show ? 'flex' : 'none'; 
-    }
+    function toggleLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
 
     function showToast(msg, type = 'default') {
         const container = document.getElementById('toast-container');
@@ -339,6 +302,39 @@
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
     }
 
+    // --- LOGIN LOGIC ---
+    function handleLogin() {
+        const phone = document.getElementById('loginPhone').value;
+        const pin = document.getElementById('loginPin').value;
+
+        if (!phone || !pin) return showToast("Enter Phone & PIN!", "error");
+
+        toggleLoader(true);
+
+        db.collection("users").doc(phone).get().then((doc) => {
+            toggleLoader(false);
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.pin == pin) {
+                    // Save credentials permanently
+                    localStorage.setItem('userPhone', phone);
+                    localStorage.setItem('tempUserName', data.name);
+                    
+                    showToast("Login Successful!", "success");
+                    setTimeout(() => { window.location.replace("dashboard.html"); }, 1000);
+                } else { 
+                    showToast("Incorrect PIN!", "error"); 
+                }
+            } else { 
+                showToast("Account Not Found!", "error"); 
+            }
+        }).catch(err => { 
+            toggleLoader(false); 
+            showToast("Login Error! Check internet.", "error"); 
+        });
+    }
+
+    // --- REGISTRATION LOGIC ---
     function validateAndSendOtp() {
         const name = document.getElementById('regName').value.trim();
         const phone = document.getElementById('regPhone').value.trim();
@@ -350,7 +346,7 @@
         const btn = document.getElementById('btnSendOtp');
         btn.disabled = true;
 
-        // Check Phone Number
+        // Check Phone
         db.collection("users").doc(phone).get().then((doc) => {
             if(doc.exists) {
                 toggleLoader(false); btn.disabled = false;
@@ -361,10 +357,9 @@
             db.collection("users").where("email", "==", email).get().then((querySnapshot) => {
                 if(!querySnapshot.empty) {
                     toggleLoader(false); btn.disabled = false;
-                    return showToast("This email is already used in another account!", "error");
+                    return showToast("This email is already used!", "error");
                 }
 
-                // Proceed to send OTP
                 tempUser = { name, phone, email };
                 triggerOtpEmail('register', email, name, btn);
             });
@@ -411,9 +406,6 @@
                 toggleLoader(false); btn.disabled = false;
                 showToast("Account not found!", "error");
             }
-        }).catch(e => {
-            toggleLoader(false); btn.disabled = false;
-            showToast("Error checking account.", "error");
         });
     }
 
@@ -441,7 +433,6 @@
             dataToSave.phone = tempUser.phone;
             dataToSave.email = tempUser.email;
             dataToSave.createdAt = new Date().toISOString();
-            dataToSave.shops = [];
         }
 
         db.collection("users").doc(tempUser.phone).set(dataToSave, { merge: true }).then(() => {
@@ -454,33 +445,6 @@
         });
     }
 
-    function handleLogin() {
-        const phone = document.getElementById('loginPhone').value;
-        const pin = document.getElementById('loginPin').value;
-
-        if (!phone || !pin) return showToast("Enter Phone & PIN!", "error");
-
-        toggleLoader(true);
-
-        db.collection("users").doc(phone).get().then((doc) => {
-            toggleLoader(false);
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.pin == pin) {
-                    // sessionStorage এর বদলে localStorage ব্যবহার করা হলো যেন অ্যাপ কাটলেও লগইন থাকে
-                    localStorage.setItem('userPhone', phone); 
-                    localStorage.setItem('tempUserPhone', phone);
-                    localStorage.setItem('tempUserName', data.name);
-                    
-                    showToast("Login Successful!", "success");
-                    setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
-                } else { showToast("Incorrect PIN!", "error"); }
-            } else { showToast("Account Not Found!", "error"); }
-        }).catch(e => {
-            toggleLoader(false); showToast("Login Error!", "error");
-        });
-    }
-
     // PWA Support
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -490,4 +454,3 @@
 </script>
 </body>
 </html>
-
