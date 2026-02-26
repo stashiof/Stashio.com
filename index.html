@@ -277,14 +277,46 @@
     let tempUser = {};
     let currentFlow = "";
 
-    // Auto Login Check (Updated to use localStorage only)
+        // Auto Login Check (Permanent Setup)
     window.onload = function() {
-        if (localStorage.getItem('activeShopId') && localStorage.getItem('userPhone')) {
-            // যদি আগে থেকে লগইন করা থাকে এবং দোকান সিলেক্ট করা থাকে, তবে সোজা home.html এ যাবে
-            window.location.href = "home.html";
-        } else if (localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone')) {
-            // যদি লগইন করা থাকে কিন্তু দোকান সিলেক্ট করা না থাকে, তবে dashboard.html এ যাবে
-            window.location.href = "dashboard.html";
+        const phone = localStorage.getItem('userPhone');
+        const shopId = localStorage.getItem('activeShopId');
+
+        if (phone && shopId) {
+            // যদি আগে থেকেই লগইন থাকে এবং দোকান সিলেক্ট করা থাকে
+            window.location.replace("home.html");
+        } else if (phone) {
+            // যদি লগইন থাকে কিন্তু দোকান সিলেক্ট করা না থাকে
+            window.location.replace("dashboard.html");
+        }
+    };
+
+    window.handleLogin = async () => {
+        const phone = document.getElementById('loginPhone').value;
+        const pin = document.getElementById('loginPin').value;
+
+        if (!phone || !pin) return window.showToast("Enter Phone & PIN!", "error");
+
+        window.toggleLoader(true);
+
+        try {
+            const userDocRef = doc(dbFirestore, "users", phone);
+            const docSnap = await getDoc(userDocRef);
+            
+            window.toggleLoader(false);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.pin == pin) {
+                    // স্থায়ীভাবে (Permanent) লগইন ডেটা সেভ করা হচ্ছে
+                    localStorage.setItem('userPhone', phone);
+                    localStorage.setItem('userName', data.name);
+                    
+                    window.showToast("Login Successful!", "success");
+                    setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
+                } else { window.showToast("Incorrect PIN!", "error"); }
+            } else { window.showToast("Account Not Found!", "error"); }
+        } catch(e) {
+            window.toggleLoader(false); window.showToast("Login Error!", "error");
         }
     };
 
