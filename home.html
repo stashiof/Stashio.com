@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
     
-            <script>
+    <script>
         // শুধুমাত্র localStorage ব্যবহার করা হচ্ছে
         const loggedInUser = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
         const activeShopId = localStorage.getItem('activeShopId');
@@ -21,7 +21,6 @@
         }
     </script>
  
-    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -231,13 +230,11 @@
     <div id="bottom-nav-container" class="bottom-nav"></div>
 
     <script type="module">
-        // ১. মডুলার ফায়ারবেস কনফিগ ফাইল ইমপোর্ট করা
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName');
 
-        // ২. ডাইনামিক কম্পোনেন্ট লোড করার ফাংশন (Header & Footer)
         async function loadComponents() {
             try {
                 // Header Load
@@ -246,10 +243,19 @@
                     document.getElementById('header-container').innerHTML = await headerRes.text();
                     if(SHOP_NAME) document.getElementById('shopTitle').innerHTML = `<span style="color:#fef08a;">✨</span> ${SHOP_NAME}`;
                     
-                    // Header Theme Sync (From Firebase)
+                    // --- Header Theme Sync With Page Permissions ---
                     rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
-                        if (snap.exists() && snap.val().code) {
-                            document.getElementById('dynamicThemeContainer').innerHTML = snap.val().code;
+                        if (snap.exists()) {
+                            const data = snap.val();
+                            let currentPage = window.location.pathname.split('/').pop() || 'home.html';
+                            
+                            if (data.code && data.allowed_pages && data.allowed_pages[currentPage]) {
+                                document.getElementById('dynamicThemeContainer').innerHTML = data.code;
+                            } else {
+                                document.getElementById('dynamicThemeContainer').innerHTML = ""; 
+                            }
+                        } else {
+                            document.getElementById('dynamicThemeContainer').innerHTML = "";
                         }
                     });
                 }
@@ -258,7 +264,6 @@
                 const navRes = await fetch('bottom_nav.html');
                 if (navRes.ok) {
                     document.getElementById('bottom-nav-container').innerHTML = await navRes.text();
-                    // বর্তমান পেজ অনুযায়ী এক্টিভ ক্লাস সেট করা
                     document.getElementById('nav-home').classList.add('active');
                 }
             } catch (error) {
