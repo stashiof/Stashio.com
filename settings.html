@@ -7,7 +7,7 @@
     
     <meta name="theme-color" content="#4F46E5">
 
-        <script>
+    <script>
         // শুধুমাত্র localStorage ব্যবহার করা হচ্ছে
         const loggedInUser = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
         const activeShopId = localStorage.getItem('activeShopId');
@@ -48,8 +48,6 @@
         .header-content { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
         .header-content h1 { font-size: 22px; font-weight: 800; margin: 0; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; }
         .header-content p { font-size: 12px; font-weight: 500; opacity: 0.9; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); background: rgba(255, 255, 255, 0.15); padding: 3px 10px; border-radius: 10px; display: inline-block; }
-
-        
 
         /* Settings Card Structure */
         .section-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: var(--border-radius); padding: 25px 20px; box-shadow: var(--shadow); margin: 0 15px 20px 15px; position: relative; z-index: 20; border: 1px solid #f8fafc; }
@@ -106,8 +104,6 @@
         .nav-item.active { color: var(--primary); }
         .nav-item.active i { transform: translateY(-4px); }
         .nav-item.active::after { content: ''; position: absolute; top: 12px; right: 35%; width: 6px; height: 6px; background: var(--secondary); border-radius: 50%; }
-
-        body.has-theme .bottom-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
     </style>
 </head>
 <body>
@@ -190,7 +186,6 @@
     <div id="bottom-nav-container" class="bottom-nav"></div>
 
     <script type="module">
-        // মডুলার ফায়ারবেস কনফিগ ফাইল ইমপোর্ট করা
         import { rtdb, dbFirestore, doc, getDoc, updateDoc, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
 
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
@@ -198,37 +193,36 @@
         const activeShopId = localStorage.getItem('activeShopId');
         const userPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
 
-        // Header & Footer Load Function
         async function loadComponents() {
             try {
-                // Header Load
                 const headerRes = await fetch('header.html');
                 if (headerRes.ok) {
                     document.getElementById('header-container').innerHTML = await headerRes.text();
                     
-                    // সেটিংস পেজের জন্য হেডার টেক্সট পরিবর্তন
                     document.getElementById('shopTitle').innerHTML = `<i class="fas fa-user-cog" style="color: #fef08a;"></i> Account Settings`;
                     const subText = document.querySelector('.header-content p');
                     if(subText) subText.innerText = "Manage your profile & shop";
                     
-                    // Header Theme Sync
+                    // --- Updated Theme Sync with Targeting ---
                     rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
-                        const themeCode = snap.exists() ? snap.val().code : null;
-                        if (themeCode && themeCode.trim() !== "") {
-                            document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
-                            document.body.classList.add('has-theme');
+                        if (snap.exists()) {
+                            const data = snap.val();
+                            let currentPage = window.location.pathname.split('/').pop() || 'settings.html';
+                            
+                            if (data.code && data.allowed_pages && data.allowed_pages[currentPage]) {
+                                document.getElementById('dynamicThemeContainer').innerHTML = data.code;
+                            } else {
+                                document.getElementById('dynamicThemeContainer').innerHTML = ""; 
+                            }
                         } else {
                             document.getElementById('dynamicThemeContainer').innerHTML = "";
-                            document.body.classList.remove('has-theme');
                         }
                     });
                 }
 
-                // Bottom Nav Load
                 const navRes = await fetch('bottom_nav.html');
                 if (navRes.ok) {
                     document.getElementById('bottom-nav-container').innerHTML = await navRes.text();
-                    // সেটিংস পেজের মেন্যুটি এক্টিভ করা
                     document.getElementById('nav-settings').classList.add('active');
                 }
             } catch (error) {
@@ -237,10 +231,9 @@
         }
 
         window.onload = () => {
-            loadComponents(); // 컴পোনেন্ট লোড কল করা
+            loadComponents(); 
             document.getElementById('userPhone').value = userPhone;
 
-            // --- PERMISSION LOGIC (Hide/Show Menu Items) ---
             const myRole = localStorage.getItem('myRole') || 'staff';
             const myPerms = JSON.parse(localStorage.getItem('myPermissions') || '{}');
             
@@ -257,7 +250,6 @@
                 }
             });
 
-            // 1. OFFLINE LOAD FIRST
             const cachedShop = localStorage.getItem(`shop_details_${activeShopId}`);
             if(cachedShop) {
                 const data = JSON.parse(cachedShop);
@@ -269,7 +261,6 @@
                 document.getElementById('userRole').value = role.charAt(0).toUpperCase() + role.slice(1);
             }
 
-            // 2. ONLINE SYNC
             fetchShopDetails();
         };
 
@@ -309,7 +300,6 @@
             try {
                 let updateData = { name: name, address: address };
                 
-                // Image Upload
                 if (fileInput.files[0]) {
                     status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Image...';
                     const formData = new FormData();
