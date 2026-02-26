@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sales Return (Invoice Based) - Stashio</title>
+    <title>Sales Return - Stashio</title>
     
     <meta name="theme-color" content="#ef4444">
     <script>
@@ -57,7 +57,7 @@
     <div class="app-header">
         <div class="header-title">
             <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-            <span>Return by Invoice</span>
+            <span>Sales Return (Invoice)</span>
         </div>
     </div>
 
@@ -137,8 +137,7 @@
             returnCart = {}; 
 
             currentInvoiceData.items.forEach((item, index) => {
-                const alreadyReturned = item.returned_qty || 0;
-                const maxReturnable = item.qty - alreadyReturned;
+                const maxReturnable = item.qty; // Current available quantity in invoice
 
                 if (maxReturnable > 0) {
                     returnCart[index] = 0; 
@@ -147,7 +146,7 @@
                     <div class="item-card">
                         <div class="item-name">${item.name}</div>
                         <div style="font-size: 11px; color: var(--text-light); display: flex; justify-content: space-between;">
-                            <span>Bought: ${item.qty} | Returned: ${alreadyReturned}</span>
+                            <span>Bought Qty: <strong style="color:var(--text-dark);">${item.qty}</strong></span>
                             <span style="color: var(--primary); font-weight: bold;">Rate: ৳${item.sellRate}</span>
                         </div>
                         <div class="item-controls">
@@ -164,7 +163,7 @@
             });
 
             if(listEl.innerHTML === '') {
-                listEl.innerHTML = '<div style="text-align:center; color: var(--success); font-weight:bold; padding: 20px;">All items from this invoice have already been returned.</div>';
+                listEl.innerHTML = '<div style="text-align:center; color: var(--success); font-weight:bold; padding: 20px;">No items left in this invoice to return.</div>';
             }
             calculateRefund();
         }
@@ -200,7 +199,7 @@
         }
 
         window.processReturn = async () => {
-            if(!confirm("Are you sure you want to process this return? Money will be deducted and sales book will be updated.")) return;
+            if(!confirm("Are you sure? Returned items will be REMOVED from the original invoice and money will be deducted from your cashbox.")) return;
             
             const btn = document.getElementById('btnProcess');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; 
@@ -209,20 +208,28 @@
             let totalRefund = 0;
             let totalProfitDeducted = 0;
             let returnedItemsLog = [];
+            let finalInvoiceItems = [];
             const updates = {};
 
             // 1. Prepare data and calculate deductions
             currentInvoiceData.items.forEach((item, index) => {
-                const rQty = returnCart[index];
+                const rQty = returnCart[index] || 0;
+                
                 if(rQty > 0) {
                     totalRefund += rQty * item.sellRate;
                     
-                    // Calculate profit to deduct (Sell Rate - Buy Rate)
+                    // Calculate profit to deduct
                     const buyRate = Number(item.buy_price || item.purchaseRate || 0);
                     const profitPerItem = Number(item.sellRate) - buyRate;
                     totalProfitDeducted += (profitPerItem * rQty);
 
                     returnedItemsLog.push({ id: item.id, name: item.name, qty_returned: rQty, rate: item.sellRate });
+                }
+
+                // REDUCE QTY (If any quantity is left, keep the item in invoice)
+                const remainingQty = item.qty - rQty;
+                if(remainingQty > 0) {
+                    finalInvoiceItems.push({ ...item, qty: remainingQty });
                 }
             });
 
@@ -234,48 +241,44 @@
                     });
                 }
 
-                // 3. Update Invoice Items (Track how many returned)
-                const updatedInvoiceItems = currentInvoiceData.items.map((item, index) => {
-                    const rQty = returnCart[index] || 0;
-                    return { ...item, returned_qty: (item.returned_qty || 0) + rQty };
-                });
-
-                // 4. Update Original Invoice Totals in Sales Book
-                let newTotal = Number(currentInvoiceData.total_amount) - totalRefund;
-                let currentPaid = Number(currentInvoiceData.paid_amount || 0);
-                let currentDue = Number(currentInvoiceData.due_amount || 0);
-                let newProfit = Number(currentInvoiceData.total_profit || 0) - totalProfitDeducted;
-
-                // Adjust Paid and Due Logics
-                if(totalRefund <= currentPaid) {
-                    currentPaid -= totalRefund; // Deduct from paid amount if fully paid
+                // 3. Update Original Invoice in Sales Book
+                if (finalInvoiceItems.length === 0) {
+                    // IF ALL ITEMS RETURNED -> Delete the whole invoice completely
+                    updates[`sales_history/${currentInvoiceData.id}`] = null;
                 } else {
-                    let remainingRefund = totalRefund - currentPaid;
-                    currentPaid = 0;
-                    currentDue -= remainingRefund; // If they owed money, reduce their due instead of giving cash back
-                    if(currentDue < 0) currentDue = 0;
+                    // IF SOME ITEMS LEFT -> Update invoice totals
+                    let newTotal = Number(currentInvoiceData.total_amount) - totalRefund;
+                    let currentPaid = Number(currentInvoiceData.paid_amount || 0);
+                    let currentDue = Number(currentInvoiceData.due_amount || 0);
+                    let newProfit = Number(currentInvoiceData.total_profit || 0) - totalProfitDeducted;
+
+                    // Adjust Paid and Due Logics
+                    if(totalRefund <= currentPaid) {
+                        currentPaid -= totalRefund; 
+                    } else {
+                        let remainingRefund = totalRefund - currentPaid;
+                        currentPaid = 0;
+                        currentDue -= remainingRefund; 
+                        if(currentDue < 0) currentDue = 0;
+                    }
+
+                    updates[`sales_history/${currentInvoiceData.id}/items`] = finalInvoiceItems;
+                    updates[`sales_history/${currentInvoiceData.id}/total_amount`] = newTotal;
+                    updates[`sales_history/${currentInvoiceData.id}/paid_amount`] = currentPaid;
+                    updates[`sales_history/${currentInvoiceData.id}/due_amount`] = currentDue;
+                    updates[`sales_history/${currentInvoiceData.id}/total_profit`] = newProfit;
                 }
 
-                updates[`sales_history/${currentInvoiceData.id}/items`] = updatedInvoiceItems;
-                updates[`sales_history/${currentInvoiceData.id}/total_amount`] = newTotal;
-                updates[`sales_history/${currentInvoiceData.id}/paid_amount`] = currentPaid;
-                updates[`sales_history/${currentInvoiceData.id}/due_amount`] = currentDue;
-                updates[`sales_history/${currentInvoiceData.id}/total_profit`] = newProfit;
-                updates[`sales_history/${currentInvoiceData.id}/has_returns`] = true; // Flag to indicate modified invoice
-
-                // 5. Deduct from Cashbox (Only deduct what was actually paid in cash, not the due part)
-                let actualCashToRefund = totalRefund; 
-                // Note: Realistically if it was a Due, we don't give cash back. We just deduct from Due (done above).
+                // 4. Deduct from Cashbox 
+                await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - totalRefund);
                 
-                await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - actualCashToRefund);
-                
-                // 6. Log Cash Transaction
+                // 5. Log Cash Transaction
                 await push(rtdbRef(rtdb, 'cash_transactions'), {
                     shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return',
-                    amount: actualCashToRefund, note: `Refund for Invoice ${currentInvoiceData.invoice_no}`, created_at: Date.now()
+                    amount: totalRefund, note: `Refund for Invoice ${currentInvoiceData.invoice_no}`, created_at: Date.now()
                 });
 
-                // 7. Save Return History for Records
+                // 6. Save Return History for separate checking
                 await push(rtdbRef(rtdb, 'sales_return_history'), {
                     shop_id: SHOP_ID, customer: currentInvoiceData.customer, invoice_no: currentInvoiceData.invoice_no,
                     returned_items: returnedItemsLog, total_refund: totalRefund, date: Date.now()
@@ -284,7 +287,7 @@
                 // Commit all updates to database
                 await update(rtdbRef(rtdb), updates);
 
-                alert("Return processed successfully! Sales Book has been updated.");
+                alert("Return processed! Items have been successfully removed from the Sales Book.");
                 location.reload(); 
 
             } catch (err) {
