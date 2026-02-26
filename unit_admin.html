@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manage Units - Stashio</title>
+    
+    <meta name="theme-color" content="#4F46E5">
+
+    <script>
+        const loggedInUser = localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 90px; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Dynamic Header Area */
+        .app-header {
+            position: relative; padding: 20px 20px 40px 20px; color: white; 
+            border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
+            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            overflow: hidden;
+        }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
+        
+        .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+
+        /* Add Unit Box */
+        .add-unit-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -20px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: center; border: 1px solid #f8fafc; }
+        .add-unit-card input { flex: 1; padding: 12px 15px; border-radius: 12px; border: 2px solid #f1f5f9; outline: none; font-size: 14px; font-family: inherit; font-weight: 600; background: #f8fafc; transition: 0.3s; }
+        .add-unit-card input:focus { border-color: var(--primary); background: white; }
+        .btn-add { background: var(--text-dark); color: white; border: none; padding: 0 20px; height: 46px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .btn-add:active { transform: scale(0.95); }
+
+        /* Unit List */
+        .unit-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .unit-card { background: var(--white); border-radius: 14px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); border: 1px solid #f1f5f9; transition: 0.2s; }
+        .unit-card:hover { border-color: #e2e8f0; }
+        
+        .unit-info { display: flex; align-items: center; gap: 15px; }
+        .unit-icon { width: 40px; height: 40px; background: #f0f5ff; color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .unit-name { font-size: 16px; font-weight: 700; color: var(--text-dark); text-transform: lowercase; }
+        
+        .unit-actions { display: flex; gap: 10px; }
+        .action-btn { width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-edit { background: #fef3c7; color: var(--warning); }
+        .btn-delete { background: #fee2e2; color: var(--danger); }
+        .action-btn:active { transform: scale(0.90); }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
+        .empty-state i { font-size: 40px; color: #cbd5e1; margin-bottom: 10px; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--white); display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -5px 25px rgba(0,0,0,0.08); border-top-left-radius: 30px; border-top-right-radius: 30px; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; flex: 1; height: 100%; text-decoration: none; transition: 0.3s; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
+        .nav-item span { font-size: 11px; font-weight: 700; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active i { transform: translateY(-4px); }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-bg"></div>
+        <div id="dynamicThemeContainer"></div>
+        <div class="header-top">
+            <div class="header-title">
+                <a href="product_list.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Manage Units</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="add-unit-card">
+        <input type="text" id="unitInput" placeholder="e.g. pcs, kg, box, dozen">
+        <input type="hidden" id="editUnitId">
+        <button onclick="saveUnit()" class="btn-add" id="btnSave"><i class="fas fa-plus"></i> Add</button>
+    </div>
+
+    <div id="loading" style="text-align: center; padding: 20px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading Units...
+    </div>
+
+    <div class="unit-list" id="unitList"></div>
+
+    <div class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="reports.html" class="nav-item">
+            <i class="fas fa-chart-pie"></i><span>Reports</span>
+        </a>
+        <a href="settings.html" class="nav-item active">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
+
+    <script>
+        // --- FIREBASE CONFIGURATION (V8 STANDARD) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
+            authDomain: "stashio-6b332.firebaseapp.com",
+            projectId: "stashio-6b332",
+            databaseURL: "https://stashio-6b332-default-rtdb.firebaseio.com",
+            storageBucket: "stashio-6b332.firebasestorage.app"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const SHOP_ID = localStorage.getItem('activeShopId');
+
+        let allUnits = [];
+
+        window.onload = () => {
+            // Theme sync
+            db.ref(`global_settings/header_theme`).on('value', (snap) => {
+                const themeCode = snap.exists() ? snap.val().code : null;
+                if (themeCode && themeCode.trim() !== "") {
+                    document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
+                    document.body.classList.add('has-theme');
+                } else {
+                    document.getElementById('dynamicThemeContainer').innerHTML = "";
+                    document.body.classList.remove('has-theme');
+                }
+            });
+
+            loadUnits();
+        };
+
+        function loadUnits() {
+            db.ref('units').on('value', (snapshot) => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if (snapshot.exists()) {
+                    allUnits = Object.entries(snapshot.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(u => u.shop_id === SHOP_ID)
+                        .reverse();
+                    
+                    // Save to local storage so product_list.html can access them quickly
+                    localStorage.setItem(`units_${SHOP_ID}`, JSON.stringify(allUnits));
+                    
+                    renderUnits();
+                } else {
+                    allUnits = [];
+                    localStorage.removeItem(`units_${SHOP_ID}`);
+                    renderUnits();
+                }
+            });
+        }
+
+        function renderUnits() {
+            const listEl = document.getElementById('unitList');
+            listEl.innerHTML = '';
+
+            if(allUnits.length === 0) {
+                listEl.innerHTML = `<div class="empty-state">
+                    <i class="fas fa-balance-scale"></i><br>
+                    No units found. Add your first unit (e.g., pcs, kg).
+                </div>`;
+                // Provide some defaults suggestions
+                if(confirm("No units found. Would you like to add default units (pcs, kg, box)?")) {
+                    addDefaultUnits();
+                }
+                return;
+            }
+
+            allUnits.forEach(u => {
+                const html = `
+                <div class="unit-card">
+                    <div class="unit-info">
+                        <div class="unit-icon"><i class="fas fa-tag"></i></div>
+                        <div class="unit-name">${u.name}</div>
+                    </div>
+                    <div class="unit-actions">
+                        <button onclick="editUnit('${u.id}', '${u.name}')" class="action-btn btn-edit"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteUnit('${u.id}')" class="action-btn btn-delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`;
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function saveUnit() {
+            const inputEl = document.getElementById('unitInput');
+            const name = inputEl.value.trim().toLowerCase();
+            const editId = document.getElementById('editUnitId').value;
+            const btn = document.getElementById('btnSave');
+
+            if(!name) return alert("Please enter a unit name.");
+
+            // Check duplicate
+            const isDuplicate = allUnits.some(u => u.name === name && u.id !== editId);
+            if(isDuplicate) return alert("This unit already exists!");
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            const data = {
+                shop_id: SHOP_ID,
+                name: name,
+                updated_at: Date.now()
+            };
+
+            if(editId) {
+                // Update
+                db.ref(`units/${editId}`).update(data)
+                .then(() => { resetForm(); })
+                .catch(err => alert("Error updating unit."));
+            } else {
+                // Add New
+                data.created_at = Date.now();
+                db.ref('units').push(data)
+                .then(() => { resetForm(); })
+                .catch(err => alert("Error adding unit."));
+            }
+        }
+
+        function editUnit(id, currentName) {
+            document.getElementById('unitInput').value = currentName;
+            document.getElementById('editUnitId').value = id;
+            const btn = document.getElementById('btnSave');
+            btn.innerHTML = '<i class="fas fa-check"></i> Update';
+            btn.style.background = 'var(--warning)';
+            document.getElementById('unitInput').focus();
+        }
+
+        function deleteUnit(id) {
+            if(!confirm("Are you sure you want to delete this unit?")) return;
+            db.ref(`units/${id}`).remove().catch(err => alert("Failed to delete."));
+        }
+
+        function resetForm() {
+            document.getElementById('unitInput').value = '';
+            document.getElementById('editUnitId').value = '';
+            const btn = document.getElementById('btnSave');
+            btn.innerHTML = '<i class="fas fa-plus"></i> Add';
+            btn.style.background = 'var(--text-dark)';
+            btn.disabled = false;
+        }
+
+        async function addDefaultUnits() {
+            const defaults = ['pcs', 'kg', 'box', 'lit', 'dozen'];
+            const promises = defaults.map(name => {
+                return db.ref('units').push({
+                    shop_id: SHOP_ID,
+                    name: name,
+                    created_at: Date.now()
+                });
+            });
+            await Promise.all(promises);
+            alert("Default units added successfully!");
+        }
+    </script>
+</body>
+</html>
