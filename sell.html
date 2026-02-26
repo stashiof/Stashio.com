@@ -633,6 +633,8 @@
             if(Object.keys(cart).length === 0) showView('view-selection'); 
         }
 
+                window.goToCheckout = () => { renderCartItems(); calculateSummary(true); showView('view-checkout'); };
+
         window.updateCartQty = (id, change, manualValue = null) => {
             let newQty = manualValue ? Number(manualValue) : cart[id].qty + change;
             const maxStock = cart[id].stock;
@@ -645,31 +647,35 @@
                 if(confirm("Remove this item?")) delete cart[id];
             } else { cart[id].qty = newQty; }
             
-            renderCartItems(); calculateSummary(); updateCartCount();
+            renderCartItems(); calculateSummary(true); updateCartCount();
         };
 
         window.updateCartRate = (id, value) => {
             cart[id].sellRate = Number(value) || 0;
-            renderCartItems(); calculateSummary();
+            renderCartItems(); calculateSummary(true);
         };
 
         window.removeCartItem = (id) => {
-            delete cart[id]; renderCartItems(); calculateSummary(); updateCartCount();
+            delete cart[id]; renderCartItems(); calculateSummary(true); updateCartCount();
         }
 
-        window.calculateSummary = () => {
+        window.calculateSummary = (autoFill = false) => {
             let subtotal = 0;
             Object.values(cart).forEach(item => { subtotal += item.qty * item.sellRate; });
             
-            const discount = Number(document.getElementById('discountInput').value) || 0;
+            const discountInput = document.getElementById('discountInput');
+            const discount = discountInput ? (Number(discountInput.value) || 0) : 0;
             const grandTotal = subtotal - discount;
             
             document.getElementById('grandTotalDisplay').innerText = `৳${grandTotal}`;
             
-            const paidStr = document.getElementById('paidInput').value;
-            const paid = paidStr === '' ? grandTotal : Number(paidStr); 
-            if(paidStr === '') document.getElementById('paidInput').value = grandTotal;
+            const paidInput = document.getElementById('paidInput');
             
+            if(autoFill || paidInput.value === '') {
+                paidInput.value = grandTotal;
+            }
+            
+            const paid = Number(paidInput.value);
             const due = grandTotal - paid;
             
             if(due < 0) {
@@ -684,6 +690,7 @@
             
             window.checkoutSummary = { subtotal, discount, grandTotal, paid, due: due > 0 ? due : 0 };
         };
+
 
         // --- CONFIRM SALE & SAVE PRICING ---
         window.confirmSell = async () => {
