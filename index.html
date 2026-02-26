@@ -277,11 +277,13 @@
     let tempUser = {};
     let currentFlow = "";
 
-    // Auto Login Check
+    // Auto Login Check (Updated to use localStorage only)
     window.onload = function() {
         if (localStorage.getItem('activeShopId') && localStorage.getItem('userPhone')) {
+            // যদি আগে থেকে লগইন করা থাকে এবং দোকান সিলেক্ট করা থাকে, তবে সোজা home.html এ যাবে
             window.location.href = "home.html";
-        } else if (sessionStorage.getItem('tempUserPhone')) {
+        } else if (localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone')) {
+            // যদি লগইন করা থাকে কিন্তু দোকান সিলেক্ট করা না থাকে, তবে dashboard.html এ যাবে
             window.location.href = "dashboard.html";
         }
     };
@@ -433,8 +435,11 @@
             if (doc.exists) {
                 const data = doc.data();
                 if (data.pin == pin) {
-                    sessionStorage.setItem('tempUserPhone', phone);
-                    sessionStorage.setItem('tempUserName', data.name);
+                    // sessionStorage এর বদলে localStorage ব্যবহার করা হলো যেন অ্যাপ কাটলেও লগইন থাকে
+                    localStorage.setItem('userPhone', phone); 
+                    localStorage.setItem('tempUserPhone', phone);
+                    localStorage.setItem('tempUserName', data.name);
+                    
                     showToast("Login Successful!", "success");
                     setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
                 } else { showToast("Incorrect PIN!", "error"); }
@@ -453,3 +458,4 @@
 </script>
 </body>
 </html>
+
