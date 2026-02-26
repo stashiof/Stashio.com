@@ -9,16 +9,17 @@
     <meta name="theme-color" content="#4F46E5">
     <link rel="apple-touch-icon" href="icon-192x192.png">
 
-        <script>
-        // যদি আগে থেকেই লগইন করা থাকে এবং দোকান সিলেক্ট করা থাকে, তবে সরাসরি home.html এ পাঠিয়ে দেবে
-        if (localStorage.getItem('activeShopId') && localStorage.getItem('userPhone')) {
-            window.location.replace("home.html");
-        }
-
-        // আর যদি লগইন না থাকে, তবে index.html এ পাঠিয়ে দেবে
-        const loggedInUserPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
+            <script>
+        const loggedInUserPhone = localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        
+        // ১. যদি ইউজার লগইন করা না থাকে, তবে লগইন পেজে পাঠাবে
         if (!loggedInUserPhone) {
             window.location.replace("index.html");
+        } 
+        // ২. যদি ইউজারের দোকান আগে থেকেই সিলেক্ট করা থাকে, তবে সরাসরি হোমে পাঠাবে
+        else if (activeShopId) {
+            window.location.replace("home.html");
         }
     </script>
 
@@ -390,18 +391,18 @@
             });
         }
 
-        // --- ENTER SHOP ---
+                // --- ENTER SHOP ---
         function enterShop(shopId, shopName) {
-            localStorage.setItem('tempUserPhone', activeUserPhone); 
-            localStorage.setItem('tempUserName', activeUserName);
+            // স্থায়ীভাবে স্টোরেজে সেভ করা হচ্ছে
             localStorage.setItem('activeShopId', shopId);
             localStorage.setItem('activeShopName', shopName);
             
             document.body.style.opacity = "0.5";
             document.body.style.transition = "opacity 0.3s";
             
-            setTimeout(() => { window.location.href = "home.html"; }, 300);
+            setTimeout(() => { window.location.replace("home.html"); }, 300);
         }
+
 
         // --- MODAL HANDLING ---
         function openModal(mode, shopId = null) {
