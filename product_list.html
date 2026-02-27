@@ -216,37 +216,36 @@
                     </div>
 
                     <div class="grid-2">
-    <div class="input-group">
-        <label>Buy Price (৳)</label>
-        <input type="number" id="pBuyPrice" class="input-field" required step="any">
-    </div>
-    <div class="input-group">
-        <label>Sell Price (৳)</label>
-        <input type="number" id="pSellPrice" class="input-field" style="border-color: var(--primary); font-weight: bold;" required step="any">
-    </div>
-</div>
+                        <div class="input-group">
+                            <label>Buy Price (৳)</label>
+                            <input type="number" id="pBuyPrice" class="input-field" required step="any">
+                        </div>
+                        <div class="input-group">
+                            <label>Sell Price (৳)</label>
+                            <input type="number" id="pSellPrice" class="input-field" style="border-color: var(--primary); font-weight: bold;" required step="any">
+                        </div>
+                    </div>
 
-<div class="grid-2">
-    <div class="input-group">
-        <label>Stock Qty</label>
-        <input type="number" id="pStock" class="input-field" required step="any">
-    </div>
-    <div class="input-group">
-        <label>Unit</label>
-        <select id="pUnit" class="input-field" required>
-            <option value="" disabled selected>Select Unit</option>
-        </select>
-    </div>
-</div>
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label>Stock Qty</label>
+                            <input type="number" id="pStock" class="input-field" required step="any">
+                        </div>
+                        <div class="input-group">
+                            <label>Unit</label>
+                            <select id="pUnit" class="input-field" required>
+                                <option value="" disabled selected>Select Unit</option>
+                            </select>
+                        </div>
+                    </div>
 
-<div class="input-group">
-    <label>Barcode / SKU</label>
-    <div style="display: flex; gap: 8px;">
-        <input type="text" id="pBarcode" class="input-field" placeholder="Scan or type" style="font-family: monospace;">
-        <button type="button" onclick="startScanner('input')" style="background: var(--text-dark); color: white; border: none; border-radius: 10px; width: 45px; cursor: pointer;"><i class="fas fa-qrcode"></i></button>
-    </div>
-</div>
-
+                    <div class="input-group">
+                        <label>Barcode / SKU</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="pBarcode" class="input-field" placeholder="Scan or type" style="font-family: monospace;">
+                            <button type="button" onclick="startScanner('input')" style="background: var(--text-dark); color: white; border: none; border-radius: 10px; width: 45px; cursor: pointer;"><i class="fas fa-qrcode"></i></button>
+                        </div>
+                    </div>
 
                     <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
                         <label style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; display: block;">Advanced Settings</label>
@@ -260,7 +259,7 @@
                                 </label>
                             </div>
                             <div id="fieldWholesale" class="setting-content">
-                                <input type="number" id="pWholesalePrice" class="input-field" placeholder="Enter Wholesale Price">
+                                <input type="number" id="pWholesalePrice" class="input-field" placeholder="Enter Wholesale Price" step="any">
                             </div>
                         </div>
 
@@ -273,7 +272,7 @@
                                 </label>
                             </div>
                             <div id="fieldAlert" class="setting-content">
-                                <input type="number" id="pAlertQty" class="input-field" placeholder="Min Qty (Default 5)">
+                                <input type="number" id="pAlertQty" class="input-field" placeholder="Min Qty (Default 5)" step="any">
                             </div>
                         </div>
 
@@ -310,7 +309,7 @@
             
             <div class="stock-control">
                 <button onclick="adjustStock(-1)" class="btn-qty btn-minus"><i class="fas fa-minus"></i></button>
-                <input type="number" id="newStockInput" class="stock-input">
+                <input type="number" id="newStockInput" class="stock-input" step="any">
                 <button onclick="adjustStock(1)" class="btn-qty btn-plus"><i class="fas fa-plus"></i></button>
             </div>
             
@@ -542,14 +541,16 @@
             btn.disabled = true;
 
             const productId = document.getElementById('editProductId').value;
+            const enteredStock = Number(document.getElementById('pStock').value);
+            const productName = document.getElementById('pName').value;
             
             const productData = {
                 shop_id: SHOP_ID, 
-                name: document.getElementById('pName').value,
-                brand: document.getElementById('pBrand').value, // Brand Field Added
+                name: productName,
+                brand: document.getElementById('pBrand').value, 
                 buy_price: Number(document.getElementById('pBuyPrice').value),
                 sell_price: Number(document.getElementById('pSellPrice').value),
-                stock: Number(document.getElementById('pStock').value),
+                stock: enteredStock,
                 unit: document.getElementById('pUnit').value,
                 image: document.getElementById('uploadedImageUrl').value,
                 barcode: document.getElementById('pBarcode').value,
@@ -568,7 +569,20 @@
                     await update(ref(rtdb, `product_list/${productId}`), productData);
                 } else {
                     productData.created_at = Date.now();
-                    await push(ref(rtdb, 'product_list'), productData);
+                    const newProductRef = await push(ref(rtdb, 'product_list'), productData);
+                    
+                    // --- Opening Stock History Record Added Here ---
+                    if(enteredStock > 0) {
+                        const historyData = {
+                            shop_id: SHOP_ID,
+                            product_id: newProductRef.key,
+                            product_name: productName,
+                            qty: enteredStock,
+                            action: "Opening Stock",
+                            date: Date.now()
+                        };
+                        await push(ref(rtdb, 'stock_history'), historyData);
+                    }
                 }
                 closeModal('productModal');
             } catch (err) { alert("Error saving: " + err.message); } 
@@ -706,6 +720,23 @@
         window.confirmStockUpdate = async () => {
             const id = document.getElementById('stockUpdateId').value;
             const stock = Number(document.getElementById('newStockInput').value);
+            
+            // --- Quick Stock History Record Added Here ---
+            const currentProduct = allProducts.find(p => p.id === id);
+            const qtyChange = stock - currentProduct.stock;
+            
+            if(qtyChange !== 0) {
+                const historyData = {
+                    shop_id: SHOP_ID,
+                    product_id: id,
+                    product_name: currentProduct.name,
+                    qty: Math.abs(qtyChange),
+                    action: qtyChange > 0 ? "Manual Add (Quick Stock)" : "Manual Reduce (Quick Stock)",
+                    date: Date.now()
+                };
+                await push(ref(rtdb, 'stock_history'), historyData);
+            }
+
             await update(ref(rtdb, `product_list/${id}`), { stock: stock });
             closeModal('stockModal');
         };
@@ -774,4 +805,4 @@
         };
     </script>
 </body>
-</html>
+    </html>
