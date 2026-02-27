@@ -61,8 +61,6 @@
         .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-header:active { transform: scale(0.95); }
 
-        
-
         /* Analytics Dashboard */
         .analytics-container { margin: -30px 15px 15px 15px; position: relative; z-index: 60; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-card { background: var(--white); padding: 15px; border-radius: 14px; box-shadow: var(--shadow); text-align: center; border: 1px solid #f8fafc; }
@@ -199,7 +197,6 @@
     </div>
 
     <script type="module">
-        // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get } from './firebase_config.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
@@ -364,7 +361,7 @@
             });
         }
 
-        // --- HISTORY FETCHING (Simulated/Aggregated from DB with SHOP_ID filtering) ---
+        // --- HISTORY FETCHING (Updated to include stock_history for Opening/Manual Stock) ---
         window.fetchHistory = async (productId, productName) => {
             const modal = document.getElementById('historyModal');
             const timeline = document.getElementById('historyTimeline');
@@ -374,13 +371,16 @@
             modal.style.display = 'flex';
 
             try {
-                const [purchaseSnap, salesSnap] = await Promise.all([
+                // এখন তিনটি জায়গা থেকে ডেটা টানবে: Purchase, Sales, এবং Stock History
+                const [purchaseSnap, salesSnap, stockSnap] = await Promise.all([
                     get(rtdbRef(rtdb, 'purchase_history')),
-                    get(rtdbRef(rtdb, 'sales_history'))
+                    get(rtdbRef(rtdb, 'sales_history')),
+                    get(rtdbRef(rtdb, 'stock_history')) // <--- নতুন ফোল্ডার যুক্ত করা হলো
                 ]);
 
                 let historyLogs = [];
 
+                // ১. Purchase History পার্স করা
                 if(purchaseSnap.exists()) {
                     Object.values(purchaseSnap.val()).forEach(purchase => {
                         if (purchase.shop_id === SHOP_ID) {
@@ -395,6 +395,7 @@
                     });
                 }
 
+                // ২. Sales History পার্স করা
                 if(salesSnap.exists()) {
                     Object.values(salesSnap.val()).forEach(sale => {
                         if (sale.shop_id === SHOP_ID) {
@@ -409,6 +410,24 @@
                     });
                 }
 
+                // ৩. নতুন Stock History (Opening / Manual Update) পার্স করা
+                if(stockSnap.exists()) {
+                    Object.values(stockSnap.val()).forEach(log => {
+                        if (log.shop_id === SHOP_ID && log.product_id === productId) {
+                            // যদি লেখার মাঝে Reduce কথাটি থাকে, তার মানে স্টক কমানো হয়েছে (out), নাহলে বাড়ানো হয়েছে (in)
+                            const isOut = log.action && log.action.toLowerCase().includes("reduce");
+                            historyLogs.push({
+                                type: isOut ? 'out' : 'in', 
+                                date: log.date,
+                                qty: log.qty, 
+                                rate: "-", // ম্যানুয়াল আপডেটে রেট থাকে না, তাই ফাকা রাখলাম
+                                ref: `${log.action}`
+                            });
+                        }
+                    });
+                }
+
+                // তারিখ অনুযায়ী সাজানো (নতুনটা আগে)
                 historyLogs.sort((a, b) => b.date - a.date);
 
                 if(historyLogs.length === 0) {
@@ -418,15 +437,17 @@
 
                 timeline.innerHTML = '';
                 historyLogs.forEach(log => {
-                    const isPurch = log.type === 'in';
+                    const isIn = log.type === 'in';
                     const d = new Date(log.date);
+                    const rateDisplay = log.rate === "-" ? "" : `৳${log.rate}/pc`;
+                    
                     timeline.innerHTML += `
                         <div class="timeline-item">
-                            <div class="tl-icon ${isPurch ? 'in' : 'out'}"><i class="fas ${isPurch ? 'fa-arrow-down' : 'fa-arrow-up'}"></i></div>
+                            <div class="tl-icon ${isIn ? 'in' : 'out'}"><i class="fas ${isIn ? 'fa-arrow-down' : 'fa-arrow-up'}"></i></div>
                             <div class="tl-content">
                                 <div class="tl-title">
-                                    <span style="color: ${isPurch ? 'var(--success)' : 'var(--danger)'}">${isPurch ? 'Stock IN' : 'Stock OUT'} (+${log.qty})</span>
-                                    <span>৳${log.rate}/pc</span>
+                                    <span style="color: ${isIn ? 'var(--success)' : 'var(--danger)'}">${isIn ? 'Stock IN' : 'Stock OUT'} (+${log.qty})</span>
+                                    <span>${rateDisplay}</span>
                                 </div>
                                 <div class="tl-date">${log.ref} • ${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                             </div>
