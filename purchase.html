@@ -240,7 +240,7 @@
                 <div class="grid-2">
                     <div class="input-group">
                         <label>Paid Amount (৳)</label>
-                        <input type="number" id="paidInput" oninput="calculateSummary()" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
+                        <input type="number" id="paidInput" oninput="calculateSummary()" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);" step="any">
                     </div>
                     <div style="text-align: right;">
                         <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Due Amount</label>
@@ -506,7 +506,7 @@
                         <div style="font-size: 13px; font-weight: 700; color: var(--text-dark);">${item.name}</div>
                         <div class="item-controls">
                             <button onclick="updateCartQty('${item.id}', -1)" class="qty-btn"><i class="fas fa-minus"></i></button>
-                            <input type="number" value="${item.qty}" onchange="updateCartQty('${item.id}', 0, this.value)" class="qty-input">
+                            <input type="number" value="${item.qty}" onchange="updateCartQty('${item.id}', 0, this.value)" class="qty-input" step="any">
                             <button onclick="updateCartQty('${item.id}', 1)" class="qty-btn"><i class="fas fa-plus"></i></button>
                             <span style="font-size: 11px; color: var(--text-light);">${item.unit || 'pcs'}</span>
                         </div>
@@ -514,7 +514,7 @@
                     <div style="text-align: right;">
                         <div style="display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-bottom: 5px;">
                             <span style="font-size: 11px; color: var(--text-light);">Rate:</span>
-                            <input type="number" value="${item.purchaseRate}" onchange="updateCartRate('${item.id}', this.value)" class="rate-input">
+                            <input type="number" value="${item.purchaseRate}" onchange="updateCartRate('${item.id}', this.value)" class="rate-input" step="any">
                         </div>
                         <div style="font-size: 16px; font-weight: 800; color: var(--text-dark);">৳${lineTotal}</div>
                         <button onclick="removeCartItem('${item.id}')" style="background:none; border:none; color: var(--danger); font-size: 11px; font-weight:600; cursor:pointer; margin-top:5px;"><i class="fas fa-trash"></i> Remove</button>
