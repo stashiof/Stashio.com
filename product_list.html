@@ -325,8 +325,8 @@
         <button onclick="stopScanner()" class="btn-close-scanner">Close Camera</button>
     </div>
 
-    <script type="module">
-        import { rtdb, ref, push, update, remove, onValue } from './firebase_config.js';
+                   <script type="module">
+        import { rtdb, ref, push, update, remove, onValue, get } from './firebase_config.js';
 
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
         const SHOP_ID = localStorage.getItem('activeShopId');
@@ -374,7 +374,6 @@
                     
                     localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(allProducts));
                     
-                    // Re-init pagination if not searching
                     if(document.getElementById('searchInput').value.trim() === '') {
                         initPagination(allProducts);
                     }
@@ -412,7 +411,7 @@
             const endIndex = startIndex + itemsPerPage;
             const nextBatch = displayedProducts.slice(startIndex, endIndex);
             
-            renderProducts(nextBatch, true); // true means append
+            renderProducts(nextBatch, true); 
             currentPage++;
             
             if(endIndex >= displayedProducts.length) {
@@ -477,7 +476,6 @@
             uploadText.innerText = "Compressing...";
             uploadText.style.color = "var(--warning)";
 
-            // Image Compression Logic
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = function(event) {
@@ -487,7 +485,6 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // Resize Logic (Max 400px width to keep size < 50kb)
                     const MAX_WIDTH = 400;
                     let width = img.width;
                     let height = img.height;
@@ -499,14 +496,10 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Compress to JPEG with 0.6 quality
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                    
-                    // Convert back to File Object for ImgBB
                     const blob = await (await fetch(dataUrl)).blob();
                     const compressedFile = new File([blob], "product_image.jpg", { type: "image/jpeg" });
                     
-                    // Upload to ImgBB
                     uploadText.innerText = "Uploading...";
                     uploadText.style.color = "var(--primary)";
                     const formData = new FormData(); 
@@ -532,7 +525,7 @@
             };
         };
 
-        // --- FORM SUBMIT (Save Product) ---
+        // --- FORM SUBMIT (Save & Edit Product) ---
         document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('saveBtn');
@@ -555,7 +548,6 @@
                 image: document.getElementById('uploadedImageUrl').value,
                 barcode: document.getElementById('pBarcode').value,
                 
-                // Advanced Settings
                 is_wholesale: document.getElementById('toggleWholesale').checked,
                 wholesale_price: document.getElementById('toggleWholesale').checked ? Number(document.getElementById('pWholesalePrice').value) : 0,
                 has_alert: document.getElementById('toggleAlert').checked,
@@ -566,20 +558,42 @@
 
             try {
                 if (productId) {
+                    // যদি আগে থেকেই প্রোডাক্ট থাকে, তাহলে এডিট হবে
                     await update(ref(rtdb, `product_list/${productId}`), productData);
+                    
+                    // হিস্টোরি চেক করে Opening Stock এর কোয়ান্টিটি ওভাররাইট (Replace) করা
+                    const stockSnap = await get(ref(rtdb, 'stock_history'));
+                    let openingKey = null;
+                    if(stockSnap.exists()) {
+                        Object.entries(stockSnap.val()).forEach(([key, val]) => {
+                            // যদি এই প্রোডাক্টের Opening Stock পাওয়া যায়
+                            if(val.product_id === productId && val.action === "Opening Stock") {
+                                openingKey = key;
+                            }
+                        });
+                    }
+                    
+                    // যদি Opening Stock এর এন্ট্রি পাওয়া যায়, তাহলে শুধু সেটা আপডেট হবে 
+                    if(openingKey) {
+                        await update(ref(rtdb, `stock_history/${openingKey}`), { qty: enteredStock });
+                    } else if (enteredStock > 0) {
+                        // যদি আগে Opening Stock না থাকে, তবে নতুন করে তৈরি হবে
+                        const historyData = {
+                            shop_id: SHOP_ID, product_id: productId, product_name: productName,
+                            qty: enteredStock, action: "Opening Stock", date: Date.now()
+                        };
+                        await push(ref(rtdb, 'stock_history'), historyData);
+                    }
+
                 } else {
+                    // নতুন প্রোডাক্ট তৈরি হচ্ছে
                     productData.created_at = Date.now();
                     const newProductRef = await push(ref(rtdb, 'product_list'), productData);
                     
-                    // --- Opening Stock History Record Added Here ---
                     if(enteredStock > 0) {
                         const historyData = {
-                            shop_id: SHOP_ID,
-                            product_id: newProductRef.key,
-                            product_name: productName,
-                            qty: enteredStock,
-                            action: "Opening Stock",
-                            date: Date.now()
+                            shop_id: SHOP_ID, product_id: newProductRef.key, product_name: productName,
+                            qty: enteredStock, action: "Opening Stock", date: Date.now()
                         };
                         await push(ref(rtdb, 'stock_history'), historyData);
                     }
@@ -589,7 +603,7 @@
             finally { btn.innerText = originalText; btn.disabled = false; }
         });
 
-        // --- DELETE PRODUCT (Permanently) ---
+        // --- DELETE PRODUCT ---
         window.deleteProduct = async (id) => {
             if(!confirm("Are you sure you want to PERMANENTLY delete this product? This cannot be undone.")) return;
             try { 
@@ -721,7 +735,6 @@
             const id = document.getElementById('stockUpdateId').value;
             const stock = Number(document.getElementById('newStockInput').value);
             
-            // --- Quick Stock History Record Added Here ---
             const currentProduct = allProducts.find(p => p.id === id);
             const qtyChange = stock - currentProduct.stock;
             
@@ -741,7 +754,7 @@
             closeModal('stockModal');
         };
 
-        // --- PDF EXPORT (Preview logic) ---
+        // --- PDF EXPORT ---
         window.downloadPDF = () => {
             const tempDiv = document.createElement('div');
             tempDiv.style.padding = '20px';
@@ -803,6 +816,6 @@
                 window.open(pdfUrl, '_blank');
             });
         };
-    </script>
+    </script> 
 </body>
     </html>
