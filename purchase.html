@@ -51,9 +51,7 @@
         .header-title a { color: white; text-decoration: none; }
         .btn-new-product { background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; backdrop-filter: blur(5px); color: white; text-decoration: none; transition: 0.2s; }
         .btn-new-product:active { transform: scale(0.95); }
-
-        
-
+      
         /* Search Bar */
         .search-container { margin: -15px 15px 15px 15px; display: flex; gap: 10px; position: relative; z-index: 60; }
         .search-box { flex: 1; position: relative; }
@@ -237,33 +235,35 @@
                 </div>
 
                 <div class="grid-2">
-    <div class="input-group">
-        <label>Paid Amount (৳)</label>
-        <input type="number" id="paidInput" oninput="calculateSummary()" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);" step="any">
-    </div>
-    <div style="text-align: right;">
-        <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Due Amount</label>
-        <div style="font-size: 20px; font-weight: 700; color: var(--danger); margin-top: 5px;" id="dueDisplay">৳0.00</div>
-    </div>
-</div>
+                    <div class="input-group">
+                        <label>Paid Amount (৳)</label>
+                        <input type="number" id="paidInput" oninput="calculateSummary()" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
+                    </div>
+                    <div style="text-align: right;">
+                        <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Due Amount</label>
+                        <div style="font-size: 20px; font-weight: 700; color: var(--danger); margin-top: 5px;" id="dueDisplay">৳0.00</div>
+                    </div>
+                </div>
 
-<div style="margin-top: 10px;">
-    <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Payment Method</label>
-    <div class="payment-methods">
-        <label class="pay-method-label">
-            <input type="radio" name="payMethod" value="Cash" checked>
-            <div class="pay-method-box">Cash</div>
-        </label>
-        <label class="pay-method-label">
-            <input type="radio" name="payMethod" value="MFS">
-            <div class="pay-method-box">Bkash/Nagad</div>
-        </label>
-        <label class="pay-method-label">
-            <input type="radio" name="payMethod" value="Bank">
-            <div class="pay-method-box">Bank</div>
-        </label>
-    </div>
-</div>
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Payment Method</label>
+                    <div class="payment-methods">
+                        <label class="pay-method-label">
+                            <input type="radio" name="payMethod" value="Cash" checked>
+                            <div class="pay-method-box">Cash</div>
+                        </label>
+                        <label class="pay-method-label">
+                            <input type="radio" name="payMethod" value="MFS">
+                            <div class="pay-method-box">Bkash/Nagad</div>
+                        </label>
+                        <label class="pay-method-label">
+                            <input type="radio" name="payMethod" value="Bank">
+                            <div class="pay-method-box">Bank</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="bottom-checkout-bar" style="padding: 15px;">
             <button id="confirmBtn" onclick="confirmPurchase()" class="btn-confirm">
