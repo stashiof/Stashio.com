@@ -51,8 +51,13 @@
         .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-pdf:active { transform: scale(0.95); }
 
+        /* Tabs */
+        .tab-container { display: flex; justify-content: space-around; padding: 10px 15px; background: var(--white); margin: -25px 15px 15px; border-radius: 16px; box-shadow: var(--shadow); position: relative; z-index: 60; }
+        .tab-btn { flex: 1; padding: 10px; text-align: center; font-weight: 600; cursor: pointer; border-radius: 12px; transition: 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; }
+
         /* Filter Section */
-        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; flex-direction: column; gap: 10px; border: 1px solid #f8fafc; }
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: 0 15px 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; border: 1px solid #f8fafc; }
         .date-row { display: flex; gap: 10px; }
         .input-group { flex: 1; }
         .input-group label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
@@ -145,6 +150,12 @@
         </div>
     </div>
 
+    <div class="tab-container">
+        <div class="tab-btn active" onclick="switchTab('customers')">Customers</div>
+        <div class="tab-btn" onclick="switchTab('suppliers')">Suppliers</div>
+        <div class="tab-btn" onclick="switchTab('staff')">Staff</div>
+    </div>
+
     <div class="summary-bar">
         <div class="sum-box recv">
             <div class="sum-title text-success">To Receive (পাব)</div>
@@ -159,7 +170,7 @@
     <div class="filter-card">
         <div class="search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchName" placeholder="🔍 Search Customer / Supplier...">
+            <input type="text" id="searchName" placeholder="🔍 Search Name...">
         </div>
         <div class="date-row">
             <div class="input-group" style="margin: 0;">
@@ -186,7 +197,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 style="font-size: 15px; font-weight: 700; margin: 0;" id="payTitle">Update Payment</h3>
-                <button onclick="document.getElementById('payModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
+                <button onclick="closeModal('payModal')" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="payForm">
@@ -215,9 +226,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 style="font-size: 15px; font-weight: 700; margin: 0;">Transaction History</h3>
-                <button onclick="document.getElementById('historyModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
+                <button onclick="closeModal('historyModal')" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
+                <button onclick="downloadSpecificHistoryPDF()" class="btn-pdf" style="margin-bottom: 15px; width: 100%; background: var(--primary); color: white; border: none;">Download PDF</button>
                 <div class="timeline" id="historyTimeline"></div>
             </div>
         </div>
@@ -225,9 +237,8 @@
 
 
     <script type="module">
-        // মডুলার ফায়ারবেস ইমপোর্ট
-        import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, push, update, get } from './firebase_config.js';
-        // runTransaction এর জন্য আলাদা ইমপোর্ট
+        // Import from firebase_config.js
+        import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, push, update } from './firebase_config.js';
         import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
@@ -235,9 +246,11 @@
 
         let allDues = [];
         let allHistory = [];
-        let allContacts = { customers: [], suppliers: [] };
+        let allContacts = { customers: [], suppliers: [], staff: [] };
         let globalPdfTemplateCode = "";
         let filteredHistory = [];
+        let currentTab = 'customers';
+        let specificHistory = [];
 
         window.onload = () => {
             const today = new Date().toISOString().split('T')[0];
@@ -246,62 +259,48 @@
 
             // Theme sync
             rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
-                const themeCode = snap.exists() ? snap.val().code : null;
-                if (themeCode && themeCode.trim() !== "") {
-                    document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
-                    document.body.classList.add('has-theme');
-                } else {
-                    document.getElementById('dynamicThemeContainer').innerHTML = "";
-                    document.body.classList.remove('has-theme');
-                }
+                const themeCode = snap.val()?.code || '';
+                document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
+                document.body.classList.toggle('has-theme', !!themeCode.trim());
             });
 
             // Load PDF Template
             rtdbOnValue(rtdbRef(rtdb, `global_settings/pdf_due_template`), (snap) => {
-                if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
+                globalPdfTemplateCode = snap.val()?.code || '';
             });
 
             // Load Contacts
             rtdbOnValue(rtdbRef(rtdb, 'contacts'), (snap) => {
-                allContacts = { customers: [], suppliers: [] };
-                if(snap.exists()){
+                allContacts = { customers: [], suppliers: [], staff: [] };
+                if (snap.exists()) {
                     const data = snap.val();
-                    if(data.customers) allContacts.customers = Object.values(data.customers).filter(c => c.shop_id === SHOP_ID);
-                    if(data.suppliers) allContacts.suppliers = Object.values(data.suppliers).filter(c => c.shop_id === SHOP_ID);
+                    if (data.customers) allContacts.customers = Object.values(data.customers).filter(c => c.shop_id === SHOP_ID);
+                    if (data.suppliers) allContacts.suppliers = Object.values(data.suppliers).filter(c => c.shop_id === SHOP_ID);
+                    if (data.staff) allContacts.staff = Object.values(data.staff).filter(c => c.shop_id === SHOP_ID);
                 }
                 renderDues();
             });
 
             // Load History Data
             rtdbOnValue(rtdbRef(rtdb, 'due_history'), (snap) => {
-                allHistory = [];
-                if(snap.exists()) {
-                    allHistory = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).reverse();
-                }
+                allHistory = snap.exists() ? Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).reverse() : [];
                 applyFilters();
             });
 
             // Load Main Due Book
-            const cachedDues = localStorage.getItem(`due_book_${SHOP_ID}`);
-            if(cachedDues) {
-                allDues = JSON.parse(cachedDues);
-                renderDues();
-            }
-
-            rtdbOnValue(rtdbRef(rtdb, 'due_book'), (snapshot) => {
+            rtdbOnValue(rtdbRef(rtdb, 'due_book'), (snap) => {
                 document.getElementById('loading').style.display = 'none';
-                allDues = [];
-                if (snapshot.exists()) {
-                    allDues = Object.entries(snapshot.val())
-                        .map(([id, val]) => ({ id, ...val }))
-                        .filter(d => d.shop_id === SHOP_ID);
-                    
-                    localStorage.setItem(`due_book_${SHOP_ID}`, JSON.stringify(allDues));
-                } else {
-                    localStorage.removeItem(`due_book_${SHOP_ID}`);
-                }
-                renderDues(); 
+                allDues = snap.exists() ? Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).filter(d => d.shop_id === SHOP_ID) : [];
+                localStorage.setItem(`due_book_${SHOP_ID}`, JSON.stringify(allDues));
+                renderDues();
             });
+        };
+
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+            renderDues();
         };
 
         // Real-time Search and Date Filter
@@ -317,36 +316,28 @@
             let totalRecv = 0;
             let totalPay = 0;
 
-            // Create due map by name (assuming unique names)
             const dueMap = new Map();
             allDues.forEach(d => dueMap.set(d.name.toLowerCase(), d));
 
-            // Combine all contacts with dues (0 if none)
-            let allEntries = [];
-            allContacts.customers.forEach(c => {
-                const nameLow = c.name.toLowerCase();
-                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
-                allEntries.push({ ...d, name: c.name, type: 'receive' });
-            });
-            allContacts.suppliers.forEach(c => {
-                const nameLow = c.name.toLowerCase();
-                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
-                allEntries.push({ ...d, name: c.name, type: 'pay' });
-            });
+            let contacts = [];
+            if (currentTab === 'customers') contacts = allContacts.customers;
+            else if (currentTab === 'suppliers') contacts = allContacts.suppliers;
+            else if (currentTab === 'staff') contacts = allContacts.staff;
 
-            let filteredDues = allEntries;
-            if(searchTerm) {
-                filteredDues = allEntries.filter(d => d.name.toLowerCase().includes(searchTerm));
-            }
+            let filteredContacts = contacts.filter(c => c.name.toLowerCase().includes(searchTerm));
 
-            if (filteredDues.length === 0) {
+            if (filteredContacts.length === 0) {
                 listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-book-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No contacts found.</div>`;
             } else {
-                filteredDues.forEach(d => {
-                    if(d.type === 'receive') totalRecv += Number(d.current_due);
+                filteredContacts.forEach(c => {
+                    const nameLow = c.name.toLowerCase();
+                    const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0, type: currentTab === 'customers' ? 'receive' : 'pay' };
+                    const type = d.type || (currentTab === 'customers' ? 'receive' : 'pay');
+
+                    if (type === 'receive') totalRecv += Number(d.current_due);
                     else totalPay += Number(d.current_due);
 
-                    const isRecv = d.type === 'receive';
+                    const isRecv = type === 'receive';
                     const typeLabel = isRecv ? 'Receive (পাব)' : 'Pay (দিব)';
                     const typeClass = isRecv ? 'type-recv' : 'type-pay';
                     const cardClass = isRecv ? 'receive' : 'pay';
@@ -355,7 +346,7 @@
                     const html = `
                     <div class="due-card ${cardClass}">
                         <div class="dc-header">
-                            <div class="dc-name">${d.name || 'Unknown'}</div>
+                            <div class="dc-name">${c.name || 'Unknown'}</div>
                             <div class="dc-type ${typeClass}">${typeLabel}</div>
                         </div>
                         <div class="dc-body">
@@ -363,20 +354,21 @@
                             <div class="dc-due-amt" style="color:${btnColor}">৳${Number(d.current_due).toLocaleString()}</div>
                         </div>
                         <div class="btn-group">
-                            <button onclick="openHistory('${d.id || ''}')" class="btn-action btn-history"><i class="fas fa-history"></i> History</button>
-                            ${Number(d.current_due) > 0 ? `<button onclick="openPayModal('${d.id || ''}', '${d.type}', '${d.name.replace(/'/g, "\\'")}', ${d.current_due})" class="btn-action btn-update" style="background:${btnColor}">
+                            <button onclick="openHistory('${d.id || ''}', '${c.name}')" class="btn-action btn-history"><i class="fas fa-history"></i> History</button>
+                            <button onclick="openPayModal('${d.id || ''}', '${type}', '${c.name.replace(/'/g, "\\'")}', ${d.current_due})" class="btn-action btn-update" style="background:${btnColor}">
                                 <i class="fas ${isRecv ? 'fa-hand-holding-usd' : 'fa-money-bill-wave'}"></i> Update
-                            </button>` : ''}
+                            </button>
                         </div>
                     </div>`;
                     listEl.insertAdjacentHTML('beforeend', html);
                 });
             }
 
-            // Update Top Boxes (Overall totals)
+            // Update summary with overall, not filtered
             let overallRecv = 0, overallPay = 0;
-            allEntries.forEach(d => {
-                if(d.type === 'receive') overallRecv += Number(d.current_due);
+            [...allContacts.customers, ...allContacts.suppliers, ...allContacts.staff].forEach(c => {
+                const d = dueMap.get(c.name.toLowerCase()) || { current_due: 0, type: currentTab === 'customers' ? 'receive' : 'pay' };
+                if (d.type === 'receive') overallRecv += Number(d.current_due);
                 else overallPay += Number(d.current_due);
             });
             document.getElementById('sumRecv').innerText = `৳${overallRecv.toLocaleString()}`;
@@ -389,7 +381,7 @@
             const dateTo = new Date(document.getElementById('dateTo').value).setHours(23,59,59,999);
 
             filteredHistory = allHistory.filter(h => {
-                const matchName = h.name ? h.name.toLowerCase().includes(term) : false;
+                const matchName = h.name.toLowerCase().includes(term);
                 const hDate = new Date(h.date).getTime();
                 const matchDate = hDate >= dateFrom && hDate <= dateTo;
                 return matchName && matchDate;
@@ -402,15 +394,14 @@
             const listEl = document.getElementById('historyList');
             listEl.innerHTML = '';
 
-            if(filteredHistory.length === 0) {
+            if (filteredHistory.length === 0) {
                 listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;">No records found.</div>`;
                 return;
             }
 
             filteredHistory.forEach(h => {
                 const d = new Date(h.date);
-                const isPositive = h.type === 'receive' ? (h.action.includes('Received') ? true : false) : (h.action.includes('Paid') ? false : true);
-                
+                const isPositive = h.type === 'receive' ? h.action.includes('Received') : !h.action.includes('Paid');
                 const cardClass = isPositive ? 'in' : 'out';
                 const textClass = isPositive ? 'text-green' : 'text-red';
                 const sign = isPositive ? '+' : '-';
@@ -431,7 +422,9 @@
             });
         }
 
-        // --- PAYMENT LOGIC ---
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        // Payment Modal
         window.openPayModal = (id, type, name, currentAmt) => {
             document.getElementById('payDueId').value = id;
             document.getElementById('payDueType').value = type;
@@ -449,6 +442,7 @@
         document.getElementById('payForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('paySubmitBtn');
+            const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             btn.disabled = true;
 
@@ -458,9 +452,9 @@
             const currentAmt = Number(document.getElementById('payCurrentAmt').value);
             const payAmt = Number(document.getElementById('payAmount').value);
 
-            if(payAmt <= 0 || payAmt > currentAmt) {
+            if (payAmt <= 0 || payAmt > currentAmt) {
                 alert("Invalid amount! Cannot be more than current due.");
-                btn.innerHTML = 'Confirm Update'; btn.disabled = false; return;
+                btn.innerHTML = originalText; btn.disabled = false; return;
             }
 
             const newDue = currentAmt - payAmt;
@@ -468,33 +462,23 @@
 
             try {
                 if (!id) {
-                    // Create new due entry if no id
-                    const newDueRef = await push(rtdbRef(rtdb, 'due_book'));
+                    const newDueRef = push(rtdbRef(rtdb, 'due_book'));
                     id = newDueRef.key;
-                    await update(rtdbRef(rtdb, `due_book/${id}`), { 
-                        shop_id: SHOP_ID,
-                        name: name,
-                        type: type,
-                        current_due: newDue,
-                        total_amount: currentAmt, // Assume total_amount is currentAmt initially
-                        created_at: Date.now(),
-                        updated_at: Date.now() 
-                    });
-                } else {
-                    // Update existing
-                    await update(rtdbRef(rtdb, `due_book/${id}`), { 
-                        current_due: newDue, 
-                        updated_at: Date.now() 
-                    });
                 }
+                await update(rtdbRef(rtdb, `due_book/${id}`), { 
+                    shop_id: SHOP_ID,
+                    name: name,
+                    type: type,
+                    current_due: newDue,
+                    total_amount: currentAmt, 
+                    updated_at: Date.now() 
+                });
 
-                // Add to Due History
                 await push(rtdbRef(rtdb, 'due_history'), {
                     due_id: id, shop_id: SHOP_ID, name: name, type: type,
                     action: actionText, amount: payAmt, balance_left: newDue, date: Date.now()
                 });
 
-                // Update Cash Box
                 const cashType = type === 'receive' ? 'cash_in' : 'cash_out';
                 const modifier = type === 'receive' ? payAmt : -payAmt;
 
@@ -505,28 +489,28 @@
                     amount: payAmt, note: `Due ${actionText}: ${name}`, created_at: Date.now()
                 });
 
-                document.getElementById('payModal').style.display = 'none';
+                closeModal('payModal');
 
             } catch (err) {
-                alert("Error updating: " + err.message);
+                alert("Error: " + err.message);
             } finally {
-                btn.innerHTML = 'Confirm Update'; btn.disabled = false;
+                btn.innerHTML = originalText; btn.disabled = false;
             }
         });
 
-        // --- HISTORY LOGIC ---
-        window.openHistory = (id) => {
+        // History Modal
+        window.openHistory = (id, name) => {
             const tl = document.getElementById('historyTimeline');
             tl.innerHTML = '';
             
-            const specificHistory = allHistory.filter(h => h.due_id === id);
+            specificHistory = allHistory.filter(h => h.due_id === id);
             
-            if(specificHistory.length === 0) {
+            if (specificHistory.length === 0) {
                 tl.innerHTML = '<p style="text-align:center; color:#9ca3af; padding: 20px;">No transaction records found.</p>';
             } else {
                 specificHistory.forEach(h => {
                     const d = new Date(h.date);
-                    const color = h.type === 'receive' ? (h.action==='Received'?'green':'blue') : (h.action==='Paid'?'red':'blue');
+                    const color = h.type === 'receive' ? (h.action === 'Received' ? 'green' : 'blue') : (h.action === 'Paid' ? 'red' : 'blue');
 
                     tl.innerHTML += `
                         <div class="tl-item">
@@ -545,47 +529,84 @@
                     `;
                 });
             }
+            document.getElementById('historyModal').querySelector('h3').innerText = `History for ${name}`;
             document.getElementById('historyModal').style.display = 'flex';
         };
 
-        // --- DUE PDF EXPORT ---
+        // Download Specific History PDF
+        window.downloadSpecificHistoryPDF = () => {
+            if (specificHistory.length === 0) { alert("No history to download!"); return; }
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '20px';
+            tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
+            
+            let trs = '';
+            specificHistory.forEach(h => {
+                const d = new Date(h.date).toLocaleDateString('en-GB');
+                trs += `<tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${d}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; font-weight:bold;">${h.name}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${h.action}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align:right; font-weight:bold;">${Number(h.amount).toLocaleString()}</td>
+                </tr>`;
+            });
+
+            tempDiv.innerHTML = `
+                <h2 style="text-align:center; margin-bottom: 5px;">${SHOP_NAME}</h2>
+                <p style="text-align:center; font-size: 14px; margin-bottom: 20px;">Specific Due History for ${specificHistory[0].name}</p>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead style="background-color: #4F46E5; color: white;">
+                        <tr>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Party Name</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Action</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; text-align:right;">Amount (৳)</th>
+                        </tr>
+                    </thead>
+                    <tbody>${trs}</tbody>
+                </table>
+            `;
+            
+            html2pdf().set({
+                margin: 10, filename: `Due_History_${specificHistory[0].name}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(tempDiv).save();
+        };
+
+        // Download Due PDF (similar to previous)
         window.downloadDuePDF = () => {
-            // Use allEntries from renderDues logic
+            // Implement as before, but filter by currentTab if needed
             const searchTerm = document.getElementById('searchName').value.trim();
             const dateStr = new Date().toLocaleDateString('en-GB');
 
             const dueMap = new Map();
             allDues.forEach(d => dueMap.set(d.name.toLowerCase(), d));
 
-            let allEntries = [];
-            allContacts.customers.forEach(c => {
-                const nameLow = c.name.toLowerCase();
-                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
-                allEntries.push({ ...d, name: c.name, type: 'receive' });
-            });
-            allContacts.suppliers.forEach(c => {
-                const nameLow = c.name.toLowerCase();
-                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
-                allEntries.push({ ...d, name: c.name, type: 'pay' });
+            let contacts = [];
+            if (currentTab === 'customers') contacts = allContacts.customers;
+            else if (currentTab === 'suppliers') contacts = allContacts.suppliers;
+            else if (currentTab === 'staff') contacts = allContacts.staff;
+
+            let listToPrint = contacts.map(c => {
+                const d = dueMap.get(c.name.toLowerCase()) || { current_due: 0, total_amount: 0, created_at: Date.now(), type: currentTab === 'customers' ? 'receive' : 'pay' };
+                return { ...d, name: c.name };
             });
 
-            let listToPrint = allEntries;
-            if(searchTerm) listToPrint = allEntries.filter(d => d.name && d.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            if (searchTerm) listToPrint = listToPrint.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-            if(listToPrint.length === 0) { alert("No records to generate PDF!"); return; }
-
-            const btn = document.getElementById('btnDuePdf');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            if (listToPrint.length === 0) { alert("No records to generate PDF!"); return; }
 
             let rowsHtml = '';
             let sumR = 0, sumP = 0;
             
             listToPrint.forEach(d => {
-                if(d.type === 'receive') sumR += Number(d.current_due);
+                if (d.type === 'receive') sumR += Number(d.current_due);
                 else sumP += Number(d.current_due);
 
-                const cDate = new Date(d.created_at || Date.now()).toLocaleDateString('en-GB');
+                const cDate = new Date(d.created_at).toLocaleDateString('en-GB');
                 const typeTxt = d.type === 'receive' ? '<span style="color:green; font-weight:bold;">Receive</span>' : '<span style="color:red; font-weight:bold;">Pay</span>';
 
                 rowsHtml += `
@@ -602,9 +623,9 @@
             const defaultTemplate = `
                 <div style="font-family: 'Hind Siliguri', sans-serif; padding: 20px;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="font-size: 24px; margin-bottom: 5px; color: #1f2937;">{{SHOP_NAME}}</h2>
-                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Due Ledger Report (বকেয়া খাতা)</p>
-                        <p style="font-size: 12px; font-weight: bold; margin-top: 5px;">Date: {{DATE_RANGE}} | ${searchTerm ? 'Filtered: '+searchTerm : 'All Active Dues'}</p>
+                        <h2 style="font-size: 24px; margin-bottom: 5px; color: #1f2937;">${SHOP_NAME}</h2>
+                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Due Ledger Report (বকেয়া খাতা) - ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}</p>
+                        <p style="font-size: 12px; font-weight: bold; margin-top: 5px;">Date: ${dateStr} | ${searchTerm ? 'Filtered: '+searchTerm : 'All'}</p>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
                         <thead style="background-color: #4F46E5; color: white;">
@@ -616,54 +637,36 @@
                                 <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Current Due</th>
                             </tr>
                         </thead>
-                        <tbody>{{TABLE_ROWS}}</tbody>
+                        <tbody>${rowsHtml}</tbody>
                     </table>
                     <div style="margin-top:20px; display:flex; justify-content:flex-end;">
                         <div style="width:250px; background:#f9fafb; padding:15px; border-radius:8px; border:1px solid #ddd;">
                             <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:green; font-weight:bold;">
-                                <span>Total Receivable:</span><span>৳{{TOTAL_RECEIVABLE}}</span>
+                                <span>Total Receivable:</span><span>৳${sumR.toLocaleString()}</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; color:red; font-weight:bold;">
-                                <span>Total Payable:</span><span>৳{{TOTAL_PAYABLE}}</span>
+                                <span>Total Payable:</span><span>৳${sumP.toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
 
-            let finalTemplate = globalPdfTemplateCode ? globalPdfTemplateCode : defaultTemplate;
-            
-            finalTemplate = finalTemplate.replace(/{{SHOP_NAME}}/g, SHOP_NAME);
-            finalTemplate = finalTemplate.replace(/{{DATE_RANGE}}/g, dateStr);
-            finalTemplate = finalTemplate.replace(/{{TABLE_ROWS}}/g, rowsHtml);
-            finalTemplate = finalTemplate.replace(/{{TOTAL_RECEIVABLE}}/g, sumR.toLocaleString());
-            finalTemplate = finalTemplate.replace(/{{TOTAL_PAYABLE}}/g, sumP.toLocaleString());
-
             const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = finalTemplate;
-            
+            tempDiv.innerHTML = globalPdfTemplateCode || defaultTemplate;
+
             html2pdf().set({
-                margin: 10, filename: `Due_Ledger_${dateStr.replace(/\//g, '-')}.pdf`,
+                margin: 10, filename: `Due_Ledger_${currentTab}_${dateStr.replace(/\//g, '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank');
-                btn.innerHTML = originalText;
-            }).catch(err => {
-                alert('Error generating PDF: ' + err.message);
-                btn.innerHTML = originalText;
-            });
+            }).from(tempDiv).save();
         };
 
-        // --- HISTORY PDF EXPORT ---
+        // Download Global History PDF
         window.downloadHistoryPDF = () => {
-            if(filteredHistory.length === 0) { alert("No data to download!"); return; }
+            if (filteredHistory.length === 0) { alert("No data to download!"); return; }
             
-            const btn = document.getElementById('btnHistoryPdf');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
             const tempDiv = document.createElement('div');
             tempDiv.style.padding = '20px';
             tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
@@ -700,13 +703,7 @@
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank');
-                btn.innerHTML = originalText;
-            }).catch(err => {
-                alert('Error generating PDF: ' + err.message);
-                btn.innerHTML = originalText;
-            });
+            }).from(tempDiv).save();
         };
     </script>
 </body>
