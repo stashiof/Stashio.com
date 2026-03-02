@@ -6,567 +6,331 @@
     <title>Due Book - Stashio</title>
     
     <meta name="theme-color" content="#4F46E5">
-
     <script>
-        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        
-        if (!loggedInUser) {
-            window.location.replace("index.html");
-        } else if (!activeShopId) {
-            window.location.replace("dashboard.html");
-        }
+        if (!activeShopId) window.location.replace("dashboard.html");
     </script>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    
     <style>
         :root {
             --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
             --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
-            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
 
-        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        /* Dynamic Header Area */
+        /* Header */
         .app-header {
-            position: relative; padding: 20px 20px 45px 20px; color: white; 
-            border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
-            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
-            overflow: hidden;
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            padding: 20px 20px 60px 20px; color: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
         }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
-        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
+        .header-top { display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 700; }
+        .header-top a { color: white; text-decoration: none; }
+
+        /* Tabs */
+        .tab-container { display: flex; background: white; margin: -30px 15px 15px 15px; border-radius: 15px; padding: 5px; box-shadow: var(--shadow); position: relative; z-index: 10; }
+        .tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 700; color: var(--text-light); cursor: pointer; border-radius: 12px; transition: 0.3s; }
+        .tab.active { background: var(--primary); color: white; }
+
+        /* Search & Summary */
+        .search-area { padding: 0 15px; margin-bottom: 15px; }
+        .search-box { position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: none; outline: none; box-shadow: var(--shadow); font-size: 14px; }
+
+        .summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
+        .sum-card { background: white; padding: 15px; border-radius: 15px; box-shadow: var(--shadow); text-align: center; }
+        .sum-label { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+        .sum-val { font-size: 18px; font-weight: 800; margin-top: 5px; }
+        .text-receive { color: var(--success); }
+        .text-pay { color: var(--danger); }
+
+        /* List Items */
+        .contact-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .contact-card { background: white; padding: 15px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+        .c-info h4 { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+        .c-info p { font-size: 11px; color: var(--text-light); margin-top: 2px; }
         
-        .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
-        .header-title a { color: white; text-decoration: none; }
+        .c-due { text-align: right; }
+        .due-amt { font-size: 16px; font-weight: 800; }
+        .btn-action { margin-top: 5px; padding: 5px 12px; border-radius: 8px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-receive { background: #dcfce3; color: var(--success); }
+        .btn-pay { background: #fee2e2; color: var(--danger); }
 
-        /* Filter Tabs (Customer, Staff, Supplier) */
-        .filter-tabs {
-            position: relative; z-index: 60; margin: -25px 15px 15px 15px;
-            display: flex; gap: 8px; background: var(--white); padding: 8px;
-            border-radius: 50px; box-shadow: var(--shadow);
-        }
-        .tab-btn {
-            flex: 1; background: transparent; border: none; padding: 10px 0;
-            border-radius: 50px; font-size: 13px; font-weight: 700; color: var(--text-light);
-            cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .tab-btn.active { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 4px 10px rgba(79,70,229,0.3); }
-
-        /* Search Bar */
-        .search-container { padding: 0 15px; margin-bottom: 15px; }
-        .search-box { background: var(--white); border-radius: 50px; padding: 5px 15px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
-        .search-box i { color: var(--text-light); font-size: 14px; }
-        .search-box input { flex: 1; border: none; padding: 12px 0; font-size: 14px; outline: none; background: transparent; color: var(--text-dark); }
-        .search-box button { background: var(--primary); border: none; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; box-shadow: 0 4px 10px rgba(79,70,229,0.3); }
-
-        /* Due Summary Cards */
-        .summary-cards { display: flex; gap: 12px; padding: 0 15px; margin-bottom: 20px; }
-        .due-card { flex: 1; background: var(--white); border-radius: 14px; padding: 12px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
-        .due-card-title { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; margin-bottom: 2px; }
-        .due-card-amount { font-size: 18px; font-weight: 800; color: var(--danger); }
-
-        /* Contact List */
-        .contact-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
-        .contact-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); border-left: 4px solid var(--danger); border-top: 1px solid #f8fafc; border-right: 1px solid #f8fafc; border-bottom: 1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; }
-        .contact-card.customer { border-left-color: var(--primary); }
-        .contact-card.staff { border-left-color: var(--warning); }
-        .contact-card.supplier { border-left-color: var(--success); }
-
-        .contact-info h4 { font-size: 15px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
-        .contact-info .contact-phone { font-size: 11px; color: var(--text-light); font-weight: 500; display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
-        .contact-info .contact-meta { display: flex; gap: 8px; align-items: center; font-size: 10px; font-weight: 600; }
-        .contact-type-badge { background: #f1f5f9; padding: 2px 8px; border-radius: 50px; color: var(--text-light); text-transform: uppercase; }
-        .due-amount { font-size: 12px; color: var(--danger); font-weight: 700; }
-        
-        .contact-actions { display: flex; gap: 10px; }
-        .btn-icon { width: 34px; height: 34px; border-radius: 10px; border: none; background: #f8fafc; color: var(--text-light); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn-icon:active { background: #f1f5f9; transform: scale(0.95); }
-        .btn-icon.pay { background: #dcfce3; color: var(--success); }
-        .btn-icon.receive { background: #fee2e2; color: var(--danger); }
-
-        /* Add Due Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .modal-content { background: white; width: 100%; max-width: 350px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .modal-header h3 { font-size: 16px; font-weight: 700; margin: 0; color: var(--text-dark); }
-        .btn-close-modal { background: white; border: 1px solid #e5e7eb; width: 28px; height: 28px; border-radius: 50%; color: var(--text-light); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-close-modal:active { background: #f1f5f9; }
-        .modal-body { padding: 20px; overflow-y: auto; }
-
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 350px; border-radius: 20px; overflow: hidden; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; }
         .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
-        .input-field { width: 100%; padding: 12px 15px; border: 2px solid #f1f5f9; border-radius: 12px; background: #f8fafc; outline: none; font-size: 14px; font-family: inherit; transition: 0.3s; color: var(--text-dark); }
-        .input-field:focus { border-color: var(--primary); background: white; }
-        .input-field[readonly] { background: #e5e7eb; border-color: #d1d5db; color: var(--text-light); font-weight: 600; }
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 5px; }
+        .input-field { width: 100%; padding: 12px; border: 2px solid #f1f5f9; border-radius: 12px; outline: none; font-size: 14px; transition: 0.3s; }
+        .input-field:focus { border-color: var(--primary); }
+        .btn-submit { width: 100%; padding: 14px; border-radius: 12px; border: none; color: white; font-weight: 700; cursor: pointer; }
 
-        .btn-submit { width: 100%; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 5px; }
-        .btn-submit.green { background: linear-gradient(135deg, var(--success), #059669); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
-        .btn-submit.red { background: linear-gradient(135deg, var(--danger), #dc2626); box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3); }
-        .btn-submit:active { transform: scale(0.98); }
+        #loading { text-align: center; padding: 50px; color: var(--text-light); }
     </style>
 </head>
 <body>
 
-    <div class="app-header" id="header-container">
-        <div class="header-bg"></div>
-        <div id="dynamicThemeContainer"></div>
+    <div class="app-header">
         <div class="header-top">
-            <div class="header-title">
-                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-                <span>Due Book</span>
-            </div>
+            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+            <span>Due Book (বাকি খাতা)</span>
         </div>
     </div>
 
-    <!-- Tab Filter: Customer / Staff / Supplier -->
-    <div class="filter-tabs">
-        <button class="tab-btn active" onclick="switchTab('customer')" id="tab-customer">Customer</button>
-        <button class="tab-btn" onclick="switchTab('staff')" id="tab-staff">Staff</button>
-        <button class="tab-btn" onclick="switchTab('supplier')" id="tab-supplier">Supplier</button>
+    <div class="tab-container">
+        <div class="tab active" onclick="switchTab('customers')">Customers</div>
+        <div class="tab" onclick="switchTab('suppliers')">Suppliers</div>
+        <div class="tab" onclick="switchTab('staffs')">Staffs</div>
     </div>
 
-    <!-- Search Bar -->
-    <div class="search-container">
+    <div class="search-area">
         <div class="search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search by name or phone...">
-            <button onclick="filterContacts()"><i class="fas fa-arrow-right"></i></button>
+            <input type="text" id="searchInput" placeholder="Search by name or phone..." oninput="filterList()">
         </div>
     </div>
 
-    <!-- Due Summary -->
     <div class="summary-cards">
-        <div class="due-card">
-            <div class="due-card-title">Total To Receive</div>
-            <div class="due-card-amount" id="totalReceive">৳0</div>
+        <div class="sum-card">
+            <div class="sum-label">To Receive</div>
+            <div class="sum-val text-receive" id="totalToReceive">৳0</div>
         </div>
-        <div class="due-card">
-            <div class="due-card-title">Total To Pay</div>
-            <div class="due-card-amount" id="totalPay">৳0</div>
+        <div class="sum-card">
+            <div class="sum-label">To Pay</div>
+            <div class="sum-val text-pay" id="totalToPay">৳0</div>
         </div>
     </div>
 
-    <!-- Loading -->
-    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
-        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>
-        Loading Contacts...
-    </div>
-
-    <!-- Contact List (Dynamic) -->
+    <div id="loading"><i class="fas fa-spinner fa-spin"></i> Loading context...</div>
     <div class="contact-list" id="contactList"></div>
 
-    <!-- Add / Receive Due Modal -->
-    <div class="modal-overlay" id="dueModal">
+    <div class="modal-overlay" id="trxModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalTitle">Add / Receive Due</h3>
-                <button onclick="closeDueModal()" class="btn-close-modal"><i class="fas fa-times"></i></button>
+                <h3 id="modalTitle">Update Due</h3>
+                <button onclick="closeModal()" style="border:none; background:none; font-size:20px;">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="dueForm">
-                    <input type="hidden" id="dueContactId">
-                    <input type="hidden" id="dueContactType">
-                    
+                <form id="trxForm">
+                    <input type="hidden" id="targetId">
+                    <input type="hidden" id="targetType">
                     <div class="input-group">
-                        <label>Contact Name</label>
-                        <input type="text" id="dueContactName" class="input-field" readonly>
+                        <label>Current Due: <span id="modalCurrentDue" style="color:var(--primary)">৳0</span></label>
                     </div>
-                    
                     <div class="input-group">
-                        <label>Current Due</label>
-                        <input type="text" id="dueCurrentAmount" class="input-field" readonly>
+                        <label>Transaction Type</label>
+                        <select id="trxAction" class="input-field">
+                            </select>
                     </div>
-
-                    <div class="input-group">
-                        <label>Action Type</label>
-                        <select id="dueActionType" class="input-field">
-                            <option value="receive">Receive Payment (They pay you)</option>
-                            <option value="add">Add Due (You pay them / They owe more)</option>
-                        </select>
-                    </div>
-
                     <div class="input-group">
                         <label>Amount (৳)</label>
-                        <input type="number" id="dueAmount" class="input-field" required step="any" placeholder="Enter amount">
+                        <input type="number" id="trxAmount" class="input-field" required placeholder="0.00">
                     </div>
-
                     <div class="input-group">
-                        <label>Note / Reason</label>
-                        <input type="text" id="dueNote" class="input-field" placeholder="e.g. Cash received, New purchase">
+                        <label>Note / Remarks</label>
+                        <input type="text" id="trxNote" class="input-field" placeholder="e.g. Received partial payment">
                     </div>
-
-                    <button type="submit" id="dueModalBtn" class="btn-submit green">Confirm</button>
+                    <button type="submit" id="submitBtn" class="btn-submit">Confirm Transaction</button>
                 </form>
             </div>
         </div>
     </div>
 
-
     <script type="module">
-        import { rtdb, ref, onValue, push, update, runTransaction } from './firebase_config.js';
+        import { rtdb, ref, onValue, push, update } from './firebase_config.js';
+        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
-        let currentTab = 'customer'; // customer, staff, supplier
-        let allContacts = {
-            customer: [],
-            staff: [],
-            supplier: []
+        let currentTab = 'customers';
+        let allData = { customers: [], suppliers: [], staffs: [] };
+
+        window.onload = () => {
+            fetchContacts();
         };
-        let filteredContacts = [];
 
-        // Theme Sync
-        onValue(ref(rtdb, 'global_settings/header_theme'), (snap) => {
-            const themeCode = snap.exists() ? snap.val().code : null;
-            if (themeCode && themeCode.trim() !== "") {
-                document.getElementById('dynamicThemeContainer').innerHTML = themeCode;
-                document.body.classList.add('has-theme');
-            } else {
-                document.getElementById('dynamicThemeContainer').innerHTML = "";
-                document.body.classList.remove('has-theme');
-            }
-        });
+        function fetchContacts() {
+            const types = ['customers', 'suppliers', 'staffs'];
+            let loadedCount = 0;
 
-        // Load Contacts (Customers, Staff, Suppliers)
-        function loadAllContacts() {
-            document.getElementById('loading').style.display = 'block';
-            
-            // Customers
-            onValue(ref(rtdb, 'contacts/customers'), (snap) => {
-                if (snap.exists()) {
-                    allContacts.customer = Object.entries(snap.val())
-                        .map(([id, val]) => ({ id, ...val, type: 'customer' }))
-                        .filter(c => c.shop_id === SHOP_ID);
-                } else {
-                    allContacts.customer = [];
-                }
-                renderCurrentTab();
-            });
-
-            // Staff
-            onValue(ref(rtdb, 'contacts/staff'), (snap) => {
-                if (snap.exists()) {
-                    allContacts.staff = Object.entries(snap.val())
-                        .map(([id, val]) => ({ id, ...val, type: 'staff' }))
-                        .filter(s => s.shop_id === SHOP_ID);
-                } else {
-                    allContacts.staff = [];
-                }
-                renderCurrentTab();
-            });
-
-            // Suppliers
-            onValue(ref(rtdb, 'contacts/suppliers'), (snap) => {
-                if (snap.exists()) {
-                    allContacts.supplier = Object.entries(snap.val())
-                        .map(([id, val]) => ({ id, ...val, type: 'supplier' }))
-                        .filter(s => s.shop_id === SHOP_ID);
-                } else {
-                    allContacts.supplier = [];
-                }
-                renderCurrentTab();
+            types.forEach(type => {
+                onValue(ref(rtdb, `contacts/${type}`), (snap) => {
+                    allData[type] = [];
+                    if (snap.exists()) {
+                        Object.entries(snap.val()).forEach(([id, val]) => {
+                            if (val.shop_id === SHOP_ID) {
+                                allData[type].push({ id, ...val });
+                            }
+                        });
+                    }
+                    loadedCount++;
+                    if (loadedCount === 3) {
+                        document.getElementById('loading').style.display = 'none';
+                        renderList();
+                        calculateTotalSummary();
+                    }
+                });
             });
         }
-
-        // Listen to Due Book Changes (Realtime)
-        onValue(ref(rtdb, 'due_book'), (snap) => {
-            // This will automatically trigger re-render via loadAllContacts -> renderCurrentTab
-            // But we can just call renderCurrentTab() again
-            renderCurrentTab();
-        });
 
         window.switchTab = (tab) => {
             currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            renderCurrentTab();
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderList();
         };
 
-        window.filterContacts = () => {
-            renderCurrentTab();
-        };
+        window.filterList = () => renderList();
 
-        function renderCurrentTab() {
-            document.getElementById('loading').style.display = 'none';
-            
-            let contacts = allContacts[currentTab] || [];
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (searchTerm) {
-                contacts = contacts.filter(c => 
-                    c.name.toLowerCase().includes(searchTerm) || 
-                    (c.phone && c.phone.includes(searchTerm))
-                );
-            }
-
-            // Fetch due amounts from due_book
-            const dueBookRef = ref(rtdb, 'due_book');
-            onValue(dueBookRef, (snap) => {
-                const dueData = snap.exists() ? snap.val() : {};
-                
-                // Attach due amounts to contacts
-                const contactsWithDue = contacts.map(contact => {
-                    const dueEntry = Object.values(dueData).find(d => 
-                        d.shop_id === SHOP_ID && 
-                        d.name === contact.name && 
-                        d.type === (contact.type === 'customer' ? 'receive' : (contact.type === 'supplier' ? 'pay' : 'staff'))
-                    );
-                    return {
-                        ...contact,
-                        due_amount: dueEntry ? dueEntry.current_due || 0 : 0,
-                        due_id: dueEntry ? dueEntry.id : null
-                    };
-                });
-
-                filteredContacts = contactsWithDue;
-                renderContactList(filteredContacts);
-                updateSummaryTotals(filteredContacts);
-            }, { onlyOnce: false }); // Keep listening for due updates
-        }
-
-        function renderContactList(contacts) {
+        function renderList() {
             const listEl = document.getElementById('contactList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             listEl.innerHTML = '';
 
-            if (contacts.length === 0) {
-                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-user-slash" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No contacts found.</div>`;
+            const filtered = allData[currentTab].filter(item => 
+                item.name.toLowerCase().includes(searchTerm) || 
+                (item.phone && item.phone.includes(searchTerm))
+            );
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; color:var(--text-light); padding:20px;">No results found.</p>`;
                 return;
             }
 
-            contacts.forEach(contact => {
-                const dueAmount = contact.due_amount || 0;
-                const dueAmountFormatted = `৳${dueAmount.toLocaleString()}`;
-                
-                // Determine badge color based on type
-                let typeClass = 'customer';
-                if (contact.type === 'staff') typeClass = 'staff';
-                if (contact.type === 'supplier') typeClass = 'supplier';
+            filtered.forEach(item => {
+                const due = Number(item.due || 0);
+                // Customers & Staff usually owe us (Receive), Suppliers we owe (Pay)
+                const isPayable = currentTab === 'suppliers';
+                const dueColor = isPayable ? 'var(--danger)' : 'var(--success)';
+                const btnClass = isPayable ? 'btn-pay' : 'btn-receive';
+                const btnText = isPayable ? 'Payment' : 'Collection';
 
-                const phoneHtml = contact.phone ? `<i class="fas fa-phone-alt"></i> ${contact.phone}` : '<i class="fas fa-phone-alt" style="opacity:0.4;"></i> No phone';
-                
                 const html = `
-                <div class="contact-card ${typeClass}">
-                    <div class="contact-info">
-                        <h4>${contact.name}</h4>
-                        <div class="contact-phone">${phoneHtml}</div>
-                        <div class="contact-meta">
-                            <span class="contact-type-badge">${contact.type}</span>
-                            <span class="due-amount">Due: ${dueAmountFormatted}</span>
-                        </div>
+                <div class="contact-card">
+                    <div class="c-info">
+                        <h4>${item.name}</h4>
+                        <p><i class="fas fa-phone-alt"></i> ${item.phone || 'No Phone'}</p>
                     </div>
-                    <div class="contact-actions">
-                        <button onclick="openDueModal('${contact.id}', '${contact.type}', '${contact.name}', ${dueAmount})" class="btn-icon pay"><i class="fas fa-hand-holding-usd"></i></button>
-                        <button onclick="openDueModal('${contact.id}', '${contact.type}', '${contact.name}', ${dueAmount}, 'receive')" class="btn-icon receive"><i class="fas fa-hand-holding-heart"></i></button>
+                    <div class="c-due">
+                        <div class="due-amt" style="color:${dueColor}">৳${due.toLocaleString()}</div>
+                        <button class="btn-action ${btnClass}" onclick="openTrxModal('${item.id}', '${item.name}', ${due}, '${currentTab}')">
+                            <i class="fas fa-plus-circle"></i> ${btnText}
+                        </button>
                     </div>
                 </div>`;
                 listEl.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        function updateSummaryTotals(contacts) {
-            let totalReceive = 0; // Customers owe us (receive)
-            let totalPay = 0;     // We owe suppliers (pay)
+        function calculateTotalSummary() {
+            let receive = 0;
+            let pay = 0;
 
-            contacts.forEach(c => {
-                if (c.type === 'customer') totalReceive += c.due_amount || 0;
-                if (c.type === 'supplier') totalPay += c.due_amount || 0;
-                // Staff due could be considered as either, but for summary we keep separate maybe
-                // For simplicity, we include staff in totalPay if they are owed money? 
-                // We'll keep staff separate for now
-            });
+            allData.customers.forEach(c => receive += Number(c.due || 0));
+            allData.staffs.forEach(s => receive += Number(s.due || 0));
+            allData.suppliers.forEach(sup => pay += Number(sup.due || 0));
 
-            document.getElementById('totalReceive').innerText = `৳${totalReceive.toLocaleString()}`;
-            document.getElementById('totalPay').innerText = `৳${totalPay.toLocaleString()}`;
+            document.getElementById('totalToReceive').innerText = `৳${receive.toLocaleString()}`;
+            document.getElementById('totalToPay').innerText = `৳${pay.toLocaleString()}`;
         }
 
-        // --- DUE MODAL LOGIC ---
-        window.openDueModal = (contactId, type, name, currentDue, presetAction = 'add') => {
-            document.getElementById('dueContactId').value = contactId;
-            document.getElementById('dueContactType').value = type;
-            document.getElementById('dueContactName').value = name;
-            document.getElementById('dueCurrentAmount').value = `৳${currentDue}`;
-            document.getElementById('dueAmount').value = '';
-            document.getElementById('dueNote').value = '';
+        window.openTrxModal = (id, name, currentDue, type) => {
+            document.getElementById('targetId').value = id;
+            document.getElementById('targetType').value = type;
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalCurrentDue').innerText = `৳${currentDue}`;
+            
+            const actionSelect = document.getElementById('trxAction');
+            actionSelect.innerHTML = '';
 
-            // Set action type based on who is paying
-            // For customers: "receive" means they pay us, "add" means they owe more
-            // For suppliers: "receive" means we pay them, "add" means they owe us more (rare)
-            // Default: 'add' (increase due)
-            const actionSelect = document.getElementById('dueActionType');
-            if (presetAction === 'receive') {
-                actionSelect.value = 'receive';
+            if (type === 'suppliers') {
+                actionSelect.innerHTML = `
+                    <option value="pay">I am Paying (বাকি কমানো)</option>
+                    <option value="add">Add More Due (বাকি বাড়ানো)</option>`;
+                document.getElementById('submitBtn').style.background = 'var(--danger)';
             } else {
-                actionSelect.value = 'add';
+                actionSelect.innerHTML = `
+                    <option value="receive">Receiving Cash (বাকি কমানো)</option>
+                    <option value="add">Add More Due (বাকি বাড়ানো)</option>`;
+                document.getElementById('submitBtn').style.background = 'var(--success)';
             }
 
-            document.getElementById('dueModal').style.display = 'flex';
+            document.getElementById('trxModal').style.display = 'flex';
         };
 
-        window.closeDueModal = () => {
-            document.getElementById('dueModal').style.display = 'none';
+        window.closeModal = () => {
+            document.getElementById('trxModal').style.display = 'none';
+            document.getElementById('trxForm').reset();
         };
 
-        document.getElementById('dueForm').addEventListener('submit', async (e) => {
+        document.getElementById('trxForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const btn = document.getElementById('dueModalBtn');
-            const originalText = btn.innerText;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            const btn = document.getElementById('submitBtn');
+            const id = document.getElementById('targetId').value;
+            const type = document.getElementById('targetType').value;
+            const action = document.getElementById('trxAction').value;
+            const amount = Number(document.getElementById('trxAmount').value);
+            const note = document.getElementById('trxNote').value;
+
+            if (amount <= 0) return alert("Please enter a valid amount");
+
             btn.disabled = true;
-
-            const contactId = document.getElementById('dueContactId').value;
-            const contactType = document.getElementById('dueContactType').value;
-            const contactName = document.getElementById('dueContactName').value;
-            const actionType = document.getElementById('dueActionType').value; // 'add' or 'receive'
-            const amount = Number(document.getElementById('dueAmount').value);
-            const note = document.getElementById('dueNote').value || 'Manual adjustment';
-
-            // Determine due type in due_book (receive = customer owes us, pay = we owe supplier)
-            let dueType = 'receive'; // default for customers
-            if (contactType === 'supplier') dueType = 'pay';
-            if (contactType === 'staff') dueType = 'staff'; // staff can have both? For now treat as 'staff'
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
             try {
-                // 1. Find or create due_book entry
-                const dueBookRef = ref(rtdb, 'due_book');
-                const dueSnapshot = await getDueEntry(contactName, dueType);
-                
-                let dueId;
-                let currentDue = 0;
-
-                if (dueSnapshot) {
-                    dueId = dueSnapshot.id;
-                    currentDue = dueSnapshot.current_due || 0;
-                } else {
-                    // Create new due entry
-                    const newDueRef = await push(dueBookRef, {
-                        shop_id: SHOP_ID,
-                        type: dueType,
-                        name: contactName,
-                        total_amount: 0,
-                        current_due: 0,
-                        created_at: Date.now()
-                    });
-                    dueId = newDueRef.key;
-                }
-
-                // 2. Calculate new due based on action
-                let newDue = currentDue;
-                let cashImpact = 0;
-                let cashType = '';
-                let historyAction = '';
-
-                if (actionType === 'add') {
-                    // Increase due
-                    newDue = currentDue + amount;
-                    historyAction = 'Due Added (Manual)';
-                    if (dueType === 'receive') {
-                        // Customer owes more -> no cash impact, just a record
-                    } else if (dueType === 'pay') {
-                        // We owe supplier more -> no cash impact, just a record
-                    }
-                    // Optionally, if we are adding due because we paid cash? That's separate.
-                } else {
-                    // Receive (decrease due)
-                    newDue = currentDue - amount;
-                    if (newDue < 0) newDue = 0; // Can't go negative
-                    historyAction = 'Due Received (Payment)';
-                    
-                    // Cash impact: If it's a payment to us (customer paying), cash increases.
-                    // If it's us paying supplier, cash decreases.
-                    if (dueType === 'receive') {
-                        // Customer paying us -> Cash In
-                        cashImpact = amount;
-                        cashType = 'cash_in';
-                    } else if (dueType === 'pay') {
-                        // We paying supplier -> Cash Out
-                        cashImpact = amount;
-                        cashType = 'cash_out';
-                    } else if (dueType === 'staff') {
-                        // Staff payment (salary?) -> Cash Out
-                        cashImpact = amount;
-                        cashType = 'cash_out';
-                    }
-                }
-
-                // 3. Update due_book entry
-                await update(ref(rtdb, `due_book/${dueId}`), {
-                    current_due: newDue,
-                    total_amount: (dueSnapshot?.total_amount || 0) + (actionType === 'add' ? amount : 0) // Only increase total if adding
+                // 1. Update Contact Due
+                await runTransaction(ref(rtdb, `contacts/${type}/${id}/due`), (current) => {
+                    let val = Number(current) || 0;
+                    if (action === 'add') return val + amount;
+                    return val - amount; // receive or pay
                 });
 
-                // 4. Save to due_history
+                // 2. Log History
                 await push(ref(rtdb, 'due_history'), {
-                    due_id: dueId,
-                    name: contactName,
-                    type: dueType,
-                    action: historyAction,
+                    shop_id: SHOP_ID,
+                    contact_id: id,
+                    contact_type: type,
+                    action: action,
                     amount: amount,
                     note: note,
                     date: Date.now()
                 });
 
-                // 5. Handle cash transaction if applicable
-                if (cashImpact > 0) {
-                    // Update cash balance
+                // 3. Update Cashbox if cash was actually received or paid
+                if (action === 'receive' || action === 'pay') {
+                    const cashAction = action === 'receive' ? 'cash_in' : 'cash_out';
+                    
                     await runTransaction(ref(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => {
-                        let newBal = (bal || 0) + (cashType === 'cash_in' ? cashImpact : -cashImpact);
-                        return newBal;
+                        return action === 'receive' ? (bal || 0) + amount : (bal || 0) - amount;
                     });
 
-                    // Log cash transaction
                     await push(ref(rtdb, 'cash_transactions'), {
                         shop_id: SHOP_ID,
-                        type: cashType,
+                        type: cashAction,
                         source: 'due_ledger',
-                        amount: cashImpact,
-                        note: `${historyAction} for ${contactName}: ${note}`,
+                        amount: amount,
+                        note: `Due ${action} from ${document.getElementById('modalTitle').innerText}: ${note}`,
                         created_at: Date.now()
                     });
                 }
 
-                closeDueModal();
-                alert('Due updated successfully!');
-                renderCurrentTab(); // Refresh
-
+                alert("Transaction Successful!");
+                closeModal();
             } catch (err) {
-                alert('Error: ' + err.message);
+                alert("Error: " + err.message);
             } finally {
-                btn.innerHTML = originalText;
                 btn.disabled = false;
+                btn.innerText = 'Confirm Transaction';
             }
         });
-
-        // Helper to find due entry by name and type
-        async function getDueEntry(name, type) {
-            return new Promise((resolve) => {
-                onValue(ref(rtdb, 'due_book'), (snap) => {
-                    if (snap.exists()) {
-                        const entries = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val }));
-                        const found = entries.find(e => e.shop_id === SHOP_ID && e.name === name && e.type === type);
-                        resolve(found);
-                    } else {
-                        resolve(null);
-                    }
-                }, { onlyOnce: true });
-            });
-        }
-
-        // Initialize
-        loadAllContacts();
-
-        // Close modal when clicking overlay
-        document.getElementById('dueModal').addEventListener('click', function(e) {
-            if (e.target === this) closeDueModal();
-        });
-
     </script>
 </body>
 </html>
