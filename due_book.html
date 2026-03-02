@@ -3,334 +3,374 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Due Book - Stashio</title>
+    <title>Due Book Pro - Stashio</title>
     
     <meta name="theme-color" content="#4F46E5">
-    <script>
-        const activeShopId = localStorage.getItem('activeShopId');
-        if (!activeShopId) window.location.replace("dashboard.html");
-    </script>
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
-            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
-            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --primary: #4F46E5; --secondary: #764ba2; --bg: #f3f4f6;
+            --white: #ffffff; --text: #1f2937; --light-text: #6b7280;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
             --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 20px; }
+
+        /* Navigation Views */
+        .view { display: none; animation: fadeIn 0.3s ease; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Header */
-        .app-header {
-            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
-            padding: 20px 20px 60px 20px; color: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
-        }
+        .app-header { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 100; }
         .header-top { display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 700; }
-        .header-top a { color: white; text-decoration: none; }
+        .header-top i { cursor: pointer; }
 
-        /* Tabs */
-        .tab-container { display: flex; background: white; margin: -30px 15px 15px 15px; border-radius: 15px; padding: 5px; box-shadow: var(--shadow); position: relative; z-index: 10; }
-        .tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 700; color: var(--text-light); cursor: pointer; border-radius: 12px; transition: 0.3s; }
+        /* Tabs & Search */
+        .tab-container { display: flex; background: white; margin: 15px; border-radius: 12px; padding: 5px; box-shadow: var(--shadow); }
+        .tab { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 700; color: var(--light-text); cursor: pointer; border-radius: 10px; }
         .tab.active { background: var(--primary); color: white; }
-
-        /* Search & Summary */
         .search-area { padding: 0 15px; margin-bottom: 15px; }
         .search-box { position: relative; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: none; outline: none; box-shadow: var(--shadow); font-size: 14px; }
+        .search-box input { width: 100%; padding: 12px 40px; border-radius: 12px; border: none; box-shadow: var(--shadow); outline: none; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--light-text); }
 
-        .summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
-        .sum-card { background: white; padding: 15px; border-radius: 15px; box-shadow: var(--shadow); text-align: center; }
-        .sum-label { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
-        .sum-val { font-size: 18px; font-weight: 800; margin-top: 5px; }
-        .text-receive { color: var(--success); }
-        .text-pay { color: var(--danger); }
+        /* Contact Cards */
+        .list-container { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .contact-card { background: white; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow); cursor: pointer; border: 1px solid transparent; }
+        .contact-card:active { transform: scale(0.98); }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: #e0e7ff; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; }
+        .c-info { flex: 1; }
+        .c-info h4 { font-size: 14px; margin-bottom: 2px; }
+        .c-info p { font-size: 11px; color: var(--light-text); }
+        .due-badge { text-align: right; }
+        .due-val { font-size: 14px; font-weight: 800; }
 
-        /* List Items */
-        .contact-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
-        .contact-card { background: white; padding: 15px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
-        .c-info h4 { font-size: 14px; font-weight: 700; color: var(--text-dark); }
-        .c-info p { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-        
-        .c-due { text-align: right; }
-        .due-amt { font-size: 16px; font-weight: 800; }
-        .btn-action { margin-top: 5px; padding: 5px 12px; border-radius: 8px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .btn-receive { background: #dcfce3; color: var(--success); }
-        .btn-pay { background: #fee2e2; color: var(--danger); }
+        /* Profile Details */
+        .profile-hero { background: white; margin: 15px; padding: 20px; border-radius: 20px; text-align: center; box-shadow: var(--shadow); }
+        .profile-hero .avatar { width: 70px; height: 70px; margin: 0 auto 10px; font-size: 30px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-box { background: #f8fafc; padding: 10px; border-radius: 12px; }
+        .stat-box small { font-size: 10px; color: var(--light-text); text-transform: uppercase; }
+        .stat-box div { font-size: 16px; font-weight: 800; }
 
-        /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .modal-content { background: white; width: 100%; max-width: 350px; border-radius: 20px; overflow: hidden; }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 20px; }
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 5px; }
-        .input-field { width: 100%; padding: 12px; border: 2px solid #f1f5f9; border-radius: 12px; outline: none; font-size: 14px; transition: 0.3s; }
-        .input-field:focus { border-color: var(--primary); }
-        .btn-submit { width: 100%; padding: 14px; border-radius: 12px; border: none; color: white; font-weight: 700; cursor: pointer; }
+        /* Statement List */
+        .section-title { padding: 0 20px; font-size: 14px; font-weight: 700; margin: 15px 0 10px; display: flex; justify-content: space-between; align-items: center; }
+        .ledger-card { background: white; margin: 0 15px 10px; padding: 12px; border-radius: 12px; border-left: 4px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; }
+        .ledger-card.in { border-left-color: var(--success); }
+        .ledger-card.out { border-left-color: var(--danger); }
+        .l-info h5 { font-size: 13px; margin-bottom: 2px; }
+        .l-info small { font-size: 10px; color: var(--light-text); }
+        .l-amt { text-align: right; font-weight: 700; font-size: 14px; }
 
-        #loading { text-align: center; padding: 50px; color: var(--text-light); }
+        /* Filter & PDF Footer */
+        .filter-bar { display: flex; gap: 5px; margin: 0 15px 15px; }
+        .filter-bar input { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 11px; }
+        .btn-pdf { background: var(--text); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="app-header">
-        <div class="header-top">
-            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-            <span>Due Book (বাকি খাতা)</span>
-        </div>
-    </div>
-
-    <div class="tab-container">
-        <div class="tab active" onclick="switchTab('customers')">Customers</div>
-        <div class="tab" onclick="switchTab('suppliers')">Suppliers</div>
-        <div class="tab" onclick="switchTab('staffs')">Staffs</div>
-    </div>
-
-    <div class="search-area">
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search by name or phone..." oninput="filterList()">
-        </div>
-    </div>
-
-    <div class="summary-cards">
-        <div class="sum-card">
-            <div class="sum-label">To Receive</div>
-            <div class="sum-val text-receive" id="totalToReceive">৳0</div>
-        </div>
-        <div class="sum-card">
-            <div class="sum-label">To Pay</div>
-            <div class="sum-val text-pay" id="totalToPay">৳0</div>
-        </div>
-    </div>
-
-    <div id="loading"><i class="fas fa-spinner fa-spin"></i> Loading context...</div>
-    <div class="contact-list" id="contactList"></div>
-
-    <div class="modal-overlay" id="trxModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Update Due</h3>
-                <button onclick="closeModal()" style="border:none; background:none; font-size:20px;">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="trxForm">
-                    <input type="hidden" id="targetId">
-                    <input type="hidden" id="targetType">
-                    <div class="input-group">
-                        <label>Current Due: <span id="modalCurrentDue" style="color:var(--primary)">৳0</span></label>
-                    </div>
-                    <div class="input-group">
-                        <label>Transaction Type</label>
-                        <select id="trxAction" class="input-field">
-                            </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Amount (৳)</label>
-                        <input type="number" id="trxAmount" class="input-field" required placeholder="0.00">
-                    </div>
-                    <div class="input-group">
-                        <label>Note / Remarks</label>
-                        <input type="text" id="trxNote" class="input-field" placeholder="e.g. Received partial payment">
-                    </div>
-                    <button type="submit" id="submitBtn" class="btn-submit">Confirm Transaction</button>
-                </form>
+    <div id="view-list" class="view active">
+        <div class="app-header">
+            <div class="header-top">
+                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Due Book (বাকি খাতা)</span>
             </div>
         </div>
+
+        <div class="tab-container">
+            <div class="tab active" onclick="switchTab('customers', this)">Customer</div>
+            <div class="tab" onclick="switchTab('suppliers', this)">Supplier</div>
+            <div class="tab" onclick="switchTab('staffs', this)">Staff</div>
+        </div>
+
+        <div class="search-area">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="contactSearch" placeholder="Search by name..." oninput="filterContacts()">
+            </div>
+        </div>
+
+        <div class="list-container" id="contactList">
+            <p style="text-align:center; padding:20px; color:var(--light-text);">Loading accounts...</p>
+        </div>
+    </div>
+
+    <div id="view-profile" class="view">
+        <div class="app-header">
+            <div class="header-top">
+                <i class="fas fa-arrow-left" onclick="showView('view-list')"></i>
+                <span id="profileTitle">Account Profile</span>
+            </div>
+        </div>
+
+        <div class="profile-hero">
+            <div class="avatar" id="pAvatar">A</div>
+            <h3 id="pName">User Name</h3>
+            <p id="pPhone" style="font-size: 12px; color: var(--light-text);">017XXXXXXXX</p>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <small>Total Bill</small>
+                    <div id="pTotalBill">৳0</div>
+                </div>
+                <div class="stat-box">
+                    <small style="color:var(--danger)">Total Due</small>
+                    <div id="pTotalDue" style="color:var(--danger)">৳0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span>Statement History</span>
+            <button class="btn-pdf" onclick="generateStatementPDF()"><i class="fas fa-file-pdf"></i> Download</button>
+        </div>
+
+        <div class="filter-bar">
+            <input type="date" id="dateFrom">
+            <input type="date" id="dateTo">
+            <button class="btn-pdf" style="background:var(--primary)" onclick="loadProfileHistory()"><i class="fas fa-search"></i></button>
+        </div>
+
+        <div id="historyList">
+            </div>
     </div>
 
     <script type="module">
-        import { rtdb, ref, onValue, push, update } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { rtdb, ref, onValue, get } from './firebase_config.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         let currentTab = 'customers';
-        let allData = { customers: [], suppliers: [], staffs: [] };
+        let contacts = { customers: [], suppliers: [], staffs: [] };
+        let activeContact = null;
 
         window.onload = () => {
-            fetchContacts();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = today;
+            document.getElementById('dateTo').value = today;
+            fetchAllData();
         };
 
-        function fetchContacts() {
+        // --- DATA FETCHING ---
+        async function fetchAllData() {
             const types = ['customers', 'suppliers', 'staffs'];
-            let loadedCount = 0;
-
             types.forEach(type => {
                 onValue(ref(rtdb, `contacts/${type}`), (snap) => {
-                    allData[type] = [];
+                    contacts[type] = [];
                     if (snap.exists()) {
                         Object.entries(snap.val()).forEach(([id, val]) => {
-                            if (val.shop_id === SHOP_ID) {
-                                allData[type].push({ id, ...val });
-                            }
+                            if (val.shop_id === SHOP_ID) contacts[type].push({ id, ...val });
                         });
                     }
-                    loadedCount++;
-                    if (loadedCount === 3) {
-                        document.getElementById('loading').style.display = 'none';
-                        renderList();
-                        calculateTotalSummary();
-                    }
+                    if(type === currentTab) renderContactList();
                 });
             });
         }
 
-        window.switchTab = (tab) => {
+        window.switchTab = (tab, el) => {
             currentTab = tab;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            renderList();
+            el.classList.add('active');
+            renderContactList();
         };
 
-        window.filterList = () => renderList();
+        function renderContactList() {
+            const container = document.getElementById('contactList');
+            container.innerHTML = '';
+            const list = contacts[currentTab];
 
-        function renderList() {
-            const listEl = document.getElementById('contactList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            listEl.innerHTML = '';
-
-            const filtered = allData[currentTab].filter(item => 
-                item.name.toLowerCase().includes(searchTerm) || 
-                (item.phone && item.phone.includes(searchTerm))
-            );
-
-            if (filtered.length === 0) {
-                listEl.innerHTML = `<p style="text-align:center; color:var(--text-light); padding:20px;">No results found.</p>`;
+            if(list.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding:50px; color:var(--light-text);">No ${currentTab} found.</p>`;
                 return;
             }
 
-            filtered.forEach(item => {
-                const due = Number(item.due || 0);
-                // Customers & Staff usually owe us (Receive), Suppliers we owe (Pay)
-                const isPayable = currentTab === 'suppliers';
-                const dueColor = isPayable ? 'var(--danger)' : 'var(--success)';
-                const btnClass = isPayable ? 'btn-pay' : 'btn-receive';
-                const btnText = isPayable ? 'Payment' : 'Collection';
-
+            list.forEach(c => {
+                const due = Number(c.due || 0);
                 const html = `
-                <div class="contact-card">
+                <div class="contact-card" onclick="openProfile('${c.id}', '${currentTab}')">
+                    <div class="avatar">${c.name.charAt(0)}</div>
                     <div class="c-info">
-                        <h4>${item.name}</h4>
-                        <p><i class="fas fa-phone-alt"></i> ${item.phone || 'No Phone'}</p>
+                        <h4>${c.name}</h4>
+                        <p>${c.phone || 'No phone'}</p>
                     </div>
-                    <div class="c-due">
-                        <div class="due-amt" style="color:${dueColor}">৳${due.toLocaleString()}</div>
-                        <button class="btn-action ${btnClass}" onclick="openTrxModal('${item.id}', '${item.name}', ${due}, '${currentTab}')">
-                            <i class="fas fa-plus-circle"></i> ${btnText}
-                        </button>
+                    <div class="due-badge">
+                        <div class="due-val" style="color:${due > 0 ? 'var(--danger)' : 'var(--success)'}">৳${due}</div>
+                        <small style="font-size:9px; font-weight:700; text-transform:uppercase;">Current Due</small>
                     </div>
                 </div>`;
-                listEl.insertAdjacentHTML('beforeend', html);
+                container.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        function calculateTotalSummary() {
-            let receive = 0;
-            let pay = 0;
+        // --- PROFILE LOGIC ---
+        window.openProfile = async (id, type) => {
+            const contact = contacts[type].find(c => c.id === id);
+            if(!contact) return;
+            activeContact = contact;
+            activeContact.type = type;
 
-            allData.customers.forEach(c => receive += Number(c.due || 0));
-            allData.staffs.forEach(s => receive += Number(s.due || 0));
-            allData.suppliers.forEach(sup => pay += Number(sup.due || 0));
+            document.getElementById('pName').innerText = contact.name;
+            document.getElementById('pPhone').innerText = contact.phone || 'N/A';
+            document.getElementById('pAvatar').innerText = contact.name.charAt(0);
+            document.getElementById('pTotalDue').innerText = `৳${contact.due || 0}`;
 
-            document.getElementById('totalToReceive').innerText = `৳${receive.toLocaleString()}`;
-            document.getElementById('totalToPay').innerText = `৳${pay.toLocaleString()}`;
+            showView('view-profile');
+            loadProfileHistory();
+        };
+
+        window.loadProfileHistory = async () => {
+            const historyContainer = document.getElementById('historyList');
+            historyContainer.innerHTML = '<p style="text-align:center; padding:20px;">Fetching records...</p>';
+            
+            const from = new Date(document.getElementById('dateFrom').value).setHours(0,0,0,0);
+            const to = new Date(document.getElementById('dateTo').value).setHours(23,59,59,999);
+            
+            let combinedHistory = [];
+
+            // 1. Fetch Sales/Purchase history for this person
+            const historyPath = activeContact.type === 'suppliers' ? 'purchase_history' : 'sales_history';
+            const historySnap = await get(ref(rtdb, historyPath));
+            
+            if(historySnap.exists()){
+                Object.values(historySnap.val()).forEach(h => {
+                    const hDate = new Date(h.date || h.created_at).getTime();
+                    // Match by customer name or supplier name
+                    const nameMatch = (h.customer === activeContact.name || h.supplier === activeContact.name);
+                    if(h.shop_id === SHOP_ID && nameMatch && hDate >= from && hDate <= to) {
+                        combinedHistory.push({
+                            type: 'invoice',
+                            title: `Invoice: ${h.invoice_no || h.challan_no}`,
+                            date: hDate,
+                            total: h.total_amount,
+                            paid: h.paid_amount,
+                            due: h.due_amount,
+                            items: h.items
+                        });
+                    }
+                });
+            }
+
+            // 2. Fetch manual due adjustments
+            const adjSnap = await get(ref(rtdb, 'due_history'));
+            if(adjSnap.exists()){
+                Object.values(adjSnap.val()).forEach(a => {
+                    if(a.contact_id === activeContact.id && a.date >= from && a.date <= to){
+                        combinedHistory.push({
+                            type: 'payment',
+                            title: a.action === 'receive' || a.action === 'pay' ? 'Payment Received' : 'Due Added',
+                            date: a.date,
+                            amt: a.amount,
+                            note: a.note
+                        });
+                    }
+                });
+            }
+
+            combinedHistory.sort((a, b) => b.date - a.date);
+            renderHistory(combinedHistory);
+        };
+
+        function renderHistory(history) {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '';
+            
+            if(history.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:40px; color:var(--light-text);">No transactions in this period.</p>';
+                return;
+            }
+
+            history.forEach(h => {
+                const dateStr = new Date(h.date).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'});
+                let html = '';
+
+                if(h.type === 'invoice') {
+                    html = `
+                    <div class="ledger-card out">
+                        <div class="l-info">
+                            <h5>${h.title}</h5>
+                            <small>${dateStr} • Bill: ৳${h.total} • Paid: ৳${h.paid}</small>
+                        </div>
+                        <div class="l-amt" style="color:var(--danger)">
+                            +৳${h.due}<br><small>Due</small>
+                        </div>
+                    </div>`;
+                } else {
+                    const isRecv = h.title.includes('Received') || h.title.includes('Paid');
+                    html = `
+                    <div class="ledger-card ${isRecv ? 'in' : 'out'}">
+                        <div class="l-info">
+                            <h5>${h.title}</h5>
+                            <small>${dateStr} ${h.note ? '• '+h.note : ''}</small>
+                        </div>
+                        <div class="l-amt" style="color:${isRecv ? 'var(--success)' : 'var(--danger)'}">
+                            ${isRecv ? '-' : '+'}৳${h.amt}<br><small>${isRecv ? 'Reduced' : 'Added'}</small>
+                        </div>
+                    </div>`;
+                }
+                container.insertAdjacentHTML('beforeend', html);
+            });
         }
 
-        window.openTrxModal = (id, name, currentDue, type) => {
-            document.getElementById('targetId').value = id;
-            document.getElementById('targetType').value = type;
-            document.getElementById('modalTitle').innerText = name;
-            document.getElementById('modalCurrentDue').innerText = `৳${currentDue}`;
+        // --- PDF GENERATION ---
+        window.generateStatementPDF = () => {
+            const temp = document.createElement('div');
+            temp.style.padding = '30px';
+            temp.style.fontFamily = "'Hind Siliguri', sans-serif";
             
-            const actionSelect = document.getElementById('trxAction');
-            actionSelect.innerHTML = '';
+            const from = document.getElementById('dateFrom').value;
+            const to = document.getElementById('dateTo').value;
+            const shopName = localStorage.getItem('activeShopName') || 'Stashio Store';
 
-            if (type === 'suppliers') {
-                actionSelect.innerHTML = `
-                    <option value="pay">I am Paying (বাকি কমানো)</option>
-                    <option value="add">Add More Due (বাকি বাড়ানো)</option>`;
-                document.getElementById('submitBtn').style.background = 'var(--danger)';
-            } else {
-                actionSelect.innerHTML = `
-                    <option value="receive">Receiving Cash (বাকি কমানো)</option>
-                    <option value="add">Add More Due (বাকি বাড়ানো)</option>`;
-                document.getElementById('submitBtn').style.background = 'var(--success)';
-            }
+            let rows = '';
+            document.querySelectorAll('#historyList .ledger-card').forEach(card => {
+                const title = card.querySelector('h5').innerText;
+                const details = card.querySelector('small').innerText;
+                const amt = card.querySelector('.l-amt').innerText.split('\n')[0];
+                rows += `<tr>
+                    <td style="padding:10px; border:1px solid #ddd;">${title}<br><small>${details}</small></td>
+                    <td style="padding:10px; border:1px solid #ddd; text-align:right; font-weight:bold;">${amt}</td>
+                </tr>`;
+            });
 
-            document.getElementById('trxModal').style.display = 'flex';
+            temp.innerHTML = `
+                <h1 style="text-align:center; margin-bottom:5px;">${shopName}</h1>
+                <p style="text-align:center; color:#666; margin-bottom:20px;">Account Statement (বাকি খাতা রিপোর্ট)</p>
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:2px solid #eee; padding-bottom:10px;">
+                    <div><strong>Name:</strong> ${activeContact.name}<br><strong>Phone:</strong> ${activeContact.phone || 'N/A'}</div>
+                    <div style="text-align:right;"><strong>Period:</strong> ${from} to ${to}<br><strong>Current Due:</strong> ৳${activeContact.due}</div>
+                </div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr style="background:#4F46E5; color:white;"><th style="padding:10px; text-align:left;">Transaction Detail</th><th style="padding:10px; text-align:right;">Amount</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <p style="text-align:center; margin-top:30px; font-size:10px; color:#999;">Generated by Stashio Management App</p>
+            `;
+
+            html2pdf().from(temp).set({
+                margin: 10, filename: `${activeContact.name}_Statement.pdf`,
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).save();
         };
 
-        window.closeModal = () => {
-            document.getElementById('trxModal').style.display = 'none';
-            document.getElementById('trxForm').reset();
+        window.showView = (id) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         };
 
-        document.getElementById('trxForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const id = document.getElementById('targetId').value;
-            const type = document.getElementById('targetType').value;
-            const action = document.getElementById('trxAction').value;
-            const amount = Number(document.getElementById('trxAmount').value);
-            const note = document.getElementById('trxNote').value;
+        window.filterContacts = () => {
+            const term = document.getElementById('contactSearch').value.toLowerCase();
+            const cards = document.querySelectorAll('.contact-card');
+            cards.forEach(card => {
+                const name = card.querySelector('h4').innerText.toLowerCase();
+                card.style.display = name.includes(term) ? 'flex' : 'none';
+            });
+        };
 
-            if (amount <= 0) return alert("Please enter a valid amount");
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
-            try {
-                // 1. Update Contact Due
-                await runTransaction(ref(rtdb, `contacts/${type}/${id}/due`), (current) => {
-                    let val = Number(current) || 0;
-                    if (action === 'add') return val + amount;
-                    return val - amount; // receive or pay
-                });
-
-                // 2. Log History
-                await push(ref(rtdb, 'due_history'), {
-                    shop_id: SHOP_ID,
-                    contact_id: id,
-                    contact_type: type,
-                    action: action,
-                    amount: amount,
-                    note: note,
-                    date: Date.now()
-                });
-
-                // 3. Update Cashbox if cash was actually received or paid
-                if (action === 'receive' || action === 'pay') {
-                    const cashAction = action === 'receive' ? 'cash_in' : 'cash_out';
-                    
-                    await runTransaction(ref(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => {
-                        return action === 'receive' ? (bal || 0) + amount : (bal || 0) - amount;
-                    });
-
-                    await push(ref(rtdb, 'cash_transactions'), {
-                        shop_id: SHOP_ID,
-                        type: cashAction,
-                        source: 'due_ledger',
-                        amount: amount,
-                        note: `Due ${action} from ${document.getElementById('modalTitle').innerText}: ${note}`,
-                        created_at: Date.now()
-                    });
-                }
-
-                alert("Transaction Successful!");
-                closeModal();
-            } catch (err) {
-                alert("Error: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'Confirm Transaction';
-            }
-        });
     </script>
 </body>
 </html>
