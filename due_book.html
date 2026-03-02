@@ -3,20 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ledger & Statement - Stashio</title>
+    <title>Professional Ledger & Statement - Stashio</title>
     
     <meta name="theme-color" content="#4F46E5">
-
-    <script>
-        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
-        const activeShopId = localStorage.getItem('activeShopId');
-        
-        if (!loggedInUser) {
-            window.location.replace("index.html");
-        } else if (!activeShopId) {
-            window.location.replace("dashboard.html");
-        }
-    </script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -24,504 +14,319 @@
 
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --primary: #4F46E5; --secondary: #764ba2; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
-            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
-            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            --success: #10b981; --danger: #ef4444; --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
 
-        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        /* Dynamic Header Area */
+        /* Header Design */
         .app-header {
-            position: relative; padding: 20px 20px 45px 20px; color: white; 
-            border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
-            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
-            overflow: hidden;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); margin-bottom: 15px;
         }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
-        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
-        
-        .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
-        .header-title a { color: white; text-decoration: none; }
+        .header-top { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .header-top a { color: white; font-size: 18px; }
 
-        /* Tabs */
-        .tabs-container { position: relative; z-index: 10; display: flex; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 4px; margin-top: 10px; }
-        .tab-btn { flex: 1; text-align: center; padding: 8px 0; border-radius: 10px; font-size: 13px; font-weight: 600; color: white; cursor: pointer; transition: 0.3s; opacity: 0.7; }
+        /* Category Tabs */
+        .tabs-container { display: flex; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 4px; }
+        .tab-btn { flex: 1; text-align: center; padding: 10px 0; border-radius: 10px; font-size: 12px; font-weight: 600; color: white; cursor: pointer; transition: 0.3s; opacity: 0.7; }
         .tab-btn.active { background: white; color: var(--primary); opacity: 1; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
-        /* General Filter Section */
-        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -20px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; flex-direction: column; gap: 10px; border: 1px solid #f8fafc; }
-        .input-group { flex: 1; }
-        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
-        .input-group input, .input-group select { width: 100%; padding: 12px 15px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 13px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); transition: 0.3s; }
-        .input-group input:focus, .input-group select:focus { border-color: var(--primary); background: white; }
-        .date-row { display: flex; gap: 10px; }
-        
-        .btn-primary-full { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn-primary-full:active { transform: scale(0.98); }
+        /* Search & Filter Card */
+        .filter-section { padding: 0 15px; margin-bottom: 15px; }
+        .search-box { position: relative; background: white; border-radius: 15px; box-shadow: var(--shadow); overflow: hidden; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 14px 15px 14px 45px; border: none; outline: none; font-size: 14px; }
 
-        /* Summary Bar */
-        .summary-bar { display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 15px; gap: 10px; }
-        .sum-box { flex: 1; background: var(--white); padding: 15px; border-radius: 14px; text-align: center; box-shadow: var(--shadow); border-top: 3px solid transparent; }
-        .sum-box.recv { border-top-color: var(--success); }
-        .sum-box.pay { border-top-color: var(--danger); }
-        .sum-title { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
-        .sum-val { font-size: 18px; font-weight: 800; margin-top: 4px; }
+        /* Date Selection Row */
+        .date-filter { display: flex; gap: 10px; margin-top: 10px; }
+        .date-input { flex: 1; background: white; padding: 8px 12px; border-radius: 10px; box-shadow: var(--shadow); border: 1px solid #eee; }
+        .date-input label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+        .date-input input { width: 100%; border: none; outline: none; font-size: 12px; margin-top: 2px; }
 
-        /* Lists */
-        .data-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
-        
-        /* Due Card */
-        .due-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); position: relative; overflow: hidden; border-left: 4px solid transparent; }
-        .due-card.receive { border-left-color: var(--success); }
-        .due-card.pay { border-left-color: var(--danger); }
-        .dc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; }
-        .dc-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
-        .dc-type { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
-        .type-recv { background: #dcfce3; color: var(--success); }
-        .type-pay { background: #fee2e2; color: var(--danger); }
-        .dc-body { display: flex; justify-content: space-between; align-items: center; }
-        .dc-total { font-size: 11px; color: var(--text-light); font-weight: 600; }
-        .dc-due-amt { font-size: 18px; font-weight: 800; color: var(--text-dark); }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-action { flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; border: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-update { background: var(--primary); color: white; }
-        .btn-history { background: #f8fafc; color: var(--text-dark); border: 1px solid #e5e7eb; }
+        /* Contact List Cards */
+        .contact-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .contact-card { background: white; border-radius: 16px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); border: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        .contact-card:active { transform: scale(0.97); }
+        .contact-info { display: flex; align-items: center; gap: 12px; }
+        .contact-img { width: 45px; height: 45px; border-radius: 50%; background: #eef2ff; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 20px; overflow: hidden; }
+        .contact-img img { width: 100%; height: 100%; object-fit: cover; }
+        .contact-details h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+        .contact-details p { font-size: 11px; color: var(--text-light); font-weight: 500; }
+        .btn-statement { background: var(--primary); color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: none; }
 
-        /* Modals */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(3px); }
-        .modal-content { background: white; width: 100%; max-width: 800px; border-radius: 16px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
-        .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
-        .btn-close:active { background: #f1f5f9; }
+        /* Modal Design */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(5px); }
+        .modal-content { background: white; width: 100%; max-width: 850px; border-radius: 20px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; background: #f9fafb; }
+        .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .btn-download { flex: 1; background: var(--success); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
 
-        .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        
-        /* Statement Preview Container */
-        #statementPreviewContainer { background: #fff; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .statement-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
-        .statement-table th, .statement-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .statement-table th { background-color: #f3f4f6; font-weight: 700; color: var(--text-dark); }
+        /* Statement Preview Styles */
+        #pdfContent { background: white; padding: 30px; min-height: 500px; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+        .report-table th, .report-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .report-table th { background: #f3f4f6; font-weight: 700; }
         .text-right { text-align: right !important; }
+        .summary-table { margin-top: 20px; width: 250px; margin-left: auto; font-size: 13px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #ddd; }
+        .total-due { font-size: 16px; font-weight: 800; color: var(--danger); border-bottom: none; }
 
+        .loading-spinner { text-align: center; padding: 50px; color: var(--text-light); }
     </style>
 </head>
 <body>
 
-    <div class="app-header" id="header-container">
-        <div class="header-bg"></div>
-        <div id="dynamicThemeContainer"></div>
+    <div class="app-header">
         <div class="header-top">
-            <div class="header-title">
-                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-                <span>Ledger & Statement</span>
-            </div>
+            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+            <span style="font-weight: 700; font-size: 18px;">Ledger Statements</span>
         </div>
         
         <div class="tabs-container">
-            <div class="tab-btn active" id="tab-due" onclick="switchMainTab('due')">Due Book</div>
-            <div class="tab-btn" id="tab-statement" onclick="switchMainTab('statement')">Generate Statement</div>
+            <div class="tab-btn active" id="tab-customers" onclick="switchCategory('customers')">Customers</div>
+            <div class="tab-btn" id="tab-suppliers" onclick="switchCategory('suppliers')">Suppliers</div>
+            <div class="tab-btn" id="tab-employees" onclick="switchCategory('employees')">Staff</div>
         </div>
     </div>
 
-    <div id="view-due">
-        <div class="summary-bar">
-            <div class="sum-box recv">
-                <div class="sum-title text-success">To Receive (পাব)</div>
-                <div class="sum-val text-success" id="sumRecv">৳0</div>
-            </div>
-            <div class="sum-box pay">
-                <div class="sum-title text-danger">To Pay (দিব)</div>
-                <div class="sum-val text-danger" id="sumPay">৳0</div>
-            </div>
+    <div class="filter-section">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="contactSearch" placeholder="Search by name or phone..." oninput="renderContactList()">
         </div>
-
-        <div class="filter-card">
-            <div class="input-group">
-                <input type="text" id="searchDue" placeholder="🔍 Search Customer / Supplier..." oninput="renderDues()">
+        
+        <div class="date-filter">
+            <div class="date-input">
+                <label>From Date</label>
+                <input type="date" id="dateFrom">
             </div>
-        </div>
-
-        <div id="loadingDue" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading Ledger...
-        </div>
-
-        <div class="data-list" id="dueList"></div>
-    </div>
-
-    <div id="view-statement" style="display: none;">
-        <div class="filter-card">
-            <div class="input-group">
-                <label>Select Customer/Supplier</label>
-                <input type="text" id="statementCustomer" placeholder="Type name..." list="contactListOptions">
-                <datalist id="contactListOptions"></datalist>
-            </div>
-            <div class="date-row">
-                <div class="input-group">
-                    <label>From Date</label>
-                    <input type="date" id="stateDateFrom">
-                </div>
-                <div class="input-group">
-                    <label>To Date</label>
-                    <input type="date" id="stateDateTo">
-                </div>
-            </div>
-            <button onclick="generateStatementPreview()" class="btn-primary-full"><i class="fas fa-file-invoice"></i> Generate Preview</button>
-        </div>
-    </div>
-
-
-    <div class="modal-overlay" id="payModal">
-        <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3 style="font-size: 15px; font-weight: 700; margin: 0;" id="payTitle">Update Payment</h3>
-                <button onclick="document.getElementById('payModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <form id="payForm">
-                    <input type="hidden" id="payDueId">
-                    <input type="hidden" id="payDueType">
-                    <input type="hidden" id="payDueName">
-                    <input type="hidden" id="payCurrentAmt">
-
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <p style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">Current Due</p>
-                        <h2 style="font-size: 24px; color: var(--text-dark); margin: 0;" id="payDisplayAmt">৳0</h2>
-                    </div>
-
-                    <div class="input-group" style="margin-bottom: 15px;">
-                        <label id="payInputLabel">Amount (৳)</label>
-                        <input type="number" id="payAmount" required style="font-size: 16px; font-weight: bold; border-color: var(--primary); text-align: center;">
-                    </div>
-                    <button type="submit" class="btn-submit" id="paySubmitBtn">Confirm Update</button>
-                </form>
+            <div class="date-input">
+                <label>To Date</label>
+                <input type="date" id="dateTo">
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="statementModal">
+    <div class="contact-list" id="contactList">
+        <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading Contacts...</div>
+    </div>
+
+    <div class="modal-overlay" id="previewModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Statement Preview</h3>
-                <button onclick="document.getElementById('statementModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
+                <h3 style="font-size: 15px; font-weight: 700;">Statement Preview</h3>
+                <button onclick="closeModal()" style="border:none; background:none; font-size:20px; color:#999;"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <div id="statementPreviewContainer">
+                <div id="pdfContent">
+                    <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #4F46E5; padding-bottom: 10px;">
+                        <h2 id="pdfShopName" style="color: #4F46E5; margin: 0; font-size: 24px;">Shop Name</h2>
+                        <p id="pdfShopAddress" style="font-size: 12px; color: #666; margin-top: 3px;">Address Line 1, City</p>
+                        <h4 style="margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;">Transaction Statement</h4>
                     </div>
-                
-                <button onclick="downloadStatementPDF()" class="btn-submit" id="btnDownloadPdf" style="background: var(--primary); display: flex; justify-content: center; align-items: center; gap: 8px;">
-                    <i class="fas fa-download"></i> Download PDF
+
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 20px;">
+                        <div>
+                            <p><strong>Bill To:</strong></p>
+                            <h3 id="pdfContactName" style="margin: 3px 0; color: #333;">Customer Name</h3>
+                            <p id="pdfContactPhone">Phone: 01XXXXXXXXX</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p><strong>Period:</strong> <span id="pdfDateRange">01/01/2026 - 02/02/2026</span></p>
+                            <p><strong>Generated:</strong> <span id="pdfGenDate">02/03/2026</span></p>
+                        </div>
+                    </div>
+
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th width="15%">Date</th>
+                                <th width="50%">Description / Items</th>
+                                <th class="text-right" width="15%">Total (৳)</th>
+                                <th class="text-right" width="20%">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pdfTableBody">
+                            </tbody>
+                    </table>
+
+                    <div class="summary-table">
+                        <div class="summary-row">
+                            <span>Total Bill:</span>
+                            <strong id="pdfTotalBill">৳0</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span style="color: #10b981;">Total Paid:</span>
+                            <strong id="pdfTotalPaid" style="color: #10b981;">৳0</strong>
+                        </div>
+                        <div class="summary-row total-due">
+                            <span>Current Due:</span>
+                            <span id="pdfCurrentDue">৳0</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 60px; display: flex; justify-content: space-between;">
+                        <div style="border-top: 1px solid #ccc; width: 150px; text-align: center; font-size: 11px; padding-top: 5px;">Customer Signature</div>
+                        <div style="border-top: 1px solid #ccc; width: 150px; text-align: center; font-size: 11px; padding-top: 5px;">Auth. Signature</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-download" id="downloadBtn" onclick="downloadPDF()">
+                    <i class="fas fa-file-pdf"></i> Download PDF Statement
                 </button>
             </div>
         </div>
     </div>
 
-
     <script type="module">
-        import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, push, update, get } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { rtdb, ref, onValue } from './firebase_config.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
-        const SHOP_ADDRESS = "Your Shop Address Here"; // Customize this
-
-        let allDues = [];
-        let allSales = []; // For detailed items in statement
+        
+        let currentCategory = 'customers';
+        let contactsData = { customers: [], suppliers: [], employees: [] };
+        let salesData = [];
+        let purchaseData = [];
 
         window.onload = () => {
-            // Set default dates for statement
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            document.getElementById('stateDateFrom').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('stateDateTo').value = today.toISOString().split('T')[0];
+            // Set Default Dates (Current Month)
+            const date = new Date();
+            document.getElementById('dateFrom').value = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+            document.getElementById('dateTo').value = date.toISOString().split('T')[0];
 
-            // Load Contacts for Suggestions
-            rtdbOnValue(rtdbRef(rtdb, 'contacts'), (snap) => {
-                const list = document.getElementById('contactListOptions');
-                list.innerHTML = '';
-                if(snap.exists()){
+            fetchData();
+        };
+
+        function fetchData() {
+            // Load Contacts
+            onValue(ref(rtdb, 'contacts'), (snap) => {
+                if(snap.exists()) {
                     const data = snap.val();
-                    if(data.customers) Object.values(data.customers).forEach(c => { if(c.shop_id === SHOP_ID) list.innerHTML += `<option value="${c.name}">`; });
-                    if(data.suppliers) Object.values(data.suppliers).forEach(c => { if(c.shop_id === SHOP_ID) list.innerHTML += `<option value="${c.name}">`; });
+                    contactsData.customers = data.customers ? Object.values(data.customers).filter(c => c.shop_id === SHOP_ID) : [];
+                    contactsData.suppliers = data.suppliers ? Object.values(data.suppliers).filter(c => c.shop_id === SHOP_ID) : [];
+                    contactsData.employees = data.employees ? Object.values(data.employees).filter(c => c.shop_id === SHOP_ID) : [];
+                    renderContactList();
                 }
             });
 
-            // Load Due Book
-            rtdbOnValue(rtdbRef(rtdb, 'due_book'), (snapshot) => {
-                document.getElementById('loadingDue').style.display = 'none';
-                allDues = [];
-                if (snapshot.exists()) {
-                    allDues = Object.entries(snapshot.val())
-                        .map(([id, val]) => ({ id, ...val }))
-                        .filter(d => d.shop_id === SHOP_ID && d.current_due > 0)
-                        .reverse();
-                }
-                renderDues(); 
+            // Load Sales History (For Customers)
+            onValue(ref(rtdb, 'sales_history'), (snap) => {
+                if(snap.exists()) salesData = Object.values(snap.val()).filter(s => s.shop_id === SHOP_ID);
             });
 
-            // Load Sales History (for detailed statement)
-            rtdbOnValue(rtdbRef(rtdb, 'sales_history'), (snapshot) => {
-                allSales = [];
-                if (snapshot.exists()) {
-                    allSales = Object.entries(snapshot.val())
-                        .map(([id, val]) => ({ id, ...val }))
-                        .filter(s => s.shop_id === SHOP_ID);
-                }
+            // Load Purchase History (For Suppliers)
+            onValue(ref(rtdb, 'purchase_history'), (snap) => {
+                if(snap.exists()) purchaseData = Object.values(snap.val()).filter(p => p.shop_id === SHOP_ID);
             });
-        };
+        }
 
-        // --- TAB SWITCHING ---
-        window.switchMainTab = (tab) => {
+        window.switchCategory = (cat) => {
+            currentCategory = cat;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            
-            document.getElementById('view-due').style.display = tab === 'due' ? 'block' : 'none';
-            document.getElementById('view-statement').style.display = tab === 'statement' ? 'block' : 'none';
+            document.getElementById(`tab-${cat}`).classList.add('active');
+            renderContactList();
         };
 
-        // --- RENDER DUE BOOK ---
-        window.renderDues = () => {
-            const listEl = document.getElementById('dueList');
-            const searchTerm = document.getElementById('searchDue').value.toLowerCase().trim();
-            listEl.innerHTML = '';
+        window.renderContactList = () => {
+            const listEl = document.getElementById('contactList');
+            const search = document.getElementById('contactSearch').value.toLowerCase().trim();
+            const data = contactsData[currentCategory];
 
-            let totalRecv = 0, totalPay = 0;
-            let filteredDues = allDues;
-            
-            if(searchTerm) {
-                filteredDues = allDues.filter(d => d.name && d.name.toLowerCase().includes(searchTerm));
-            }
+            let filtered = data.filter(c => c.name.toLowerCase().includes(search) || (c.phone && c.phone.includes(search)));
 
-            if (filteredDues.length === 0) {
-                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light);"><i class="fas fa-book-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No active dues found.</div>`;
-            } else {
-                filteredDues.forEach(d => {
-                    const isRecv = d.type === 'receive';
-                    if(isRecv) totalRecv += Number(d.current_due); else totalPay += Number(d.current_due);
-
-                    const typeLabel = isRecv ? 'Receive' : 'Pay';
-                    const typeClass = isRecv ? 'type-recv' : 'type-pay';
-                    const cardClass = isRecv ? 'receive' : 'pay';
-                    const btnColor = isRecv ? 'var(--success)' : 'var(--danger)';
-
-                    listEl.insertAdjacentHTML('beforeend', `
-                    <div class="due-card ${cardClass}">
-                        <div class="dc-header">
-                            <div class="dc-name">${d.name || 'Unknown'}</div>
-                            <div class="dc-type ${typeClass}">${typeLabel}</div>
-                        </div>
-                        <div class="dc-body">
-                            <div class="dc-total">Total Bill: ৳${Number(d.total_amount || 0).toLocaleString()}</div>
-                            <div class="dc-due-amt" style="color:${btnColor}">৳${Number(d.current_due).toLocaleString()}</div>
-                        </div>
-                        <div class="btn-group">
-                            <button onclick="openPayModal('${d.id}', '${d.type}', '${d.name.replace(/'/g, "\\'")}', ${d.current_due})" class="btn-action btn-update" style="background:${btnColor}">
-                                <i class="fas fa-money-bill-wave"></i> Update Pay
-                            </button>
-                        </div>
-                    </div>`);
-                });
-            }
-
-            // Update Totals based on ALL data (not filtered)
-            let overallRecv = 0, overallPay = 0;
-            allDues.forEach(d => { if(d.type === 'receive') overallRecv += Number(d.current_due); else overallPay += Number(d.current_due); });
-            document.getElementById('sumRecv').innerText = `৳${overallRecv.toLocaleString()}`;
-            document.getElementById('sumPay').innerText = `৳${overallPay.toLocaleString()}`;
-        };
-
-        // --- PAYMENT LOGIC ---
-        window.openPayModal = (id, type, name, currentAmt) => {
-            document.getElementById('payDueId').value = id;
-            document.getElementById('payDueType').value = type;
-            document.getElementById('payDueName').value = name;
-            document.getElementById('payCurrentAmt').value = currentAmt;
-            document.getElementById('payTitle').innerText = type === 'receive' ? `Receive from ${name}` : `Pay to ${name}`;
-            document.getElementById('payDisplayAmt').innerText = `৳${currentAmt.toLocaleString()}`;
-            document.getElementById('payAmount').value = '';
-            document.getElementById('payModal').style.display = 'flex';
-        };
-
-        document.getElementById('payForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('paySubmitBtn');
-            btn.innerHTML = 'Processing...'; btn.disabled = true;
-
-            const id = document.getElementById('payDueId').value;
-            const type = document.getElementById('payDueType').value;
-            const name = document.getElementById('payDueName').value;
-            const currentAmt = Number(document.getElementById('payCurrentAmt').value);
-            const payAmt = Number(document.getElementById('payAmount').value);
-
-            if(payAmt <= 0 || payAmt > currentAmt) { alert("Invalid amount!"); btn.innerHTML = 'Confirm Update'; btn.disabled = false; return; }
-
-            const newDue = currentAmt - payAmt;
-            try {
-                await update(rtdbRef(rtdb, `due_book/${id}`), { current_due: newDue, updated_at: Date.now() });
-                
-                await push(rtdbRef(rtdb, 'due_history'), {
-                    due_id: id, shop_id: SHOP_ID, name: name, type: type,
-                    action: type === 'receive' ? 'Received' : 'Paid', amount: payAmt, balance_left: newDue, date: Date.now()
-                });
-
-                document.getElementById('payModal').style.display = 'none';
-            } catch (err) { alert("Error: " + err.message); } 
-            finally { btn.innerHTML = 'Confirm Update'; btn.disabled = false; }
-        });
-
-
-        // --- STATEMENT GENERATION & PREVIEW ---
-        window.generateStatementPreview = () => {
-            const customerName = document.getElementById('statementCustomer').value.trim();
-            const dateFrom = new Date(document.getElementById('stateDateFrom').value).setHours(0,0,0,0);
-            const dateTo = new Date(document.getElementById('stateDateTo').value).setHours(23,59,59,999);
-
-            if(!customerName) { alert("Please enter or select a customer name."); return; }
-
-            // Filter Sales for this customer within date range
-            const customerSales = allSales.filter(sale => {
-                const saleDate = new Date(sale.date || sale.created_at).getTime();
-                const isMatchName = (sale.customer === customerName || sale.customer_name === customerName);
-                const isMatchDate = saleDate >= dateFrom && saleDate <= dateTo;
-                return isMatchName && isMatchDate;
-            });
-
-            if(customerSales.length === 0) {
-                alert(`No purchase records found for ${customerName} in this date range.`);
+            if(filtered.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; padding:30px; color:#999;">No ${currentCategory} found.</p>`;
                 return;
             }
 
-            // Calculate Totals and Build Table Rows
-            let rowsHtml = '';
-            let grandTotalBill = 0;
-            let grandTotalPaid = 0;
-            let grandTotalDue = 0;
+            listEl.innerHTML = '';
+            filtered.forEach(c => {
+                const img = c.image ? `<img src="${c.image}">` : `<i class="fas fa-user"></i>`;
+                listEl.innerHTML += `
+                    <div class="contact-card" onclick="prepareStatement('${c.name}', '${c.phone}')">
+                        <div class="contact-info">
+                            <div class="contact-img">${img}</div>
+                            <div class="contact-details">
+                                <h4>${c.name}</h4>
+                                <p><i class="fas fa-phone-alt"></i> ${c.phone || 'No phone'}</p>
+                            </div>
+                        </div>
+                        <button class="btn-statement">Statement <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                `;
+            });
+        };
 
-            customerSales.forEach((sale, index) => {
-                const sDate = new Date(sale.date || sale.created_at).toLocaleDateString('en-GB');
-                
-                // Build Item Details String
-                let itemsStr = '';
-                if(sale.items && Array.isArray(sale.items)) {
-                    itemsStr = sale.items.map(item => `${item.name} (${item.quantity} x ৳${item.price})`).join('<br>');
-                } else {
-                    itemsStr = "Retail Items"; // Fallback if old data format
-                }
+        window.prepareStatement = (name, phone) => {
+            const dateFrom = new Date(document.getElementById('dateFrom').value).setHours(0,0,0,0);
+            const dateTo = new Date(document.getElementById('dateTo').value).setHours(23,59,59,999);
+            
+            let logs = [];
+            if(currentCategory === 'customers') {
+                logs = salesData.filter(s => (s.customer === name || s.customer_name === name) && new Date(s.date || s.created_at).getTime() >= dateFrom && new Date(s.date || s.created_at).getTime() <= dateTo);
+            } else if (currentCategory === 'suppliers') {
+                logs = purchaseData.filter(p => p.supplier === name && new Date(p.date || p.created_at).getTime() >= dateFrom && new Date(p.date || p.created_at).getTime() <= dateTo);
+            }
 
-                const sTotal = Number(sale.total_amount || 0);
-                const sPaid = Number(sale.paid_amount || 0);
-                const sDue = Number(sale.due_amount || 0);
+            if(logs.length === 0) return alert("No transactions found for this period!");
 
-                grandTotalBill += sTotal;
-                grandTotalPaid += sPaid;
-                grandTotalDue += sDue;
+            // Fill Preview
+            document.getElementById('pdfShopName').innerText = SHOP_NAME;
+            document.getElementById('pdfContactName').innerText = name;
+            document.getElementById('pdfContactPhone').innerText = "Phone: " + (phone || 'N/A');
+            document.getElementById('pdfDateRange').innerText = document.getElementById('dateFrom').value + " to " + document.getElementById('dateTo').value;
+            document.getElementById('pdfGenDate').innerText = new Date().toLocaleDateString('en-GB');
 
-                rowsHtml += `
+            let rows = '';
+            let totalBill = 0, totalPaid = 0, totalDue = 0;
+
+            logs.forEach(l => {
+                const amt = Number(l.total_amount || 0);
+                const paid = Number(l.paid_amount || 0);
+                const due = Number(l.due_amount || 0);
+                totalBill += amt; totalPaid += paid; totalDue += due;
+
+                const items = l.items ? l.items.map(i => `${i.name} (${i.quantity})`).join(', ') : 'Direct Ledger Entry';
+
+                rows += `
                     <tr>
-                        <td>${index + 1}</td>
-                        <td>${sDate}</td>
-                        <td>${itemsStr}</td>
-                        <td class="text-right">৳${sTotal.toLocaleString()}</td>
+                        <td>${new Date(l.date || l.created_at).toLocaleDateString('en-GB')}</td>
+                        <td><div style="font-weight:600;">${l.invoice_no ? 'Inv: #'+l.invoice_no : 'Challan: #'+l.challan_no}</div><div style="font-size:10px; color:#666;">${items}</div></td>
+                        <td class="text-right">৳${amt.toLocaleString()}</td>
+                        <td class="text-right">${due > 0 ? `<span style="color:red">Due: ৳${due}</span>` : `<span style="color:green">Paid</span>`}</td>
                     </tr>
                 `;
             });
 
-            // HTML Template for the Statement
-            const templateHtml = `
-                <div style="font-family: 'Hind Siliguri', sans-serif; color: #1f2937;">
-                    <div style="text-align: center; border-bottom: 2px solid #4F46E5; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h2 style="margin: 0; color: #4F46E5; font-size: 24px; font-weight: bold;">${SHOP_NAME}</h2>
-                        <p style="margin: 2px 0; font-size: 12px; color: #6b7280;">${SHOP_ADDRESS}</p>
-                        <h3 style="margin: 10px 0 0 0; font-size: 16px; font-weight: bold;">Monthly Bill Statement</h3>
-                    </div>
+            document.getElementById('pdfTableBody').innerHTML = rows;
+            document.getElementById('pdfTotalBill').innerText = `৳${totalBill.toLocaleString()}`;
+            document.getElementById('pdfTotalPaid').innerText = `৳${totalPaid.toLocaleString()}`;
+            document.getElementById('pdfCurrentDue').innerText = `৳${totalDue.toLocaleString()}`;
 
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px;">
-                        <div>
-                            <strong>Bill To:</strong><br>
-                            <span style="font-size: 16px; font-weight: bold;">${customerName}</span>
-                        </div>
-                        <div style="text-align: right;">
-                            <strong>Statement Period:</strong><br>
-                            ${new Date(dateFrom).toLocaleDateString('en-GB')} to ${new Date(dateTo).toLocaleDateString('en-GB')}<br>
-                            <strong>Generated On:</strong> ${new Date().toLocaleDateString('en-GB')}
-                        </div>
-                    </div>
-
-                    <table class="statement-table">
-                        <thead>
-                            <tr>
-                                <th width="5%">SL</th>
-                                <th width="15%">Date</th>
-                                <th width="60%">Item Description (Qty x Rate)</th>
-                                <th width="20%" class="text-right">Amount (৳)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
-
-                    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-                        <div style="width: 250px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; font-size: 13px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                <span>Total Bill:</span>
-                                <strong>৳${grandTotalBill.toLocaleString()}</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: green;">
-                                <span>Paid/Advance:</span>
-                                <strong>৳${grandTotalPaid.toLocaleString()}</strong>
-                            </div>
-                            <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 8px 0;">
-                            <div style="display: flex; justify-content: space-between; color: red; font-size: 15px; font-weight: bold;">
-                                <span>Current Due:</span>
-                                <span>৳${grandTotalDue.toLocaleString()}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; justify-content: space-between; margin-top: 60px; font-size: 12px; font-weight: bold; color: #6b7280;">
-                        <div style="text-align: center; border-top: 1px solid #cbd5e1; width: 150px; padding-top: 5px;">Receiver's Signature</div>
-                        <div style="text-align: center; border-top: 1px solid #cbd5e1; width: 150px; padding-top: 5px;">Authorized Signature</div>
-                    </div>
-                </div>
-            `;
-
-            // Inject into Preview Container
-            document.getElementById('statementPreviewContainer').innerHTML = templateHtml;
-            
-            // Show Modal
-            document.getElementById('statementModal').style.display = 'flex';
+            document.getElementById('previewModal').style.display = 'flex';
         };
 
-        // --- DOWNLOAD PDF LOGIC ---
-        window.downloadStatementPDF = () => {
-            const btn = document.getElementById('btnDownloadPdf');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        window.closeModal = () => document.getElementById('previewModal').style.display = 'none';
 
-            const element = document.getElementById('statementPreviewContainer');
-            const customerName = document.getElementById('statementCustomer').value.trim();
-            const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-
+        window.downloadPDF = () => {
+            const element = document.getElementById('pdfContent');
+            const name = document.getElementById('pdfContactName').innerText;
             const opt = {
-                margin:       10, // mm
-                filename:     `Statement_${customerName}_${dateStr}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin: 10,
+                filename: `Statement_${name}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-
-            // New Promise-based usage:
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.innerHTML = originalText;
-                // document.getElementById('statementModal').style.display = 'none'; // Optional: close modal after download
-            });
+            html2pdf().set(opt).from(element).save();
         };
 
     </script>
