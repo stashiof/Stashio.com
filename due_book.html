@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Due Book (Ledger) - Stashio</title>
+    <title>Due Ledger and History - Stashio</title>
     
     <meta name="theme-color" content="#4F46E5">
 
@@ -51,14 +51,16 @@
         .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-pdf:active { transform: scale(0.95); }
 
-        
-
         /* Filter Section */
         .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; flex-direction: column; gap: 10px; border: 1px solid #f8fafc; }
+        .date-row { display: flex; gap: 10px; }
         .input-group { flex: 1; }
         .input-group label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
         .input-group input { width: 100%; padding: 12px 15px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 13px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); transition: 0.3s; }
         .input-group input:focus { border-color: var(--primary); background: white; }
+        .search-box { position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 10px; border: 1px solid #e5e7eb; outline: none; font-size: 13px; font-family: inherit; background: #f8fafc; }
         
         /* Summary */
         .summary-bar { display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 15px; gap: 10px; }
@@ -90,6 +92,23 @@
         .btn-history { background: #f8fafc; color: var(--text-dark); border: 1px solid #e5e7eb; }
         .btn-action:active { transform: scale(0.96); }
 
+        /* History List */
+        .history-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .history-card { background: var(--white); border-radius: 14px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); border-left: 4px solid transparent; }
+        .history-card.in { border-left-color: var(--success); }
+        .history-card.out { border-left-color: var(--danger); }
+        
+        .hc-info { flex: 1; min-width: 0; }
+        .hc-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+        .hc-note { font-size: 11px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+        .hc-date { font-size: 10px; color: #9ca3af; margin-top: 4px; font-weight: 600; }
+        
+        .hc-amt-box { text-align: right; }
+        .hc-amt { font-size: 16px; font-weight: 800; }
+        .hc-bal { font-size: 10px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+        .text-green { color: var(--success); }
+        .text-red { color: var(--danger); }
+
         /* Modals */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(3px); }
         .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -117,9 +136,12 @@
         <div class="header-top">
             <div class="header-title">
                 <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-                <span>Due Book (Ledger)</span>
+                <span>Due Ledger and History</span>
             </div>
-            <button onclick="downloadPDF()" class="btn-pdf" id="btnPdf"><i class="fas fa-file-pdf"></i> Save PDF</button>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="downloadDuePDF()" class="btn-pdf" id="btnDuePdf"><i class="fas fa-file-pdf"></i> Due PDF</button>
+                <button onclick="downloadHistoryPDF()" class="btn-pdf" id="btnHistoryPdf"><i class="fas fa-file-pdf"></i> History PDF</button>
+            </div>
         </div>
     </div>
 
@@ -135,9 +157,19 @@
     </div>
 
     <div class="filter-card">
-        <div class="input-group">
-            <input type="text" id="searchName" placeholder="🔍 Search Customer / Supplier..." list="contactList">
-            <datalist id="contactList"></datalist>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchName" placeholder="🔍 Search Customer / Supplier...">
+        </div>
+        <div class="date-row">
+            <div class="input-group" style="margin: 0;">
+                <label>From Date</label>
+                <input type="date" id="dateFrom">
+            </div>
+            <div class="input-group" style="margin: 0;">
+                <label>To Date</label>
+                <input type="date" id="dateTo">
+            </div>
         </div>
     </div>
 
@@ -146,6 +178,9 @@
     </div>
 
     <div class="due-list" id="dueList"></div>
+
+    <h3 style="padding: 15px; font-size: 16px; font-weight: 700; margin-top: 20px;">Transaction History</h3>
+    <div class="history-list" id="historyList"></div>
 
     <div class="modal-overlay" id="payModal">
         <div class="modal-content">
@@ -200,9 +235,15 @@
 
         let allDues = [];
         let allHistory = [];
+        let allContacts = { customers: [], suppliers: [] };
         let globalPdfTemplateCode = "";
+        let filteredHistory = [];
 
         window.onload = () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = today;
+            document.getElementById('dateTo').value = today;
+
             // Theme sync
             rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                 const themeCode = snap.exists() ? snap.val().code : null;
@@ -220,41 +261,40 @@
                 if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
             });
 
-            // Load Contacts for Search Suggestions
+            // Load Contacts
             rtdbOnValue(rtdbRef(rtdb, 'contacts'), (snap) => {
-                const list = document.getElementById('contactList');
-                list.innerHTML = '';
+                allContacts = { customers: [], suppliers: [] };
                 if(snap.exists()){
                     const data = snap.val();
-                    if(data.customers) Object.values(data.customers).forEach(c => { if(c.shop_id === SHOP_ID) list.innerHTML += `<option value="${c.name}">`; });
-                    if(data.suppliers) Object.values(data.suppliers).forEach(c => { if(c.shop_id === SHOP_ID) list.innerHTML += `<option value="${c.name}">`; });
+                    if(data.customers) allContacts.customers = Object.values(data.customers).filter(c => c.shop_id === SHOP_ID);
+                    if(data.suppliers) allContacts.suppliers = Object.values(data.suppliers).filter(c => c.shop_id === SHOP_ID);
                 }
+                renderDues();
             });
 
-            // Load History Data (Background)
+            // Load History Data
             rtdbOnValue(rtdbRef(rtdb, 'due_history'), (snap) => {
                 allHistory = [];
                 if(snap.exists()) {
                     allHistory = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).reverse();
                 }
+                applyFilters();
             });
 
-            // Load Main Due Book (Offline First)
+            // Load Main Due Book
             const cachedDues = localStorage.getItem(`due_book_${SHOP_ID}`);
             if(cachedDues) {
                 allDues = JSON.parse(cachedDues);
                 renderDues();
             }
 
-            // Realtime Sync Due Book
             rtdbOnValue(rtdbRef(rtdb, 'due_book'), (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 allDues = [];
                 if (snapshot.exists()) {
                     allDues = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(d => d.shop_id === SHOP_ID && d.current_due > 0) // Only active dues
-                        .reverse();
+                        .filter(d => d.shop_id === SHOP_ID);
                     
                     localStorage.setItem(`due_book_${SHOP_ID}`, JSON.stringify(allDues));
                 } else {
@@ -264,8 +304,10 @@
             });
         };
 
-        // Real-time Search Filter
-        document.getElementById('searchName').addEventListener('input', renderDues);
+        // Real-time Search and Date Filter
+        document.getElementById('searchName').addEventListener('input', () => { renderDues(); applyFilters(); });
+        document.getElementById('dateFrom').addEventListener('change', applyFilters);
+        document.getElementById('dateTo').addEventListener('change', applyFilters);
 
         function renderDues() {
             const listEl = document.getElementById('dueList');
@@ -275,13 +317,30 @@
             let totalRecv = 0;
             let totalPay = 0;
 
-            let filteredDues = allDues;
+            // Create due map by name (assuming unique names)
+            const dueMap = new Map();
+            allDues.forEach(d => dueMap.set(d.name.toLowerCase(), d));
+
+            // Combine all contacts with dues (0 if none)
+            let allEntries = [];
+            allContacts.customers.forEach(c => {
+                const nameLow = c.name.toLowerCase();
+                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
+                allEntries.push({ ...d, name: c.name, type: 'receive' });
+            });
+            allContacts.suppliers.forEach(c => {
+                const nameLow = c.name.toLowerCase();
+                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
+                allEntries.push({ ...d, name: c.name, type: 'pay' });
+            });
+
+            let filteredDues = allEntries;
             if(searchTerm) {
-                filteredDues = allDues.filter(d => d.name && d.name.toLowerCase().includes(searchTerm));
+                filteredDues = allEntries.filter(d => d.name.toLowerCase().includes(searchTerm));
             }
 
             if (filteredDues.length === 0) {
-                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-book-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No active dues found.</div>`;
+                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-book-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No contacts found.</div>`;
             } else {
                 filteredDues.forEach(d => {
                     if(d.type === 'receive') totalRecv += Number(d.current_due);
@@ -304,24 +363,72 @@
                             <div class="dc-due-amt" style="color:${btnColor}">৳${Number(d.current_due).toLocaleString()}</div>
                         </div>
                         <div class="btn-group">
-                            <button onclick="openHistory('${d.id}')" class="btn-action btn-history"><i class="fas fa-history"></i> History</button>
-                            <button onclick="openPayModal('${d.id}', '${d.type}', '${d.name.replace(/'/g, "\\'")}', ${d.current_due})" class="btn-action btn-update" style="background:${btnColor}">
+                            <button onclick="openHistory('${d.id || ''}')" class="btn-action btn-history"><i class="fas fa-history"></i> History</button>
+                            ${Number(d.current_due) > 0 ? `<button onclick="openPayModal('${d.id || ''}', '${d.type}', '${d.name.replace(/'/g, "\\'")}', ${d.current_due})" class="btn-action btn-update" style="background:${btnColor}">
                                 <i class="fas ${isRecv ? 'fa-hand-holding-usd' : 'fa-money-bill-wave'}"></i> Update
-                            </button>
+                            </button>` : ''}
                         </div>
                     </div>`;
                     listEl.insertAdjacentHTML('beforeend', html);
                 });
             }
 
-            // Update Top Boxes (Only overall totals)
+            // Update Top Boxes (Overall totals)
             let overallRecv = 0, overallPay = 0;
-            allDues.forEach(d => {
+            allEntries.forEach(d => {
                 if(d.type === 'receive') overallRecv += Number(d.current_due);
                 else overallPay += Number(d.current_due);
             });
             document.getElementById('sumRecv').innerText = `৳${overallRecv.toLocaleString()}`;
             document.getElementById('sumPay').innerText = `৳${overallPay.toLocaleString()}`;
+        }
+
+        window.applyFilters = () => {
+            const term = document.getElementById('searchName').value.toLowerCase().trim();
+            const dateFrom = new Date(document.getElementById('dateFrom').value).setHours(0,0,0,0);
+            const dateTo = new Date(document.getElementById('dateTo').value).setHours(23,59,59,999);
+
+            filteredHistory = allHistory.filter(h => {
+                const matchName = h.name ? h.name.toLowerCase().includes(term) : false;
+                const hDate = new Date(h.date).getTime();
+                const matchDate = hDate >= dateFrom && hDate <= dateTo;
+                return matchName && matchDate;
+            });
+
+            renderHistory();
+        };
+
+        function renderHistory() {
+            const listEl = document.getElementById('historyList');
+            listEl.innerHTML = '';
+
+            if(filteredHistory.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;">No records found.</div>`;
+                return;
+            }
+
+            filteredHistory.forEach(h => {
+                const d = new Date(h.date);
+                const isPositive = h.type === 'receive' ? (h.action.includes('Received') ? true : false) : (h.action.includes('Paid') ? false : true);
+                
+                const cardClass = isPositive ? 'in' : 'out';
+                const textClass = isPositive ? 'text-green' : 'text-red';
+                const sign = isPositive ? '+' : '-';
+
+                const html = `
+                <div class="history-card ${cardClass}">
+                    <div class="hc-info">
+                        <div class="hc-name">${h.name}</div>
+                        <div class="hc-note">${h.action}</div>
+                        <div class="hc-date">${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                    <div class="hc-amt-box">
+                        <div class="hc-amt ${textClass}">${sign}৳${Number(h.amount).toLocaleString()}</div>
+                        <div class="hc-bal">Bal: ৳${h.balance_left !== undefined ? Number(h.balance_left).toLocaleString() : 'N/A'}</div>
+                    </div>
+                </div>`;
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
         }
 
         // --- PAYMENT LOGIC ---
@@ -345,7 +452,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             btn.disabled = true;
 
-            const id = document.getElementById('payDueId').value;
+            let id = document.getElementById('payDueId').value;
             const type = document.getElementById('payDueType').value;
             const name = document.getElementById('payDueName').value;
             const currentAmt = Number(document.getElementById('payCurrentAmt').value);
@@ -360,19 +467,34 @@
             const actionText = type === 'receive' ? 'Received' : 'Paid';
 
             try {
-                // 1. Update Due Book
-                await update(rtdbRef(rtdb, `due_book/${id}`), { 
-                    current_due: newDue, 
-                    updated_at: Date.now() 
-                });
+                if (!id) {
+                    // Create new due entry if no id
+                    const newDueRef = await push(rtdbRef(rtdb, 'due_book'));
+                    id = newDueRef.key;
+                    await update(rtdbRef(rtdb, `due_book/${id}`), { 
+                        shop_id: SHOP_ID,
+                        name: name,
+                        type: type,
+                        current_due: newDue,
+                        total_amount: currentAmt, // Assume total_amount is currentAmt initially
+                        created_at: Date.now(),
+                        updated_at: Date.now() 
+                    });
+                } else {
+                    // Update existing
+                    await update(rtdbRef(rtdb, `due_book/${id}`), { 
+                        current_due: newDue, 
+                        updated_at: Date.now() 
+                    });
+                }
 
-                // 2. Add to Due History
+                // Add to Due History
                 await push(rtdbRef(rtdb, 'due_history'), {
                     due_id: id, shop_id: SHOP_ID, name: name, type: type,
                     action: actionText, amount: payAmt, balance_left: newDue, date: Date.now()
                 });
 
-                // 3. Update Cash Box Automatically!
+                // Update Cash Box
                 const cashType = type === 'receive' ? 'cash_in' : 'cash_out';
                 const modifier = type === 'receive' ? payAmt : -payAmt;
 
@@ -384,7 +506,6 @@
                 });
 
                 document.getElementById('payModal').style.display = 'none';
-                // No alert needed, UI updates in real-time
 
             } catch (err) {
                 alert("Error updating: " + err.message);
@@ -427,24 +548,39 @@
             document.getElementById('historyModal').style.display = 'flex';
         };
 
-        // --- PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
-        window.downloadPDF = () => {
-            if(allDues.length === 0) { alert("No records to generate PDF!"); return; }
-
-            const btn = document.getElementById('btnPdf');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
+        // --- DUE PDF EXPORT ---
+        window.downloadDuePDF = () => {
+            // Use allEntries from renderDues logic
             const searchTerm = document.getElementById('searchName').value.trim();
             const dateStr = new Date().toLocaleDateString('en-GB');
 
-            // Build Rows
+            const dueMap = new Map();
+            allDues.forEach(d => dueMap.set(d.name.toLowerCase(), d));
+
+            let allEntries = [];
+            allContacts.customers.forEach(c => {
+                const nameLow = c.name.toLowerCase();
+                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
+                allEntries.push({ ...d, name: c.name, type: 'receive' });
+            });
+            allContacts.suppliers.forEach(c => {
+                const nameLow = c.name.toLowerCase();
+                const d = dueMap.get(nameLow) || { id: null, current_due: 0, total_amount: 0 };
+                allEntries.push({ ...d, name: c.name, type: 'pay' });
+            });
+
+            let listToPrint = allEntries;
+            if(searchTerm) listToPrint = allEntries.filter(d => d.name && d.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+            if(listToPrint.length === 0) { alert("No records to generate PDF!"); return; }
+
+            const btn = document.getElementById('btnDuePdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
             let rowsHtml = '';
             let sumR = 0, sumP = 0;
             
-            let listToPrint = allDues;
-            if(searchTerm) listToPrint = allDues.filter(d => d.name && d.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
             listToPrint.forEach(d => {
                 if(d.type === 'receive') sumR += Number(d.current_due);
                 else sumP += Number(d.current_due);
@@ -463,7 +599,6 @@
                 `;
             });
 
-            // Default Template
             const defaultTemplate = `
                 <div style="font-family: 'Hind Siliguri', sans-serif; padding: 20px;">
                     <div style="text-align: center; margin-bottom: 20px;">
@@ -508,12 +643,68 @@
             tempDiv.innerHTML = finalTemplate;
             
             html2pdf().set({
-                margin: 10, filename: `Due_Ledger_${dateStr.replace(/\\//g, '-')}.pdf`,
+                margin: 10, filename: `Due_Ledger_${dateStr.replace(/\//g, '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
                 window.open(pdfUrl, '_blank');
+                btn.innerHTML = originalText;
+            }).catch(err => {
+                alert('Error generating PDF: ' + err.message);
+                btn.innerHTML = originalText;
+            });
+        };
+
+        // --- HISTORY PDF EXPORT ---
+        window.downloadHistoryPDF = () => {
+            if(filteredHistory.length === 0) { alert("No data to download!"); return; }
+            
+            const btn = document.getElementById('btnHistoryPdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '20px';
+            tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
+            
+            let trs = '';
+            filteredHistory.forEach(h => {
+                const d = new Date(h.date).toLocaleDateString('en-GB');
+                trs += `<tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${d}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; font-weight:bold;">${h.name}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${h.action}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align:right; font-weight:bold;">${Number(h.amount).toLocaleString()}</td>
+                </tr>`;
+            });
+
+            tempDiv.innerHTML = `
+                <h2 style="text-align:center; margin-bottom: 5px;">${SHOP_NAME}</h2>
+                <p style="text-align:center; font-size: 14px; margin-bottom: 20px;">Due Ledger Transaction History</p>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead style="background-color: #4F46E5; color: white;">
+                        <tr>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Party Name</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Action</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; text-align:right;">Amount (৳)</th>
+                        </tr>
+                    </thead>
+                    <tbody>${trs}</tbody>
+                </table>
+            `;
+            
+            html2pdf().set({
+                margin: 10, filename: `Due_History_Report.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
+                window.open(pdfUrl, '_blank');
+                btn.innerHTML = originalText;
+            }).catch(err => {
+                alert('Error generating PDF: ' + err.message);
                 btn.innerHTML = originalText;
             });
         };
