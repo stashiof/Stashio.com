@@ -10,66 +10,45 @@
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        
-        if (!loggedInUser) {
-            window.location.replace("index.html");
-        } else if (!activeShopId) {
-            window.location.replace("dashboard.html");
-        }
+        if (!loggedInUser) window.location.replace("index.html");
+        else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        :root {
-            --primary: #14b8a6; --secondary: #0d9488; --bg-color: #f3f4f6;
-            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
-            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
-            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
+        :root { --primary: #14b8a6; --secondary: #0d9488; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
-
-        .app-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
-            position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(20, 184, 166, 0.2);
-        }
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(20, 184, 166, 0.2); }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
-
         .search-container { margin: -15px 15px 15px 15px; position: relative; z-index: 60; }
         .search-box { position: relative; }
         .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
         .search-box input { width: 100%; padding: 14px 15px 14px 40px; border-radius: 14px; border: none; outline: none; box-shadow: var(--shadow); font-size: 13px; font-family: inherit; }
-
         .order-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
-        
         .order-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
         .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; }
         .order-no { font-size: 14px; font-weight: 800; color: var(--text-dark); }
-        
         .badge { padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         .badge.pending { background: #fef3c7; color: var(--warning); }
         .badge.completed { background: #dcfce3; color: var(--success); }
         .badge.cancelled { background: #fee2e2; color: var(--danger); }
-
         .order-body { display: flex; justify-content: space-between; align-items: flex-end; }
         .order-info p { margin: 0 0 5px 0; font-size: 12px; color: var(--text-light); font-weight: 500; }
         .order-info strong { color: var(--text-dark); }
         .order-amount { text-align: right; }
         .order-amount h3 { margin: 0; font-size: 18px; color: var(--primary); font-weight: 800; }
         .advance-text { font-size: 11px; color: var(--success); font-weight: 600; }
-
-        .order-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-action { flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; text-align: center; }
+        .order-actions { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        .btn-action { flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; text-align: center; min-width: 80px; }
         .btn-action:active { transform: scale(0.96); }
         .btn-view { background: #f1f5f9; color: var(--text-dark); }
+        .btn-edit { background: #e0e7ff; color: #4F46E5; }
         .btn-complete { background: var(--primary); color: white; }
         .btn-cancel { background: #fee2e2; color: var(--danger); }
 
-        /* Modal Styles */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
         .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
@@ -77,24 +56,25 @@
         .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; }
         .modal-body { padding: 20px; overflow-y: auto; }
         
-        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; align-items: center;}
         .item-row:last-child { border-bottom: none; }
+        
+        /* Edit Mode Styles */
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { width: 28px; height: 28px; border: none; background: #f1f5f9; border-radius: 8px; font-weight: bold; cursor: pointer; color: var(--text-dark); }
+        .qty-input { width: 35px; text-align: center; border: 1px solid #e5e7eb; background: transparent; font-weight: 700; font-size: 13px; border-radius: 5px; }
+        .btn-remove-item { background: none; border: none; color: var(--danger); font-size: 14px; cursor: pointer; padding: 5px; }
+        .btn-save-changes { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="header-title">
-            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-            <span>Sales Orders</span>
-        </div>
+        <div class="header-title"><a href="home.html"><i class="fas fa-arrow-left"></i></a><span>Sales Orders</span></div>
     </div>
 
     <div class="search-container">
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search by Order No or Customer...">
-        </div>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search by Order No or Customer..."></div>
     </div>
 
     <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-size: 13px;">
@@ -107,7 +87,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="mOrderNo">Order Details</h3>
-                <button onclick="closeModal()" class="btn-close"><i class="fas fa-times"></i></button>
+                <button onclick="closeModal('orderModal')" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <div style="background: #f8fafc; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 12px;">
@@ -119,19 +99,33 @@
                 <div id="mItemsList"></div>
                 
                 <div style="margin-top: 15px; border-top: 2px dashed #e5e7eb; padding-top: 15px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
-                        <span>Subtotal:</span> <strong id="mSubtotal"></strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--danger);">
-                        <span>Discount:</span> <strong id="mDiscount"></strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px;">
-                        <span>Grand Total:</span> <span id="mTotal" style="color: var(--primary);"></span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--success); font-weight: bold;">
-                        <span>Advance Paid:</span> <span id="mAdvance"></span>
-                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;"><span>Subtotal:</span> <strong id="mSubtotal"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--danger);"><span>Discount:</span> <strong id="mDiscount"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px;"><span>Grand Total:</span> <span id="mTotal" style="color: var(--primary);"></span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--success); font-weight: bold; margin-bottom: 5px;"><span>Advance Paid:</span> <span id="mAdvance"></span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #8b5cf6; font-weight: bold; margin-top: 10px; padding-top: 5px; border-top: 1px dotted #e5e7eb;"><span>Estimated Profit:</span> <span id="mProfit"></span></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Order</h3>
+                <button onclick="closeModal('editModal')" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="editItemsList"></div>
+                
+                <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;"><span>New Subtotal:</span> <strong id="eSubtotal"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--danger);"><span>Discount (Fixed):</span> <strong id="eDiscount"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px;"><span>New Total:</span> <span id="eTotal" style="color: var(--primary);"></span></div>
+                    <div style="font-size: 10px; color: var(--success); text-align: right;">Advance Paid: <span id="eAdvance"></span></div>
+                </div>
+                
+                <button id="btnSaveChanges" onclick="saveEditedOrder()" class="btn-save-changes">Save Updates</button>
             </div>
         </div>
     </div>
@@ -142,15 +136,13 @@
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         let allOrders = [];
+        let editingOrderData = null; 
 
         window.onload = () => {
             rtdbOnValue(rtdbRef(rtdb, 'sales_orders'), (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
-                    allOrders = Object.entries(snapshot.val())
-                        .map(([id, val]) => ({ id, ...val }))
-                        .filter(o => o.shop_id === SHOP_ID)
-                        .reverse(); // Newest first
+                    allOrders = Object.entries(snapshot.val()).map(([id, val]) => ({ id, ...val })).filter(o => o.shop_id === SHOP_ID).reverse();
                     renderOrders(allOrders);
                 } else {
                     allOrders = [];
@@ -160,13 +152,8 @@
         };
 
         function renderOrders(orders) {
-            const listEl = document.getElementById('orderList');
-            listEl.innerHTML = '';
-
-            if(orders.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; padding: 40px; color:#9ca3af;">No matching orders.</div>';
-                return;
-            }
+            const listEl = document.getElementById('orderList'); listEl.innerHTML = '';
+            if(orders.length === 0) { listEl.innerHTML = '<div style="text-align:center; padding: 40px; color:#9ca3af;">No matching orders.</div>'; return; }
 
             orders.forEach(order => {
                 const isPending = order.status === 'Pending';
@@ -174,13 +161,13 @@
                 let actionsHtml = `<button onclick="viewOrder('${order.id}')" class="btn-action btn-view">View Details</button>`;
                 if(isPending) {
                     actionsHtml += `
+                        <button onclick="openEditModal('${order.id}')" class="btn-action btn-edit"><i class="fas fa-edit"></i> Edit</button>
                         <button onclick="completeOrder('${order.id}')" class="btn-action btn-complete"><i class="fas fa-check"></i> Deliver</button>
                         <button onclick="cancelOrder('${order.id}')" class="btn-action btn-cancel"><i class="fas fa-times"></i> Cancel</button>
                     `;
                 }
 
                 const advanceDisplay = order.advance_paid > 0 ? `<div class="advance-text">Adv: ৳${order.advance_paid}</div>` : '';
-
                 const html = `
                 <div class="order-card">
                     <div class="order-header">
@@ -198,25 +185,19 @@
                             ${advanceDisplay}
                         </div>
                     </div>
-                    <div class="order-actions">
-                        ${actionsHtml}
-                    </div>
+                    <div class="order-actions">${actionsHtml}</div>
                 </div>`;
                 listEl.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        // Search Filter
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase().trim();
-            const filtered = allOrders.filter(o => 
-                o.order_no.toLowerCase().includes(term) || 
-                o.customer.toLowerCase().includes(term)
-            );
+            const filtered = allOrders.filter(o => o.order_no.toLowerCase().includes(term) || o.customer.toLowerCase().includes(term));
             renderOrders(filtered);
         });
 
-        // View Order Details
+        // --- VIEW ORDER ---
         window.viewOrder = (id) => {
             const order = allOrders.find(o => o.id === id);
             if(!order) return;
@@ -225,130 +206,165 @@
             document.getElementById('mCustomer').innerText = order.customer;
             document.getElementById('mDate').innerText = order.date;
             
-            const itemsList = document.getElementById('mItemsList');
-            itemsList.innerHTML = '';
+            const itemsList = document.getElementById('mItemsList'); itemsList.innerHTML = '';
             order.items.forEach(item => {
-                itemsList.innerHTML += `
-                <div class="item-row">
-                    <span>${item.name} <br><small style="color:var(--text-light)">${item.qty} x ৳${item.sellRate}</small></span>
-                    <strong>৳${item.qty * item.sellRate}</strong>
-                </div>`;
+                itemsList.innerHTML += `<div class="item-row"><span>${item.name} <br><small style="color:var(--text-light)">${item.qty} x ৳${item.sellRate}</small></span><strong>৳${item.qty * item.sellRate}</strong></div>`;
             });
 
             document.getElementById('mSubtotal').innerText = `৳${order.subtotal}`;
             document.getElementById('mDiscount').innerText = `৳${order.discount}`;
             document.getElementById('mTotal').innerText = `৳${order.total_amount}`;
             document.getElementById('mAdvance').innerText = `৳${order.advance_paid || 0}`;
+            document.getElementById('mProfit').innerText = `৳${order.estimated_profit || 0}`;
 
             document.getElementById('orderModal').style.display = 'flex';
         };
 
-        window.closeModal = () => document.getElementById('orderModal').style.display = 'none';
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // --- CONVERT ORDER TO SALE (Complete Delivery) ---
+        // --- EDIT ORDER LOGIC ---
+        window.openEditModal = (id) => {
+            const order = allOrders.find(o => o.id === id);
+            if(!order) return;
+            // Create a deep copy for editing
+            editingOrderData = JSON.parse(JSON.stringify(order)); 
+            renderEditItems();
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        function renderEditItems() {
+            const list = document.getElementById('editItemsList');
+            list.innerHTML = '';
+            
+            editingOrderData.items.forEach((item, index) => {
+                list.innerHTML += `
+                <div class="item-row">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700;">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-light);">Rate: ৳${item.sellRate}</div>
+                    </div>
+                    <div class="qty-controls">
+                        <button onclick="changeEditQty(${index}, -1)" class="qty-btn">-</button>
+                        <input type="text" value="${item.qty}" class="qty-input" readonly>
+                        <button onclick="changeEditQty(${index}, 1)" class="qty-btn">+</button>
+                    </div>
+                    <button onclick="removeEditItem(${index})" class="btn-remove-item"><i class="fas fa-trash"></i></button>
+                </div>`;
+            });
+            calculateEditSummary();
+        }
+
+        window.changeEditQty = (index, change) => {
+            const newQty = editingOrderData.items[index].qty + change;
+            if(newQty > 0) { editingOrderData.items[index].qty = newQty; renderEditItems(); }
+        };
+
+        window.removeEditItem = (index) => {
+            editingOrderData.items.splice(index, 1); renderEditItems();
+        };
+
+        function calculateEditSummary() {
+            let subtotal = 0; let estProfit = 0;
+            editingOrderData.items.forEach(item => { 
+                subtotal += (item.qty * item.sellRate);
+                estProfit += (item.sellRate - (item.buy_price || 0)) * item.qty;
+            });
+            
+            const total = subtotal - editingOrderData.discount;
+            editingOrderData.subtotal = subtotal;
+            editingOrderData.total_amount = total;
+            editingOrderData.estimated_profit = estProfit - editingOrderData.discount;
+
+            document.getElementById('eSubtotal').innerText = `৳${subtotal}`;
+            document.getElementById('eDiscount').innerText = `৳${editingOrderData.discount}`;
+            document.getElementById('eTotal').innerText = `৳${total}`;
+            document.getElementById('eAdvance').innerText = `৳${editingOrderData.advance_paid || 0}`;
+        }
+
+        window.saveEditedOrder = async () => {
+            if(editingOrderData.items.length === 0) {
+                alert("Order cannot be empty. If you want to cancel, use the Cancel button."); return;
+            }
+            if(editingOrderData.total_amount < (editingOrderData.advance_paid || 0)) {
+                alert(`Error: The new bill total (৳${editingOrderData.total_amount}) is less than the advance paid (৳${editingOrderData.advance_paid}). Please return the extra money manually before editing, or cancel the order.`);
+                return;
+            }
+
+            const btn = document.getElementById('btnSaveChanges');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; btn.disabled = true;
+
+            try {
+                await update(rtdbRef(rtdb, `sales_orders/${editingOrderData.id}`), {
+                    items: editingOrderData.items,
+                    subtotal: editingOrderData.subtotal,
+                    total_amount: editingOrderData.total_amount,
+                    estimated_profit: editingOrderData.estimated_profit
+                });
+                alert("Order updated successfully!");
+                closeModal('editModal');
+            } catch(e) { alert("Error saving edits: " + e.message); }
+            finally { btn.innerHTML = 'Save Updates'; btn.disabled = false; }
+        };
+
+        // --- CONVERT ORDER TO SALE (Complete Delivery - Backdated) ---
         window.completeOrder = async (id) => {
             const order = allOrders.find(o => o.id === id);
             if(!order) return;
-
-            if(!confirm("Confirm Delivery? This will deduct items from stock and record it as a final sale in the Sales Book.")) return;
+            if(!confirm("Confirm Delivery? This will deduct items from stock and record it as a final sale.")) return;
 
             try {
-                // 1. Calculate Profit & Prepare Stock Updates
-                let totalProfit = 0;
-                const itemsForSale = [];
-
+                let totalProfit = 0; const itemsForSale = [];
                 for (let item of order.items) {
                     const buyRate = Number(item.buy_price || 0);
-                    const itemProfit = (item.sellRate - buyRate) * item.qty;
-                    totalProfit += itemProfit;
-
-                    itemsForSale.push({
-                        id: item.id,
-                        name: item.name,
-                        brand: item.brand || '',
-                        qty: item.qty,
-                        sellRate: item.sellRate,
-                        buyRate: buyRate,
-                        profit: itemProfit
-                    });
-
-                    // Deduct from real stock
-                    await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => {
-                        return (Number(currentStock) || 0) - item.qty;
-                    });
+                    const itemProfit = (item.sellRate - buyRate) * item.qty; totalProfit += itemProfit;
+                    itemsForSale.push({ id: item.id, name: item.name, brand: item.brand || '', qty: item.qty, sellRate: item.sellRate, buyRate: buyRate, profit: itemProfit });
+                    await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => (Number(currentStock) || 0) - item.qty);
                 }
 
-                // 2. Add to sales_history
                 const finalInvoiceNo = order.order_no.replace('ORD', 'INV');
+                
+                // BACKDATED LOGIC: Using the date from the order
+                const orderDate = new Date(order.date);
+                const now = new Date();
+                orderDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+                const actionTimestamp = orderDate.getTime();
+
                 const sellData = {
-                    shop_id: SHOP_ID,
-                    invoice_no: finalInvoiceNo,
-                    customer: order.customer,
-                    date: new Date().toISOString().split('T')[0], // Today's date
-                    items: itemsForSale,
-                    subtotal: order.subtotal,
-                    discount: order.discount,
-                    total_amount: order.total_amount,
-                    paid_amount: order.total_amount, // Assuming customer pays remaining amount on delivery
-                    due_amount: 0,
-                    total_profit: totalProfit - order.discount,
-                    payment_method: 'Cash',
-                    created_at: Date.now()
+                    shop_id: SHOP_ID, invoice_no: finalInvoiceNo, customer: order.customer,
+                    date: order.date, items: itemsForSale, subtotal: order.subtotal, discount: order.discount,
+                    total_amount: order.total_amount, paid_amount: order.total_amount, due_amount: 0,
+                    total_profit: totalProfit - order.discount, payment_method: 'Cash', created_at: actionTimestamp
                 };
 
                 await push(rtdbRef(rtdb, 'sales_history'), sellData);
-
-                // 3. Update Order Status
                 await update(rtdbRef(rtdb, `sales_orders/${id}`), { status: 'Completed' });
 
-                // 4. Update Cashbox with the REMAINING balance (Total - Advance)
                 const remainingPayment = order.total_amount - (order.advance_paid || 0);
                 if (remainingPayment > 0) {
                     await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + remainingPayment);
-                    await push(rtdbRef(rtdb, 'cash_transactions'), {
-                        shop_id: SHOP_ID, type: 'cash_in', source: 'sell',
-                        amount: remainingPayment, note: `Final payment for Order: ${order.order_no}`, created_at: Date.now()
-                    });
+                    await push(rtdbRef(rtdb, 'cash_transactions'), { shop_id: SHOP_ID, type: 'cash_in', source: 'sell', amount: remainingPayment, note: `Final payment for Order: ${order.order_no}`, created_at: actionTimestamp });
                 }
-
                 alert("Order completed! Stock has been deducted and sale recorded.");
-
-            } catch(e) {
-                alert("Error completing order: " + e.message);
-            }
+            } catch(e) { alert("Error completing order: " + e.message); }
         };
 
         // --- CANCEL ORDER ---
         window.cancelOrder = async (id) => {
             const order = allOrders.find(o => o.id === id);
             if(!order) return;
-
             if(!confirm("Are you sure you want to cancel this order?")) return;
 
             try {
                 await update(rtdbRef(rtdb, `sales_orders/${id}`), { status: 'Cancelled' });
-
-                // If advance was paid, ask if they want to refund it from cashbox
                 if (order.advance_paid > 0) {
                     if (confirm(`This order had an advance payment of ৳${order.advance_paid}. Do you want to refund this amount from your cashbox?`)) {
                         await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - order.advance_paid);
-                        await push(rtdbRef(rtdb, 'cash_transactions'), {
-                            shop_id: SHOP_ID, type: 'cash_out', source: 'order_refund',
-                            amount: order.advance_paid, note: `Refund for Cancelled Order: ${order.order_no}`, created_at: Date.now()
-                        });
+                        await push(rtdbRef(rtdb, 'cash_transactions'), { shop_id: SHOP_ID, type: 'cash_out', source: 'order_refund', amount: order.advance_paid, note: `Refund for Cancelled Order: ${order.order_no}`, created_at: Date.now() });
                         alert("Order cancelled and advance refunded.");
-                    } else {
-                        alert("Order cancelled. Advance was NOT refunded.");
-                    }
-                } else {
-                    alert("Order cancelled.");
-                }
-
-            } catch(e) {
-                alert("Error cancelling order: " + e.message);
-            }
+                    } else { alert("Order cancelled. Advance was NOT refunded."); }
+                } else { alert("Order cancelled."); }
+            } catch(e) { alert("Error cancelling order: " + e.message); }
         };
     </script>
 </body>
 </html>
-
