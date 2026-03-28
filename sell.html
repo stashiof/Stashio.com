@@ -242,7 +242,7 @@
                 <div class="grid-2">
                     <div class="input-group">
                         <label>Received (৳)</label>
-                        <input type="number" id="paidInput" class="input-field" oninput="calculateSummary()" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
+                        <input type="number" id="paidInput" class="input-field" oninput="calculateSummary()" placeholder="0" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
                     </div>
                     <div style="text-align: right;">
                         <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;" id="dueOrReturnLabel">Due Amount</label>
@@ -270,8 +270,11 @@
             </div>
         </div>
 
-        <div class="bottom-checkout-bar" style="padding: 15px;">
-            <button id="confirmBtn" onclick="confirmSell()" class="btn-confirm">
+        <div class="bottom-checkout-bar" style="padding: 15px; display: flex; gap: 10px;">
+            <button id="saveOrderBtn" onclick="saveAsOrder()" class="btn-confirm" style="background: var(--warning); flex: 1; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3); font-size: 13px;">
+                Save Order <i class="fas fa-clipboard-list" style="margin-left: 5px;"></i>
+            </button>
+            <button id="confirmBtn" onclick="confirmSell()" class="btn-confirm" style="flex: 1.5; font-size: 13px;">
                 Confirm Sale <i class="fas fa-check-circle" style="margin-left: 5px;"></i>
             </button>
         </div>
@@ -355,7 +358,6 @@
     </div>
 
     <script type="module">
-        // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, get } from './firebase_config.js';
         import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
@@ -394,7 +396,6 @@
                         
                     localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(allProducts));
                     
-                    // Re-init pagination if not currently searching
                     if(document.getElementById('searchInput').value.trim() === '') {
                         initPagination(allProducts);
                     }
@@ -418,7 +419,6 @@
             });
         };
 
-        // --- INFINITE SCROLL / PAGINATION LOGIC ---
         function initPagination(products) {
             currentPage = 1;
             displayedProducts = products;
@@ -452,7 +452,6 @@
             }
         };
 
-        // --- CUSTOMER SMART DROPDOWN LOGIC ---
         const custInput = document.getElementById('customerName');
         const custDropdown = document.getElementById('customerDropdown');
 
@@ -493,7 +492,6 @@
             }
         });
 
-        // --- MAGIC FEATURE: FETCH CUSTOMER SPECIAL PRICE ---
         async function triggerSpecialPriceFetch(custName) {
             custName = custName.trim();
             if(!custName || custName === "Local (Walk-in)") {
@@ -531,7 +529,6 @@
             }
         }
 
-        // --- PRODUCT RENDERING ---
         function renderProductGrid(products, append = false) {
             const grid = document.getElementById('productGrid');
             if(!append) grid.innerHTML = '';
@@ -561,7 +558,6 @@
             updateCartCount();
         }
 
-        // --- CART LOGIC ---
         window.toggleCart = (id) => {
             if(cart[id]) {
                 delete cart[id]; 
@@ -576,7 +572,6 @@
                 }
             }
             
-            // Re-render UI
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             if(searchTerm) {
                 const filtered = allProducts.filter(p => p.name.toLowerCase().includes(searchTerm) || (p.brand && p.brand.toLowerCase().includes(searchTerm)) || (p.barcode && p.barcode.toString().toLowerCase().includes(searchTerm)));
@@ -592,10 +587,9 @@
             document.getElementById('btnToCheckout').disabled = count === 0;
         }
 
-        // --- CHECKOUT LOGIC ---
         window.goToCheckout = () => {
             renderCartItems();
-            calculateSummary();
+            calculateSummary(true);
             showView('view-checkout');
         };
 
@@ -633,8 +627,6 @@
             if(Object.keys(cart).length === 0) showView('view-selection'); 
         }
 
-                window.goToCheckout = () => { renderCartItems(); calculateSummary(true); showView('view-checkout'); };
-
         window.updateCartQty = (id, change, manualValue = null) => {
             let newQty = manualValue ? Number(manualValue) : cart[id].qty + change;
             const maxStock = cart[id].stock;
@@ -647,16 +639,16 @@
                 if(confirm("Remove this item?")) delete cart[id];
             } else { cart[id].qty = newQty; }
             
-            renderCartItems(); calculateSummary(true); updateCartCount();
+            renderCartItems(); calculateSummary(); updateCartCount();
         };
 
         window.updateCartRate = (id, value) => {
             cart[id].sellRate = Number(value) || 0;
-            renderCartItems(); calculateSummary(true);
+            renderCartItems(); calculateSummary();
         };
 
         window.removeCartItem = (id) => {
-            delete cart[id]; renderCartItems(); calculateSummary(true); updateCartCount();
+            delete cart[id]; renderCartItems(); calculateSummary(); updateCartCount();
         }
 
         window.calculateSummary = (autoFill = false) => {
@@ -675,7 +667,7 @@
                 paidInput.value = grandTotal;
             }
             
-            const paid = Number(paidInput.value);
+            const paid = Number(paidInput.value) || 0;
             const due = grandTotal - paid;
             
             if(due < 0) {
@@ -692,7 +684,75 @@
         };
 
 
-        // --- CONFIRM SALE & SAVE PRICING ---
+        // ============================================
+        // --- SAVE AS ORDER (New Functionality) ---
+        // ============================================
+        window.saveAsOrder = async () => {
+            if(Object.keys(cart).length === 0) return alert("Cart is empty!");
+            
+            const btn = document.getElementById('saveOrderBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const customerName = document.getElementById('customerName').value || "Local (Walk-in)";
+            const { subtotal, discount, grandTotal, paid, due } = window.checkoutSummary;
+            
+            // Generate Order Number
+            const orderNo = "ORD-" + Math.floor(100000 + Math.random() * 900000);
+            
+            const itemsToSave = [];
+            Object.values(cart).forEach(item => {
+                itemsToSave.push({ 
+                    id: item.id, 
+                    name: item.name, 
+                    brand: item.brand || '', 
+                    qty: item.qty, 
+                    sellRate: item.sellRate,
+                    buy_price: item.buy_price // Required for profit calculation later
+                });
+            });
+
+            const orderData = {
+                shop_id: SHOP_ID,
+                order_no: orderNo,
+                customer: customerName,
+                date: document.getElementById('sellDate').value,
+                items: itemsToSave, 
+                subtotal: subtotal,
+                discount: discount,
+                total_amount: grandTotal,
+                advance_paid: paid, 
+                status: 'Pending', 
+                created_at: Date.now()
+            };
+
+            try {
+                // Save order to Firebase
+                await push(rtdbRef(rtdb, 'sales_orders'), orderData);
+                
+                // If customer paid an advance, update the cashbox immediately
+                if(paid > 0) {
+                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + paid);
+                    await push(rtdbRef(rtdb, 'cash_transactions'), {
+                        shop_id: SHOP_ID, type: 'cash_in', source: 'order_advance',
+                        amount: paid, note: `Advance for Order: ${orderNo}`, created_at: Date.now()
+                    });
+                }
+
+                alert("Order saved successfully! It will not deduct stock until completed.");
+                location.reload(); 
+
+            } catch (err) {
+                alert("Error saving order: " + err.message);
+                btn.innerHTML = 'Save Order <i class="fas fa-clipboard-list" style="margin-left: 5px;"></i>';
+                btn.disabled = false;
+            }
+        };
+
+
+        // ============================================
+        // --- NORMAL SELL (Direct confirm) ---
+        // ============================================
         window.confirmSell = async () => {
             if(Object.keys(cart).length === 0) return alert("Cart is empty!");
             
@@ -713,7 +773,7 @@
                 itemsToSave.push({ 
                     id: item.id, 
                     name: item.name, 
-                    brand: item.brand || '', // Saved brand in memo
+                    brand: item.brand || '', 
                     qty: item.qty, 
                     sellRate: item.sellRate, 
                     buyRate: item.buy_price, 
@@ -784,7 +844,6 @@
             }
         };
 
-        // --- RECEIPT & SCANNER ---
         function generateReceipt(data) {
             document.getElementById('rShopName').innerText = localStorage.getItem('activeShopName') || "Stashio Store"; 
             document.getElementById('rCustomer').innerText = data.customer;
@@ -826,7 +885,6 @@
             window.scrollTo(0, 0);
         };
 
-        // Search Box Logic with Pagination Support
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase().trim();
             if(term === '') {
