@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estimate & Profit Summary - Stashio</title>
+    
+    <meta name="theme-color" content="#f59e0b">
+    <script>
+        const activeShopId = localStorage.getItem('activeShopId');
+        if (!activeShopId) window.location.replace("dashboard.html");
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root { --primary: #f59e0b; --secondary: #d97706; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
+            .no-print { display: none !important; }
+            table { border-collapse: collapse !important; width: 100% !important; }
+            th, td { border: 1px solid #000 !important; padding: 8px !important; }
+        }
+
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2); }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+        
+        .search-container { margin: -15px 15px 15px 15px; position: relative; z-index: 60; }
+        .search-box { position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 14px 15px 14px 40px; border-radius: 14px; border: none; outline: none; box-shadow: var(--shadow); font-size: 13px; }
+        
+        .product-list { padding: 0 15px; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .product-card { background: white; padding: 10px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb; cursor: pointer; }
+        .product-card:active { background: #fef3c7; border-color: var(--primary); }
+
+        .cart-container { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .cart-item { background: white; padding: 15px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
+        .item-header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; font-size: 14px; }
+        .item-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .input-box { display: flex; flex-direction: column; }
+        .input-box label { font-size: 10px; color: var(--text-light); font-weight: 700; margin-bottom: 2px; }
+        .input-box input { padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; font-weight: bold; width: 100%; text-align: center; }
+        .input-box input.buy { color: var(--danger); border-color: #fca5a5; }
+        .input-box input.sell { color: var(--success); border-color: #86efac; }
+        
+        .summary-card { background: white; margin: 20px 15px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); border: 2px solid var(--primary); }
+        .summary-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+        .summary-row.profit { font-size: 18px; font-weight: 800; color: var(--success); border-top: 2px dashed #e5e7eb; padding-top: 10px; margin-top: 10px; }
+        
+        .btn-print { width: calc(100% - 30px); margin: 0 15px; background: var(--text-dark); color: white; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header no-print">
+        <div class="header-title"><a href="home.html"><i class="fas fa-arrow-left"></i></a><span>Estimate & Profit Summary</span></div>
+    </div>
+
+    <div class="search-container no-print">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search product to add...">
+        </div>
+    </div>
+
+    <div class="product-list no-print" id="searchResults" style="display: none;"></div>
+
+    <div style="padding: 0 15px; margin-bottom: 10px; font-weight: 700; color: var(--text-light); font-size: 12px;" class="no-print">ITEMS IN ESTIMATE:</div>
+    <div class="cart-container no-print" id="cartList"></div>
+
+    <div class="summary-card no-print">
+        <div class="summary-row"><span>Total Market Cost (Buy):</span> <span id="sumBuy" style="color: var(--danger);">৳0</span></div>
+        <div class="summary-row"><span>Total Company Bill (Sell):</span> <span id="sumSell" style="color: var(--text-dark);">৳0</span></div>
+        <div class="summary-row profit"><span>Estimated Profit:</span> <span id="sumProfit">৳0</span></div>
+    </div>
+
+    <button class="btn-print no-print" onclick="printQuotation()"><i class="fas fa-print"></i> Print Quotation</button>
+
+    <div id="printArea" style="display: none;"></div>
+
+    <script type="module">
+        import { rtdb, ref as rtdbRef, get } from './firebase_config.js';
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
+        
+        let allProducts = [];
+        let estimateCart = {};
+
+        window.onload = async () => {
+            const snap = await get(rtdbRef(rtdb, 'product_list'));
+            if(snap.exists()) {
+                allProducts = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).filter(p => p.shop_id === SHOP_ID);
+            }
+        };
+
+        // Search Product
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const resBox = document.getElementById('searchResults');
+            resBox.innerHTML = '';
+            
+            if(term === '') { resBox.style.display = 'none'; return; }
+            
+            const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
+            if(filtered.length > 0) {
+                resBox.style.display = 'flex';
+                filtered.forEach(p => {
+                    resBox.innerHTML += `
+                    <div class="product-card" onclick="addToEstimate('${p.id}')">
+                        <span style="font-size: 13px; font-weight: 600;">${p.name}</span>
+                        <span style="font-size: 11px; color: var(--primary);"><i class="fas fa-plus"></i> Add</span>
+                    </div>`;
+                });
+            } else { resBox.style.display = 'none'; }
+        });
+
+        // Add to Estimate
+        window.addToEstimate = (id) => {
+            if(!estimateCart[id]) {
+                const p = allProducts.find(x => x.id === id);
+                estimateCart[id] = { ...p, estQty: 1, estBuy: p.buy_price || 0, estSell: p.sell_price || 0 };
+            }
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            renderCart();
+        };
+
+        window.updateField = (id, field, value) => {
+            estimateCart[id][field] = Number(value) || 0;
+            calculateSummary();
+        };
+
+        window.removeItem = (id) => { delete estimateCart[id]; renderCart(); };
+
+        function renderCart() {
+            const list = document.getElementById('cartList');
+            list.innerHTML = '';
+            
+            Object.values(estimateCart).forEach(item => {
+                list.innerHTML += `
+                <div class="cart-item">
+                    <div class="item-header">
+                        <span>${item.name}</span>
+                        <button onclick="removeItem('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="item-grid">
+                        <div class="input-box">
+                            <label>Required Qty</label>
+                            <input type="number" value="${item.estQty}" onchange="updateField('${item.id}', 'estQty', this.value)">
+                        </div>
+                        <div class="input-box">
+                            <label>Market Buy Rate</label>
+                            <input type="number" class="buy" value="${item.estBuy}" onchange="updateField('${item.id}', 'estBuy', this.value)">
+                        </div>
+                        <div class="input-box">
+                            <label>Company Sell Rate</label>
+                            <input type="number" class="sell" value="${item.estSell}" onchange="updateField('${item.id}', 'estSell', this.value)">
+                        </div>
+                    </div>
+                </div>`;
+            });
+            calculateSummary();
+        }
+
+        function calculateSummary() {
+            let totalBuy = 0, totalSell = 0;
+            Object.values(estimateCart).forEach(item => {
+                totalBuy += (item.estBuy * item.estQty);
+                totalSell += (item.estSell * item.estQty);
+            });
+            const profit = totalSell - totalBuy;
+
+            document.getElementById('sumBuy').innerText = `৳${totalBuy}`;
+            document.getElementById('sumSell').innerText = `৳${totalSell}`;
+            document.getElementById('sumProfit').innerText = `৳${profit}`;
+        }
+
+        window.printQuotation = () => {
+            if(Object.keys(estimateCart).length === 0) return alert("Please add items first!");
+            
+            const companyName = prompt("Enter Company/Client Name for Quotation:");
+            if(!companyName) return;
+
+            let tableRows = '';
+            let finalTotal = 0;
+
+            Object.values(estimateCart).forEach((item, index) => {
+                const lineTotal = item.estSell * item.estQty;
+                finalTotal += lineTotal;
+                tableRows += `
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td>${item.name}</td>
+                    <td style="text-align: center;">${item.estQty}</td>
+                    <td style="text-align: center;">${item.estSell}</td>
+                    <td style="text-align: right; font-weight: bold;">${lineTotal}</td>
+                </tr>`;
+            });
+
+            document.getElementById('printArea').innerHTML = `
+                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="font-size: 32px; font-weight: 800; margin: 0; color: #333;">${SHOP_NAME}</h1>
+                    <p style="font-size: 14px; margin: 5px 0 0 0; font-weight: bold; background: #e5e7eb; display: inline-block; padding: 5px 15px; border-radius: 5px;">ESTIMATE / QUOTATION</p>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px;">
+                    <div><p style="margin:0;"><strong>To:</strong> ${companyName}</p></div>
+                    <div><p style="margin:0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</p></div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+                    <thead style="background: #f8fafc;">
+                        <tr>
+                            <th style="width: 40px;">S/N</th>
+                            <th style="text-align: left;">Description of Items</th>
+                            <th style="width: 80px;">Qty</th>
+                            <th style="width: 100px;">Rate (Tk)</th>
+                            <th style="width: 120px; text-align: right;">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                        <tr>
+                            <td colspan="4" style="text-align: right; font-weight: bold; border: none !important; border-top: 2px solid #000 !important; padding-top: 10px !important;">Grand Total =</td>
+                            <td style="text-align: right; font-weight: bold; font-size: 18px; border: none !important; border-top: 2px solid #000 !important; padding-top: 10px !important;">${finalTotal}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 50px; font-size: 12px; color: #6b7280; text-align: center;">* This is an estimate only and subject to market availability and price changes.</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 80px;">
+                    <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Client Signature</div>
+                    <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Authorized Signature</div>
+                </div>
+            `;
+            window.print();
+        };
+    </script>
+</body>
+</html>
