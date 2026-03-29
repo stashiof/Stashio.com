@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Notes - Stashio</title>
+    
+    <meta name="theme-color" content="#3b82f6">
+    <script>
+        const activeShopId = localStorage.getItem('activeShopId');
+        if (!activeShopId) window.location.replace("dashboard.html");
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root { --primary: #3b82f6; --secondary: #2563eb; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
+        
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2); }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+
+        .note-input-container { background: white; margin: -15px 15px 20px 15px; padding: 15px; border-radius: 16px; box-shadow: var(--shadow); position: relative; z-index: 60; }
+        textarea { width: 100%; height: 100px; padding: 15px; border-radius: 12px; border: 1px solid #e5e7eb; outline: none; font-size: 14px; font-family: inherit; resize: none; margin-bottom: 10px; background: #f8fafc; }
+        textarea:focus { border-color: var(--primary); background: white; }
+        .btn-save { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        .notes-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
+        .note-card { background: white; padding: 15px; border-radius: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); position: relative; }
+        .note-text { font-size: 14px; color: var(--text-dark); white-space: pre-wrap; margin-bottom: 10px; line-height: 1.5; }
+        .note-footer { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--text-light); border-top: 1px dashed #e5e7eb; padding-top: 8px; }
+        .btn-delete { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-title"><a href="home.html"><i class="fas fa-arrow-left"></i></a><span>My Notes</span></div>
+    </div>
+
+    <div class="note-input-container">
+        <textarea id="noteText" placeholder="Write something you want to remember..."></textarea>
+        <button onclick="saveNote()" id="saveBtn" class="btn-save"><i class="fas fa-save"></i> Save Note</button>
+    </div>
+
+    <div class="notes-list" id="notesList">
+        <div style="text-align: center; color: #9ca3af; padding: 40px 0;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+    </div>
+
+    <script type="module">
+        import { rtdb, ref as rtdbRef, push, onValue as rtdbOnValue, remove } from './firebase_config.js';
+        const SHOP_ID = localStorage.getItem('activeShopId');
+
+        window.onload = () => {
+            rtdbOnValue(rtdbRef(rtdb, `notes/${SHOP_ID}`), (snap) => {
+                const list = document.getElementById('notesList');
+                list.innerHTML = '';
+                if(snap.exists()) {
+                    const notes = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).reverse();
+                    notes.forEach(note => {
+                        const d = new Date(note.created_at);
+                        list.innerHTML += `
+                        <div class="note-card">
+                            <div class="note-text">${note.text}</div>
+                            <div class="note-footer">
+                                <span>${d.toLocaleDateString('en-GB')} at ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <button onclick="deleteNote('${note.id}')" class="btn-delete"><i class="fas fa-trash"></i> Delete</button>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    list.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 40px 0;"><i class="fas fa-clipboard" style="font-size:30px; margin-bottom:10px; opacity:0.5;"></i><br>No notes saved yet.</div>';
+                }
+            });
+        };
+
+        window.saveNote = async () => {
+            const text = document.getElementById('noteText').value.trim();
+            if(!text) return;
+            const btn = document.getElementById('saveBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; btn.disabled = true;
+
+            try {
+                await push(rtdbRef(rtdb, `notes/${SHOP_ID}`), { text: text, created_at: Date.now() });
+                document.getElementById('noteText').value = '';
+            } catch(e) { alert("Error: " + e.message); }
+            finally { btn.innerHTML = '<i class="fas fa-save"></i> Save Note'; btn.disabled = false; }
+        };
+
+        window.deleteNote = async (id) => {
+            if(confirm("Delete this note?")) {
+                await remove(rtdbRef(rtdb, `notes/${SHOP_ID}/${id}`));
+            }
+        };
+    </script>
+</body>
+</html>
