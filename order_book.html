@@ -21,13 +21,16 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
         
-        /* Hide everything except print area when printing */
+        /* --- PRINT STYLES (A4 Size matches your uploaded images) --- */
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; display: block !important; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
             .no-print { display: none !important; }
             body { background: white; }
+            /* Force table borders to print */
+            table { border-collapse: collapse !important; width: 100% !important; }
+            th, td { border: 1px solid #000 !important; padding: 8px !important; }
         }
 
         .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(20, 184, 166, 0.2); }
@@ -70,11 +73,21 @@
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .action-btn { padding: 12px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
         .action-btn:active { transform: scale(0.96); }
-        .btn-pay { background: #e0e7ff; color: #4F46E5; }
+        .btn-edit { background: #e0e7ff; color: #4F46E5; grid-column: span 2; }
+        .btn-pay { background: #fef3c7; color: #d97706; }
         .btn-deliver { background: #dcfce3; color: var(--success); }
         .btn-chalan { background: #f1f5f9; color: var(--text-dark); }
-        .btn-bill { background: #fef3c7; color: #d97706; }
+        .btn-bill { background: var(--text-dark); color: white; }
         .btn-cancel { background: #fee2e2; color: var(--danger); grid-column: span 2; }
+
+        /* Edit Mode Styles */
+        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px; align-items: center;}
+        .item-row:last-child { border-bottom: none; }
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { width: 28px; height: 28px; border: none; background: #f1f5f9; border-radius: 8px; font-weight: bold; cursor: pointer; color: var(--text-dark); }
+        .qty-input { width: 35px; text-align: center; border: 1px solid #e5e7eb; background: transparent; font-weight: 700; font-size: 13px; border-radius: 5px; }
+        .btn-remove-item { background: none; border: none; color: var(--danger); font-size: 14px; cursor: pointer; padding: 5px; }
+        .btn-save-changes { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -97,7 +110,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="mOrderNo">Manage Order</h3>
-                <button onclick="closeModal()" class="btn-close"><i class="fas fa-times"></i></button>
+                <button onclick="closeModal('orderModal')" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <div style="background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 12px; display: flex; justify-content: space-between;">
@@ -115,12 +128,37 @@
                 </div>
 
                 <div class="action-grid">
-                    <button id="btnReceivePay" class="action-btn btn-pay" onclick="receivePayment()"><i class="fas fa-hand-holding-dollar"></i> Receive Due</button>
+                    <button id="btnEditOrder" class="action-btn btn-edit" onclick="openEditModal()"><i class="fas fa-edit"></i> Edit Items (কম/বেশি করুন)</button>
+                    
                     <button id="btnGiveDelivery" class="action-btn btn-deliver" onclick="giveDelivery()"><i class="fas fa-truck"></i> Deliver Goods</button>
+                    <button id="btnReceivePay" class="action-btn btn-pay" onclick="receivePayment()"><i class="fas fa-hand-holding-dollar"></i> Receive Due</button>
+                    
                     <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
                     <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
+                    
                     <button id="btnCancelOrder" class="action-btn btn-cancel" onclick="cancelOrder()"><i class="fas fa-times-circle"></i> Cancel Order</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay no-print" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Order Items</h3>
+                <button onclick="closeModal('editModal')" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="editItemsList"></div>
+                
+                <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;"><span>New Subtotal:</span> <strong id="eSubtotal"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--danger);"><span>Discount:</span> <strong id="eDiscount"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px;"><span>New Total:</span> <span id="eTotal" style="color: var(--primary);"></span></div>
+                    <div style="font-size: 10px; color: var(--success); text-align: right;">Already Paid: <span id="eAdvance"></span></div>
+                </div>
+                
+                <button id="btnSaveChanges" onclick="saveEditedOrder()" class="btn-save-changes">Save Updates</button>
             </div>
         </div>
     </div>
@@ -135,6 +173,22 @@
         const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
         let allOrders = [];
         let currentOrder = null;
+        let editingOrderData = null; // For edit mode
+
+        // --- NUMBER TO WORDS (For Bill Print) ---
+        function numberToWords(num) {
+            const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+            const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+            if ((num = num.toString()).length > 9) return 'overflow';
+            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+            if (!n) return; let str = '';
+            str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+            str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+            str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+            str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+            str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'Only' : 'Only';
+            return str;
+        }
 
         window.onload = () => {
             rtdbOnValue(rtdbRef(rtdb, 'sales_orders'), (snapshot) => {
@@ -208,14 +262,14 @@
             document.getElementById('mPaid').innerText = `৳${paid}`;
             document.getElementById('mDue').innerText = `৳${due > 0 ? due : 0}`;
 
-            // Setup Badges inside modal
             const delBadge = isDelivered ? `<span class="s-badge del-yes" style="margin-bottom:5px;"><i class="fas fa-check-circle"></i> Delivered</span>` : `<span class="s-badge del-no" style="margin-bottom:5px;"><i class="fas fa-clock"></i> Not Delivered</span>`;
             const payBadge = due <= 0 ? `<span class="s-badge pay-yes"><i class="fas fa-check-double"></i> Fully Paid</span>` : `<span class="s-badge pay-no"><i class="fas fa-exclamation-circle"></i> Payment Due</span>`;
             document.getElementById('mStatusBadges').innerHTML = delBadge + payBadge;
 
-            // Setup Buttons
+            // Handle Buttons state
             const btnPay = document.getElementById('btnReceivePay');
             const btnDel = document.getElementById('btnGiveDelivery');
+            const btnEdit = document.getElementById('btnEditOrder');
 
             if(due <= 0) {
                 btnPay.style.opacity = '0.5'; btnPay.style.pointerEvents = 'none'; btnPay.innerHTML = '<i class="fas fa-check"></i> Paid';
@@ -225,16 +279,104 @@
 
             if(isDelivered) {
                 btnDel.style.opacity = '0.5'; btnDel.style.pointerEvents = 'none'; btnDel.innerHTML = '<i class="fas fa-check-circle"></i> Delivered';
+                // Cannot edit if delivered
+                btnEdit.style.opacity = '0.5'; btnEdit.style.pointerEvents = 'none';
             } else {
                 btnDel.style.opacity = '1'; btnDel.style.pointerEvents = 'auto'; btnDel.innerHTML = '<i class="fas fa-truck"></i> Deliver Goods';
+                // Can edit if not delivered
+                btnEdit.style.opacity = '1'; btnEdit.style.pointerEvents = 'auto';
             }
 
             document.getElementById('orderModal').style.display = 'flex';
         };
 
-        window.closeModal = () => { document.getElementById('orderModal').style.display = 'none'; currentOrder = null; };
+        window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
 
-        // --- 1. RECEIVE PAYMENT ONLY (No Stock Change) ---
+        // --- EDIT ORDER LOGIC ---
+        window.openEditModal = () => {
+            if(!currentOrder) return;
+            editingOrderData = JSON.parse(JSON.stringify(currentOrder)); // Deep copy
+            renderEditItems();
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        function renderEditItems() {
+            const list = document.getElementById('editItemsList');
+            list.innerHTML = '';
+            
+            editingOrderData.items.forEach((item, index) => {
+                list.innerHTML += `
+                <div class="item-row">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700;">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-light);">Rate: ৳${item.sellRate}</div>
+                    </div>
+                    <div class="qty-controls">
+                        <button onclick="changeEditQty(${index}, -1)" class="qty-btn">-</button>
+                        <input type="text" value="${item.qty}" class="qty-input" readonly>
+                        <button onclick="changeEditQty(${index}, 1)" class="qty-btn">+</button>
+                    </div>
+                    <button onclick="removeEditItem(${index})" class="btn-remove-item"><i class="fas fa-trash"></i></button>
+                </div>`;
+            });
+            calculateEditSummary();
+        }
+
+        window.changeEditQty = (index, change) => {
+            const newQty = editingOrderData.items[index].qty + change;
+            if(newQty > 0) { editingOrderData.items[index].qty = newQty; renderEditItems(); }
+        };
+
+        window.removeEditItem = (index) => {
+            editingOrderData.items.splice(index, 1); renderEditItems();
+        };
+
+        function calculateEditSummary() {
+            let subtotal = 0; let estProfit = 0;
+            editingOrderData.items.forEach(item => { 
+                subtotal += (item.qty * item.sellRate);
+                estProfit += (item.sellRate - (item.buy_price || 0)) * item.qty;
+            });
+            
+            const total = subtotal - editingOrderData.discount;
+            editingOrderData.subtotal = subtotal;
+            editingOrderData.total_amount = total;
+            editingOrderData.estimated_profit = estProfit - editingOrderData.discount;
+
+            document.getElementById('eSubtotal').innerText = `৳${subtotal}`;
+            document.getElementById('eDiscount').innerText = `৳${editingOrderData.discount}`;
+            document.getElementById('eTotal').innerText = `৳${total}`;
+            document.getElementById('eAdvance').innerText = `৳${editingOrderData.advance_paid || 0}`;
+        }
+
+        window.saveEditedOrder = async () => {
+            if(editingOrderData.items.length === 0) {
+                alert("Order cannot be empty. To delete the full order, please use Cancel Order."); return;
+            }
+            if(editingOrderData.total_amount < (editingOrderData.advance_paid || 0)) {
+                alert(`Error: The new bill total (৳${editingOrderData.total_amount}) is less than the advance paid (৳${editingOrderData.advance_paid}). Please process a refund manually or cancel the order.`);
+                return;
+            }
+
+            const btn = document.getElementById('btnSaveChanges');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; btn.disabled = true;
+
+            try {
+                await update(rtdbRef(rtdb, `sales_orders/${editingOrderData.id}`), {
+                    items: editingOrderData.items,
+                    subtotal: editingOrderData.subtotal,
+                    total_amount: editingOrderData.total_amount,
+                    estimated_profit: editingOrderData.estimated_profit
+                });
+                alert("Order items updated successfully!");
+                closeModal('editModal');
+                closeModal('orderModal'); // close parent to force refresh click
+            } catch(e) { alert("Error saving edits: " + e.message); }
+            finally { btn.innerHTML = 'Save Updates'; btn.disabled = false; }
+        };
+
+
+        // --- RECEIVE PAYMENT ---
         window.receivePayment = async () => {
             if(!currentOrder) return;
             const total = currentOrder.total_amount;
@@ -253,10 +395,7 @@
             const newPaidTotal = currentPaid + receiveAmount;
 
             try {
-                // Update Order Data
                 await update(rtdbRef(rtdb, `sales_orders/${currentOrder.id}`), { advance_paid: newPaidTotal });
-                
-                // Add to Cashbox
                 await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + receiveAmount);
                 await push(rtdbRef(rtdb, 'cash_transactions'), {
                     shop_id: SHOP_ID, type: 'cash_in', source: 'order_payment',
@@ -264,11 +403,11 @@
                 });
 
                 alert(`Payment of ৳${receiveAmount} received successfully!`);
-                closeModal();
+                closeModal('orderModal');
             } catch(e) { alert("Error updating payment: " + e.message); }
         };
 
-        // --- 2. GIVE DELIVERY ONLY (Deducts Stock, No Cash Change) ---
+        // --- GIVE DELIVERY ---
         window.giveDelivery = async () => {
             if(!currentOrder) return;
             if(currentOrder.is_delivered) return alert("Goods already delivered!");
@@ -276,141 +415,44 @@
             if(!confirm("Are you sure you want to deliver these goods? This will instantly deduct the items from your stock.")) return;
 
             try {
-                // Deduct from real stock
                 for (let item of currentOrder.items) {
                     await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => {
                         return (Number(currentStock) || 0) - item.qty;
                     });
                 }
-
-                // Mark order as delivered
                 await update(rtdbRef(rtdb, `sales_orders/${currentOrder.id}`), { is_delivered: true });
+                
+                // Add to sales_history automatically
+                const finalInvoiceNo = currentOrder.order_no.replace('ORD', 'INV');
+                const sellData = {
+                    shop_id: SHOP_ID, invoice_no: finalInvoiceNo, customer: currentOrder.customer,
+                    date: currentOrder.date, items: currentOrder.items, subtotal: currentOrder.subtotal, discount: currentOrder.discount,
+                    total_amount: currentOrder.total_amount, paid_amount: currentOrder.total_amount, due_amount: 0,
+                    total_profit: currentOrder.estimated_profit, payment_method: 'Cash', created_at: Date.now()
+                };
+                await push(rtdbRef(rtdb, 'sales_history'), sellData);
 
                 alert("Delivery successful! Items deducted from stock.");
-                closeModal();
+                closeModal('orderModal');
             } catch(e) { alert("Error processing delivery: " + e.message); }
         };
 
-        // --- 3. PRINT CHALAN OR BILL ---
-        window.printDocument = (type) => {
-            if(!currentOrder) return;
-            
-            const printDiv = document.getElementById('printArea');
-            let tableRows = '';
-            
-            if(type === 'chalan') {
-                currentOrder.items.forEach((item, index) => {
-                    tableRows += `
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #000; text-align: center;">${index + 1}</td>
-                        <td style="padding: 10px; border: 1px solid #000;">${item.name} ${item.brand ? `(${item.brand})` : ''}</td>
-                        <td style="padding: 10px; border: 1px solid #000; text-align: center; font-weight: bold;">${item.qty} ${item.unit || 'pcs'}</td>
-                    </tr>`;
-                });
-
-                printDiv.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="font-size: 28px; margin: 0;">${SHOP_NAME}</h2>
-                        <h3 style="margin: 5px 0; border: 2px solid #000; display: inline-block; padding: 5px 20px; border-radius: 20px;">DELIVERY CHALAN</h3>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px;">
-                        <div>
-                            <p><strong>To:</strong> ${currentOrder.customer}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p><strong>Order No:</strong> ${currentOrder.order_no}</p>
-                            <p><strong>Date:</strong> ${currentOrder.date}</p>
-                        </div>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
-                        <thead style="background: #f3f4f6;">
-                            <tr>
-                                <th style="padding: 10px; border: 1px solid #000; width: 50px;">SL</th>
-                                <th style="padding: 10px; border: 1px solid #000; text-align: left;">Description of Goods</th>
-                                <th style="padding: 10px; border: 1px solid #000; width: 100px;">Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
-                    <div style="display: flex; justify-content: space-between; margin-top: 80px;">
-                        <div style="border-top: 2px solid #000; padding-top: 5px; width: 200px; text-align: center;">Customer Signature</div>
-                        <div style="border-top: 2px solid #000; padding-top: 5px; width: 200px; text-align: center;">Authorized Signature</div>
-                    </div>
-                `;
-            } else if(type === 'bill') {
-                currentOrder.items.forEach((item, index) => {
-                    tableRows += `
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${item.name}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.sellRate}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.qty}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${item.sellRate * item.qty}</td>
-                    </tr>`;
-                });
-
-                const due = currentOrder.total_amount - (currentOrder.advance_paid || 0);
-
-                printDiv.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="font-size: 26px; margin: 0;">${SHOP_NAME}</h2>
-                        <h3 style="margin: 5px 0; color: #6b7280;">INVOICE / BILL</h3>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; border-bottom: 2px dashed #ccc; padding-bottom: 15px;">
-                        <div>
-                            <p><strong>Customer:</strong> ${currentOrder.customer}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p><strong>Order No:</strong> ${currentOrder.order_no}</p>
-                            <p><strong>Date:</strong> ${currentOrder.date}</p>
-                        </div>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
-                        <thead style="background: #f8fafc;">
-                            <tr>
-                                <th style="padding: 8px; border: 1px solid #ddd;">SL</th>
-                                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Item</th>
-                                <th style="padding: 8px; border: 1px solid #ddd;">Rate (৳)</th>
-                                <th style="padding: 8px; border: 1px solid #ddd;">Qty</th>
-                                <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Total (৳)</th>
-                            </tr>
-                        </thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
-                    <div style="width: 250px; float: right; font-size: 14px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Subtotal:</span> <span>৳${currentOrder.subtotal}</span></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Discount:</span> <span>- ৳${currentOrder.discount}</span></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; font-size: 16px; border-top: 1px solid #000; padding-top: 5px;"><span>Grand Total:</span> <span>৳${currentOrder.total_amount}</span></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #10b981;"><span>Paid Amount:</span> <span>৳${currentOrder.advance_paid || 0}</span></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #ef4444; font-weight: bold;"><span>Due Amount:</span> <span>৳${due > 0 ? due : 0}</span></div>
-                    </div>
-                    <div style="clear: both;"></div>
-                    <div style="text-align: center; margin-top: 40px; font-size: 12px; color: #6b7280;">Thank you for your business!</div>
-                `;
-            }
-
-            // Trigger Print
-            window.print();
-        };
-
-        // --- 4. CANCEL ORDER ---
+        // --- CANCEL ORDER ---
         window.cancelOrder = async () => {
             if(!currentOrder) return;
             if(!confirm("Are you sure you want to cancel this order?")) return;
 
             try {
-                // If it was already delivered, we need to return items to stock
                 if(currentOrder.is_delivered) {
                     if(confirm("Goods were already delivered. Do you want to return these items back to stock?")) {
                         for (let item of currentOrder.items) {
                             await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => {
-                                return (Number(currentStock) || 0) + item.qty; // Add back to stock
+                                return (Number(currentStock) || 0) + item.qty; 
                             });
                         }
                     }
                 }
 
-                // If money was paid, ask to refund
                 if (currentOrder.advance_paid > 0) {
                     if (confirm(`Customer paid ৳${currentOrder.advance_paid}. Do you want to refund this amount from your cashbox?`)) {
                         await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - currentOrder.advance_paid);
@@ -420,9 +462,118 @@
                 } else { alert("Order cancelled."); }
 
                 await update(rtdbRef(rtdb, `sales_orders/${currentOrder.id}`), { status: 'Cancelled' });
-                closeModal();
-
+                closeModal('orderModal');
             } catch(e) { alert("Error cancelling order: " + e.message); }
+        };
+
+        // --- PRINT CHALAN OR BILL (MATCHING YOUR DESIGN) ---
+        window.printDocument = (type) => {
+            if(!currentOrder) return;
+            
+            const printDiv = document.getElementById('printArea');
+            let tableRows = '';
+            
+            // Header Block for Both
+            const headerBlock = `
+                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="font-size: 32px; font-weight: 800; margin: 0; color: #333;">${SHOP_NAME}</h1>
+                    <p style="font-size: 12px; margin: 5px 0 0 0; color: #555;">All Kinds of Office Stationary & Paper Wholesale Supplier</p>
+                </div>
+                <div style="font-size: 14px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px;">
+                        <span style="white-space: nowrap;">Deliver To :</span>
+                        <div style="flex: 1; border-bottom: 1px dashed #000; padding-bottom: 2px;">${currentOrder.customer}</div>
+                    </div>
+                </div>
+            `;
+
+            if(type === 'chalan') {
+                currentOrder.items.forEach((item, index) => {
+                    tableRows += `
+                    <tr>
+                        <td style="text-align: center;">${index + 1}</td>
+                        <td>${item.name}</td>
+                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
+                        <td style="text-align: center; font-weight: bold;">${item.qty}</td>
+                        <td></td>
+                    </tr>`;
+                });
+
+                printDiv.innerHTML = `
+                    ${headerBlock}
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">CHALLAN NO : ${currentOrder.order_no.replace('ORD-', '')}</span>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 14px;">
+                        <thead style="background: #f8fafc;">
+                            <tr>
+                                <th style="width: 50px;">S/N</th>
+                                <th style="text-align: left;">Name of Items</th>
+                                <th style="width: 80px;">Unit</th>
+                                <th style="width: 80px;">Qty</th>
+                                <th style="width: 150px;">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
+                    </div>
+                `;
+            } else if(type === 'bill') {
+                currentOrder.items.forEach((item, index) => {
+                    tableRows += `
+                    <tr>
+                        <td style="text-align: center;">${index + 1}</td>
+                        <td>${item.name}</td>
+                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
+                        <td style="text-align: center;">${item.qty}</td>
+                        <td style="text-align: center;">${item.sellRate}</td>
+                        <td style="text-align: center; font-weight: bold;">${item.sellRate * item.qty}</td>
+                    </tr>`;
+                });
+
+                const wordText = numberToWords(currentOrder.total_amount);
+
+                printDiv.innerHTML = `
+                    ${headerBlock}
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">BILL NO : ${currentOrder.order_no.replace('ORD-', '')}</span>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 14px;">
+                        <thead style="background: #f8fafc;">
+                            <tr>
+                                <th style="width: 50px;">S/N</th>
+                                <th style="text-align: left;">Name of Items</th>
+                                <th style="width: 80px;">Unit</th>
+                                <th style="width: 80px;">Qty</th>
+                                <th style="width: 100px;">Rate Tk.</th>
+                                <th style="width: 120px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                            <tr>
+                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; border-top: 1px solid #000 !important;">Total Tk=</td>
+                                <td style="text-align: center; font-weight: bold; font-size: 16px;">${currentOrder.total_amount}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div style="border: 1px solid #000; padding: 10px; margin-top: 20px; font-size: 13px;">
+                        <strong>In Words :</strong> <span style="text-transform: capitalize;">${wordText}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
+                    </div>
+                `;
+            }
+
+            // Trigger Print
+            window.print();
         };
     </script>
 </body>
