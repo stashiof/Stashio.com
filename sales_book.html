@@ -125,6 +125,11 @@
         .btn-remove-item { background: #fee2e2; border: none; color: var(--danger); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         
         .btn-save-changes { width: 100%; background: var(--success); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+
+        /* Product Search Dropdown */
+        .e-search-results { position: absolute; left: 0; top: 100%; width: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1000; margin-top: 5px; display: none; }
+        .e-search-item { padding: 10px 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; }
+        .e-search-item:hover { background: #f0f5ff; }
     </style>
 </head>
 <body>
@@ -220,6 +225,14 @@
                     </div>
                 </div>
 
+                <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: var(--shadow); position: relative;">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Add New Product</label>
+                        <input type="text" id="eProductSearch" class="input-field" placeholder="Search by name or barcode...">
+                    </div>
+                    <div id="eSearchResults" class="e-search-results"></div>
+                </div>
+
                 <div id="editItemsList"></div>
                 
                 <div style="background: white; padding: 15px; border-radius: 12px; margin-top: 15px; box-shadow: var(--shadow);">
@@ -254,6 +267,7 @@
         let currentSale = null;
         let editingSaleData = null; 
         
+        let allProducts = []; // For adding new products
         let globalPdfTemplateCode = ""; 
         let shopLogoImgUrl = ""; 
 
@@ -277,6 +291,7 @@
             document.getElementById('dateFrom').value = today;
             document.getElementById('dateTo').value = today;
 
+            // Load Global Settings
             rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                 const themeCode = snap.exists() ? snap.val().code : null;
                 if (themeCode && themeCode.trim() !== "") {
@@ -296,6 +311,16 @@
                 if(snap.exists() && snap.val().image) shopLogoImgUrl = snap.val().image;
             });
 
+            // Load All Products for Search & Add
+            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
+                if(snap.exists()) {
+                    allProducts = Object.entries(snap.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
+                }
+            });
+
+            // Load Sales
             rtdbOnValue(rtdbRef(rtdb, 'sales_history'), (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
@@ -386,12 +411,11 @@
             editingSaleData = JSON.parse(JSON.stringify(currentSale)); 
             if(!editingSaleData.items) editingSaleData.items = [];
             
-            // Set Header Data
             document.getElementById('eCustomer').value = editingSaleData.customer_name || editingSaleData.customer || "";
             
             let dString = "";
             if (editingSaleData.date) {
-                if (editingSaleData.date.includes('-')) dString = editingSaleData.date; // already YYYY-MM-DD
+                if (editingSaleData.date.includes('-')) dString = editingSaleData.date; 
                 else dString = new Date(editingSaleData.date).toISOString().split('T')[0];
             } else if (editingSaleData.created_at) {
                 dString = new Date(editingSaleData.created_at).toISOString().split('T')[0];
@@ -399,8 +423,62 @@
             document.getElementById('eDate').value = dString;
             document.getElementById('eDiscount').value = editingSaleData.discount || 0;
             
+            document.getElementById('eProductSearch').value = "";
+            document.getElementById('eSearchResults').style.display = "none";
+
             renderEditItems();
             document.getElementById('editModal').style.display = 'flex';
+        };
+
+        // --- SEARCH & ADD NEW PRODUCT IN EDIT MODE ---
+        document.getElementById('eProductSearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const resBox = document.getElementById('eSearchResults');
+            resBox.innerHTML = '';
+            
+            if(term === '') { resBox.style.display = 'none'; return; }
+            
+            const filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(term) || 
+                (p.barcode && p.barcode.toString().toLowerCase().includes(term))
+            ).slice(0, 15);
+            
+            if(filtered.length > 0) {
+                resBox.style.display = 'block';
+                filtered.forEach(p => {
+                    resBox.innerHTML += `
+                    <div class="e-search-item" onclick="addEditItem('${p.id}')">
+                        <span>${p.name}</span>
+                        <span style="color:var(--primary);">৳${p.sell_price || 0}</span>
+                    </div>`;
+                });
+            } else {
+                resBox.style.display = 'none';
+            }
+        });
+
+        window.addEditItem = (id) => {
+            const product = allProducts.find(p => p.id === id);
+            if(product) {
+                const existingIndex = editingSaleData.items.findIndex(i => i.id === id);
+                if(existingIndex >= 0) {
+                    editingSaleData.items[existingIndex].qty += 1;
+                } else {
+                    editingSaleData.items.unshift({ // Add to top of list
+                        id: product.id,
+                        name: product.name,
+                        brand: product.brand || '',
+                        qty: 1,
+                        sellRate: product.sell_price || 0,
+                        rate: product.sell_price || 0,
+                        buyRate: product.buy_price || 0,
+                        unit: product.unit || 'Pcs'
+                    });
+                }
+                renderEditItems();
+                document.getElementById('eProductSearch').value = '';
+                document.getElementById('eSearchResults').style.display = 'none';
+            }
         };
 
         function renderEditItems() {
@@ -433,12 +511,12 @@
 
         window.changeEditQty = (index, change) => {
             const newQty = editingSaleData.items[index].qty + change;
-            if(newQty >= 0) { editingSaleData.items[index].qty = newQty; renderEditItems(); }
+            if(newQty > 0) { editingSaleData.items[index].qty = newQty; renderEditItems(); }
         };
 
         window.manualQtyUpdate = (index, val) => {
             const newQty = Number(val);
-            if(newQty >= 0) { editingSaleData.items[index].qty = newQty; renderEditItems(); }
+            if(newQty > 0) { editingSaleData.items[index].qty = newQty; renderEditItems(); }
         };
 
         window.changeEditRate = (index, val) => {
@@ -546,7 +624,6 @@
                 // --- 3. Adjust Due Book ---
                 const oldDue = Number(currentSale.due_amount || 0);
                 
-                // Subtract old due from old customer
                 if(oldDue > 0 && oldCustName && oldCustName !== "Local (Walk-in)") {
                     const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
                     let oldDueKey = null;
@@ -562,7 +639,6 @@
                     }
                 }
                 
-                // Add new due to new customer
                 if(newDue > 0 && newCustName !== "Local (Walk-in)") {
                     const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
                     let newDueKey = null;
@@ -709,8 +785,8 @@
                 const subTotal = currentSale.subtotal || currentSale.sub_total || currentSale.total_amount;
                 const discountRow = currentSale.discount > 0 ? `
                     <tr>
-                        <td colspan=\"5\" style=\"text-align: right; border: none !important;\">Discount (-)=</td>
-                        <td style=\"text-align: center; color: red;\">${currentSale.discount}</td>
+                        <td colspan="5" style="text-align: right; border: none !important;">Discount (-)=</td>
+                        <td style="text-align: center; color: red;">${currentSale.discount}</td>
                     </tr>` : '';
 
                 printDiv.innerHTML = `
