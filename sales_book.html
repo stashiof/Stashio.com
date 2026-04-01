@@ -10,16 +10,12 @@
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        
-        if (!loggedInUser) {
-            window.location.replace("index.html");
-        } else if (!activeShopId) {
-            window.location.replace("dashboard.html");
-        }
+        if (!loggedInUser) window.location.replace("index.html");
+        else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -34,6 +30,17 @@
 
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* --- PRINT STYLES (A4 Size for Challan/Bill) --- */
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
+            .no-print { display: none !important; }
+            body { background: white; }
+            table { border-collapse: collapse !important; width: 100% !important; }
+            th, td { border: 1px solid #000 !important; padding: 8px !important; }
+        }
 
         /* Dynamic Header Area */
         .app-header {
@@ -50,8 +57,6 @@
         .header-title a { color: white; text-decoration: none; }
         .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-pdf:active { transform: scale(0.95); }
-
-        
 
         /* Filter Section */
         .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: flex-end; border: 1px solid #f8fafc; }
@@ -88,22 +93,35 @@
         .btn-view { background: #f8fafc; border: 1px solid #e5e7eb; width: 100%; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 600; color: var(--primary); margin-top: 10px; cursor: pointer; transition: 0.2s; }
         .btn-view:active { background: #f1f5f9; }
         
-        /* Receipt Modal */
+        /* Modals */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; font-size: 12px; color: var(--text-dark); }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-        th { text-align: left; color: var(--text-light); font-weight: 600; text-transform: uppercase; font-size: 10px; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .font-bold { font-weight: 700; }
+        .modal-content { background: white; width: 100%; max-width: 450px; border-radius: 16px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        
+        /* Action Grid in Modal */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .action-btn { padding: 12px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
+        .action-btn:active { transform: scale(0.96); }
+        .btn-edit { background: #e0e7ff; color: #4F46E5; grid-column: span 2;}
+        .btn-chalan { background: #f1f5f9; color: var(--text-dark); }
+        .btn-bill { background: #fef3c7; color: #d97706; }
+        .btn-delete { background: #fee2e2; color: var(--danger); grid-column: span 2; }
+
+        /* Edit Items Style */
+        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px; align-items: center;}
+        .item-row:last-child { border-bottom: none; }
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { width: 28px; height: 28px; border: none; background: #f1f5f9; border-radius: 8px; font-weight: bold; cursor: pointer; color: var(--text-dark); }
+        .qty-input { width: 35px; text-align: center; border: 1px solid #e5e7eb; background: transparent; font-weight: 700; font-size: 13px; border-radius: 5px; outline: none; }
+        .btn-remove-item { background: none; border: none; color: var(--danger); font-size: 14px; cursor: pointer; padding: 5px; }
+        .btn-save-changes { width: 100%; background: var(--primary); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="app-header" id="header-container">
+    <div class="app-header no-print" id="header-container">
         <div class="header-bg"></div>
         <div id="dynamicThemeContainer"></div>
         <div class="header-top">
@@ -111,11 +129,11 @@
                 <a href="home.html"><i class="fas fa-arrow-left"></i></a>
                 <span>Sales Book</span>
             </div>
-            <button onclick="downloadPDF()" class="btn-pdf"><i class="fas fa-file-pdf"></i> Save PDF</button>
+            <button onclick="downloadPDF()" class="btn-pdf"><i class="fas fa-file-pdf"></i> PDF Report</button>
         </div>
     </div>
 
-    <div class="filter-card">
+    <div class="filter-card no-print">
         <div class="date-input">
             <label>From Date</label>
             <input type="date" id="dateFrom">
@@ -127,7 +145,7 @@
         <button onclick="loadHistory()" class="btn-filter"><i class="fas fa-search"></i></button>
     </div>
 
-    <div class="summary-bar">
+    <div class="summary-bar no-print">
         <div class="sum-box">
             <div class="sum-title">Total Sales</div>
             <div class="sum-val text-success" id="sumTotal">৳0</div>
@@ -138,35 +156,97 @@
         </div>
     </div>
 
-    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+    <div id="loading" class="no-print" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
         <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading Sales...
     </div>
 
-    <div class="history-list" id="historyList"></div>
+    <div class="history-list no-print" id="historyList"></div>
 
-    <div class="modal-overlay" id="receiptModal">
+    <div class="modal-overlay no-print" id="manageModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Sales Details</h3>
-                <button onclick="document.getElementById('receiptModal').style.display='none'" style="background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; color: var(--text-dark); cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fas fa-times"></i></button>
+                <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Manage Sale</h3>
+                <button onclick="closeModal('manageModal')" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body" id="receiptContent">
+            <div class="modal-body">
+                <div style="background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 12px;">
+                    <p style="margin:0 0 5px 0;">Customer: <strong id="mCustomer"></strong></p>
+                    <p style="margin:0 0 5px 0;">Invoice No: <strong id="mInvoice"></strong></p>
+                    <p style="margin:0;">Date: <strong id="mDate"></strong></p>
+                </div>
+                
+                <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;"><span>Bill Total:</span> <strong id="mTotal" style="font-size: 14px;"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--success);"><span>Paid Amount:</span> <strong id="mPaid"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: var(--danger); border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 8px;"><span>Due Amount:</span> <span id="mDue"></span></div>
+                </div>
+
+                <div class="action-grid">
+                    <button class="action-btn btn-edit" onclick="openEditModal()"><i class="fas fa-edit"></i> Edit Items (পরিবর্তন করুন)</button>
+                    <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
+                    <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
+                    <button class="action-btn btn-delete" onclick="deleteFullSale()"><i class="fas fa-trash-alt"></i> Delete Full Sale</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <div class="modal-overlay no-print" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Sale Items</h3>
+                <button onclick="closeModal('editModal')" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="editItemsList"></div>
+                
+                <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;"><span>New Subtotal:</span> <strong id="eSubtotal"></strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--danger);">
+                        <span>Discount:</span> 
+                        <input type="number" id="eDiscount" onchange="calculateEditSummary()" style="width:60px; padding:2px; text-align:right; border:1px solid #ccc; outline:none;">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px;"><span>New Total:</span> <span id="eTotal" style="color: var(--primary);"></span></div>
+                    
+                    <div style="font-size: 11px; color: var(--text-light); text-align: right; border-top: 1px dotted #cbd5e1; padding-top: 5px; margin-top: 5px;" id="eMessage"></div>
+                </div>
+                
+                <button id="btnSaveChanges" onclick="saveEditedSale()" class="btn-save-changes">Save Updates & Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printArea" style="display: none;"></div>
+
     <script type="module">
-        // মডুলার ফায়ারবেস ইমপোর্ট
-        import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
+        import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get, update, push, remove } from './firebase_config.js';
+        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
 
         let allRecords = [];
         let filteredRecords = [];
+        let currentSale = null;
+        let editingSaleData = null; // For edit mode
         
         let globalPdfTemplateCode = ""; 
         let shopLogoImgUrl = ""; 
+
+        // --- NUMBER TO WORDS (For Bill Print) ---
+        function numberToWords(num) {
+            const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+            const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+            if ((num = num.toString()).length > 9) return 'overflow';
+            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+            if (!n) return; let str = '';
+            str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+            str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+            str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+            str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+            str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'Only' : 'Only';
+            return str;
+        }
 
         window.onload = () => {
             const today = new Date().toISOString().split('T')[0];
@@ -185,24 +265,15 @@
                 }
             });
 
-            // Fetch Dynamic PDF Template from Admin
             rtdbOnValue(rtdbRef(rtdb, `global_settings/pdf_sales_template`), (snap) => {
                 if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
             });
 
-            // Fetch Shop Logo
             rtdbOnValue(rtdbRef(rtdb, `shops/${SHOP_ID}`), (snap) => {
                 if(snap.exists() && snap.val().image) shopLogoImgUrl = snap.val().image;
             });
 
-            // Fetch Sales History (Offline Cache First)
-            const cachedSales = localStorage.getItem(`sales_history_${SHOP_ID}`);
-            if(cachedSales) {
-                allRecords = JSON.parse(cachedSales);
-                loadHistory();
-            }
-
-            // Realtime Sync
+            // Load Sales
             rtdbOnValue(rtdbRef(rtdb, 'sales_history'), (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
@@ -210,11 +281,8 @@
                         .map(([id, val]) => ({ id, ...val }))
                         .filter(r => r.shop_id === SHOP_ID) 
                         .reverse();
-                    
-                    localStorage.setItem(`sales_history_${SHOP_ID}`, JSON.stringify(allRecords));
                 } else {
                     allRecords = [];
-                    localStorage.removeItem(`sales_history_${SHOP_ID}`);
                 }
                 loadHistory(); 
             });
@@ -223,10 +291,7 @@
         window.loadHistory = () => {
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
-
-            if(!dateFrom || !dateTo) {
-                alert("Please select both dates."); return;
-            }
+            if(!dateFrom || !dateTo) return;
 
             const startStr = new Date(dateFrom).setHours(0,0,0,0);
             const endStr = new Date(dateTo).setHours(23,59,59,999);
@@ -243,8 +308,7 @@
             const listEl = document.getElementById('historyList');
             listEl.innerHTML = '';
 
-            let totalSales = 0;
-            let totalDue = 0;
+            let totalSales = 0, totalDue = 0;
 
             if (filteredRecords.length === 0) {
                 listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-box-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No sales records found for this date.</div>`;
@@ -263,7 +327,7 @@
                                 <div class="hc-supp">${r.customer_name || r.customer || 'Walk-in Customer'}</div>
                                 <div class="hc-inv">INV: ${r.invoice_no || 'N/A'}</div>
                             </div>
-                            <div class="hc-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                            <div class="hc-date">${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
                         <div class="hc-body">
                             <div class="hc-items"><i class="fas fa-box" style="color: #cbd5e1;"></i> ${r.items ? r.items.length : 0} Items</div>
@@ -273,7 +337,7 @@
                                 ${hasDue ? `<div class="hc-due">Due: ৳${Number(r.due_amount).toLocaleString()}</div>` : ''}
                             </div>
                         </div>
-                        <button onclick="viewReceipt('${r.id}')" class="btn-view">View Details</button>
+                        <button onclick="openManageModal('${r.id}')" class="btn-view">Manage Sale</button>
                     </div>`;
                     listEl.insertAdjacentHTML('beforeend', html);
                 });
@@ -283,52 +347,377 @@
             document.getElementById('sumDue').innerText = `৳${totalDue.toLocaleString()}`;
         }
 
-        window.viewReceipt = (id) => {
-            const r = filteredRecords.find(x => x.id === id);
-            if(!r) return;
+        // --- MANAGE MODAL ---
+        window.openManageModal = (id) => {
+            currentSale = filteredRecords.find(x => x.id === id);
+            if(!currentSale) return;
 
-            const content = document.getElementById('receiptContent');
-            let itemsHtml = '';
+            document.getElementById('mCustomer').innerText = currentSale.customer_name || currentSale.customer || 'Walk-in';
+            document.getElementById('mInvoice').innerText = currentSale.invoice_no;
+            document.getElementById('mDate').innerText = new Date(currentSale.created_at || currentSale.date).toLocaleString('en-GB');
             
-            if(r.items && r.items.length > 0) {
-                r.items.forEach(i => {
-                    itemsHtml += `
-                        <tr>
-                            <td>${i.name}<br><span style="color:#9ca3af; font-size:10px;">@৳${i.rate || i.sellRate}</span></td>
-                            <td class="text-center">${i.qty}</td>
-                            <td class="text-right font-bold">৳${i.total || (i.qty * (i.rate || i.sellRate))}</td>
-                        </tr>
-                    `;
-                });
-            }
+            document.getElementById('mTotal').innerText = `৳${currentSale.total_amount}`;
+            document.getElementById('mPaid').innerText = `৳${currentSale.paid_amount}`;
+            document.getElementById('mDue').innerText = `৳${currentSale.due_amount > 0 ? currentSale.due_amount : 0}`;
 
-            const rDate = new Date(r.created_at || r.date).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-
-            content.innerHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px;">
-                    <div><span style="color:var(--text-light); font-size:10px; text-transform:uppercase;">Customer:</span><br><strong style="font-size:14px;">${r.customer_name || r.customer || 'Walk-in'}</strong></div>
-                    <div class="text-right"><span style="color:var(--text-light); font-size:10px; text-transform:uppercase;">Date:</span><br><strong>${rDate}</strong></div>
-                </div>
-                
-                <table>
-                    <thead><tr><th>Item</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
-                    <tbody>${itemsHtml}</tbody>
-                </table>
-                
-                <div style="border-top: 2px solid #e5e7eb; padding-top: 10px; font-size: 13px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:var(--text-light)"><span>Subtotal:</span><span>৳${r.sub_total || r.subtotal || r.total_amount}</span></div>
-                    ${r.discount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:var(--danger)"><span>Discount:</span><span>-৳${r.discount}</span></div>` : ''}
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:800; font-size: 15px; color: var(--primary);"><span>Grand Total:</span><span>৳${r.total_amount}</span></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:var(--success); font-weight: 600;"><span>Received:</span><span>৳${r.paid_amount || 0}</span></div>
-                    ${r.due_amount > 0 ? `<div style="display:flex; justify-content:space-between; font-weight:700; color:var(--danger);"><span>Due:</span><span>৳${r.due_amount}</span></div>` : ''}
-                </div>
-                <div style="margin-top: 15px; font-size: 11px; color: var(--text-light); text-align: center; background: #f8fafc; padding: 5px; border-radius: 8px;">Payment Method: <strong style="color: var(--text-dark);">${r.payment_method || 'Cash'}</strong></div>
-            `;
-
-            document.getElementById('receiptModal').style.display = 'flex';
+            document.getElementById('manageModal').style.display = 'flex';
         };
 
-        // --- PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
+        window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
+
+        // --- EDIT LOGIC ---
+        window.openEditModal = () => {
+            if(!currentSale) return;
+            editingSaleData = JSON.parse(JSON.stringify(currentSale)); 
+            if(!editingSaleData.items) editingSaleData.items = [];
+            
+            document.getElementById('eDiscount').value = editingSaleData.discount || 0;
+            renderEditItems();
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        function renderEditItems() {
+            const list = document.getElementById('editItemsList');
+            list.innerHTML = '';
+            
+            editingSaleData.items.forEach((item, index) => {
+                const rate = item.sellRate || item.rate || 0;
+                list.innerHTML += `
+                <div class="item-row">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700;">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-light);">Rate: ৳${rate}</div>
+                    </div>
+                    <div class="qty-controls">
+                        <button onclick="changeEditQty(${index}, -1)" class="qty-btn">-</button>
+                        <input type="text" value="${item.qty}" class="qty-input" readonly>
+                        <button onclick="changeEditQty(${index}, 1)" class="qty-btn">+</button>
+                    </div>
+                    <button onclick="removeEditItem(${index})" class="btn-remove-item"><i class="fas fa-trash"></i></button>
+                </div>`;
+            });
+            window.calculateEditSummary();
+        }
+
+        window.changeEditQty = (index, change) => {
+            const newQty = editingSaleData.items[index].qty + change;
+            if(newQty >= 0) { editingSaleData.items[index].qty = newQty; renderEditItems(); }
+        };
+
+        window.removeEditItem = (index) => {
+            editingSaleData.items.splice(index, 1); renderEditItems();
+        };
+
+        window.calculateEditSummary = () => {
+            let subtotal = 0;
+            editingSaleData.items.forEach(item => { 
+                subtotal += (item.qty * (item.sellRate || item.rate || 0));
+            });
+            
+            const discount = Number(document.getElementById('eDiscount').value) || 0;
+            const total = subtotal - discount;
+            
+            editingSaleData.subtotal = subtotal;
+            editingSaleData.discount = discount;
+            editingSaleData.total_amount = total;
+
+            document.getElementById('eSubtotal').innerText = `৳${subtotal}`;
+            document.getElementById('eTotal').innerText = `৳${total}`;
+
+            // Figure out what happens to Paid and Due
+            const oldPaid = Number(currentSale.paid_amount || 0);
+            let newDue = total - oldPaid;
+            let msg = "";
+
+            if(newDue < 0) {
+                msg = `<span style="color:var(--danger)">New bill is less than paid amount. <b>৳${Math.abs(newDue)}</b> will be refunded from Cashbox.</span>`;
+            } else if(newDue > 0) {
+                msg = `<span style="color:var(--warning)">Customer due will become: <b>৳${newDue}</b></span>`;
+            } else {
+                msg = `<span style="color:var(--success)">Bill is perfectly settled.</span>`;
+            }
+            document.getElementById('eMessage').innerHTML = msg;
+        };
+
+        window.saveEditedSale = async () => {
+            if(editingSaleData.items.length === 0) {
+                alert("All items removed. Please use 'Delete Full Sale' instead."); return;
+            }
+
+            const btn = document.getElementById('btnSaveChanges');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving & Syncing...'; btn.disabled = true;
+
+            try {
+                // 1. Analyze Differences
+                const oldPaid = Number(currentSale.paid_amount || 0);
+                const newTotal = editingSaleData.total_amount;
+                
+                let newPaid = oldPaid;
+                let newDue = newTotal - newPaid;
+                let refundAmt = 0;
+
+                if (newDue < 0) {
+                    refundAmt = Math.abs(newDue); // Money to return
+                    newPaid = newTotal;
+                    newDue = 0;
+                }
+
+                // Recalculate Profit
+                let newProfit = 0;
+                editingSaleData.items.forEach(item => {
+                    let buyRate = Number(item.buyRate || item.buy_price || item.purchaseRate || 0);
+                    let sellRate = Number(item.sellRate || item.rate || 0);
+                    newProfit += (sellRate - buyRate) * item.qty;
+                });
+                newProfit -= editingSaleData.discount;
+
+                // Prepare final sale object
+                const updatedSaleData = {
+                    ...editingSaleData,
+                    paid_amount: newPaid,
+                    due_amount: newDue,
+                    total_profit: newProfit
+                };
+
+                // 2. Adjust Stock
+                // Add old items back to stock
+                for(let oldItem of (currentSale.items || [])) {
+                    await runTransaction(rtdbRef(rtdb, `product_list/${oldItem.id}/stock`), (stock) => (stock || 0) + oldItem.qty);
+                }
+                // Deduct new items from stock
+                for(let newItem of editingSaleData.items) {
+                    await runTransaction(rtdbRef(rtdb, `product_list/${newItem.id}/stock`), (stock) => (stock || 0) - newItem.qty);
+                }
+
+                // 3. Adjust Cashbox (If Refund)
+                if(refundAmt > 0) {
+                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - refundAmt);
+                    await push(rtdbRef(rtdb, 'cash_transactions'), {
+                        shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return',
+                        amount: refundAmt, note: `Auto-Refund for Invoice Edit: ${currentSale.invoice_no}`, created_at: Date.now()
+                    });
+                }
+
+                // 4. Adjust Due Book
+                const dueDiff = newDue - Number(currentSale.due_amount || 0);
+                const custName = currentSale.customer_name || currentSale.customer || '';
+                
+                if(dueDiff !== 0 && custName && custName !== "Local (Walk-in)") {
+                    // Get current due book to find the exact entry for this customer
+                    const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
+                    let dueKey = null;
+                    if(dueSnap.exists()){
+                        Object.entries(dueSnap.val()).forEach(([key, val]) => {
+                            if(val.shop_id === SHOP_ID && val.name === custName && val.type === 'receive') {
+                                dueKey = key;
+                            }
+                        });
+                    }
+                    if(dueKey) {
+                        await runTransaction(rtdbRef(rtdb, `due_book/${dueKey}/current_due`), (due) => (due || 0) + dueDiff);
+                    } else if(dueDiff > 0) {
+                        // Creating a new due record just in case
+                        await push(rtdbRef(rtdb, 'due_book'), {
+                            shop_id: SHOP_ID, type: 'receive', name: custName,
+                            total_amount: dueDiff, current_due: dueDiff, created_at: Date.now()
+                        });
+                    }
+                }
+
+                // 5. Update Sale Record
+                await update(rtdbRef(rtdb, `sales_history/${currentSale.id}`), updatedSaleData);
+
+                alert("Sale updated successfully! Stock, Cash and Due adjusted.");
+                closeModal('editModal');
+                closeModal('manageModal');
+
+            } catch(e) { alert("Error saving edits: " + e.message); }
+            finally { btn.innerHTML = 'Save Updates & Sync'; btn.disabled = false; }
+        };
+
+        // --- DELETE FULL SALE ---
+        window.deleteFullSale = async () => {
+            if(!confirm("Are you SURE you want to delete this entire sale? \n\n- All items will be returned to stock.\n- Paid amount will be refunded from Cashbox.\n- Customer Due will be removed.")) return;
+
+            try {
+                // 1. Return items to stock
+                for(let item of (currentSale.items || [])) {
+                    await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (stock) => (stock || 0) + item.qty);
+                }
+
+                // 2. Refund cash
+                const paid = Number(currentSale.paid_amount || 0);
+                if(paid > 0) {
+                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - paid);
+                    await push(rtdbRef(rtdb, 'cash_transactions'), {
+                        shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return',
+                        amount: paid, note: `Refund for Cancelled Invoice: ${currentSale.invoice_no}`, created_at: Date.now()
+                    });
+                }
+
+                // 3. Remove Due
+                const due = Number(currentSale.due_amount || 0);
+                const custName = currentSale.customer_name || currentSale.customer || '';
+                if(due > 0 && custName && custName !== "Local (Walk-in)") {
+                    const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
+                    let dueKey = null;
+                    if(dueSnap.exists()){
+                        Object.entries(dueSnap.val()).forEach(([key, val]) => {
+                            if(val.shop_id === SHOP_ID && val.name === custName && val.type === 'receive') {
+                                dueKey = key;
+                            }
+                        });
+                    }
+                    if(dueKey) {
+                        await runTransaction(rtdbRef(rtdb, `due_book/${dueKey}/current_due`), (current_due) => {
+                            let new_due = (current_due || 0) - due;
+                            return new_due < 0 ? 0 : new_due;
+                        });
+                    }
+                }
+
+                // 4. Delete the record
+                await remove(rtdbRef(rtdb, `sales_history/${currentSale.id}`));
+                alert("Sale deleted completely.");
+                closeModal('manageModal');
+
+            } catch(e) { alert("Error deleting sale: " + e.message); }
+        };
+
+        // --- PRINT CHALAN OR BILL (MATCHING DESIGN) ---
+        window.printDocument = (type) => {
+            if(!currentSale) return;
+            const printDiv = document.getElementById('printArea');
+            let tableRows = '';
+            
+            const custName = currentSale.customer_name || currentSale.customer || 'Walk-in';
+            const invNo = currentSale.invoice_no || 'N/A';
+            const dDate = new Date(currentSale.created_at || currentSale.date).toLocaleDateString('en-GB');
+
+            // Header Block for Both
+            const headerBlock = `
+                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="font-size: 32px; font-weight: 800; margin: 0; color: #333;">${SHOP_NAME}</h1>
+                    <p style="font-size: 12px; margin: 5px 0 0 0; color: #555;">All Kinds of Office Stationary & Paper Wholesale Supplier</p>
+                </div>
+                <div style="font-size: 14px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px;">
+                        <span style="white-space: nowrap;">Deliver To :</span>
+                        <div style="flex: 1; border-bottom: 1px dashed #000; padding-bottom: 2px;">${custName}</div>
+                    </div>
+                </div>
+            `;
+
+            if(type === 'chalan') {
+                (currentSale.items || []).forEach((item, index) => {
+                    tableRows += `
+                    <tr>
+                        <td style="text-align: center;">${index + 1}</td>
+                        <td>${item.name} ${item.brand ? `(${item.brand})` : ''}</td>
+                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
+                        <td style="text-align: center; font-weight: bold;">${item.qty}</td>
+                        <td></td>
+                    </tr>`;
+                });
+
+                printDiv.innerHTML = `
+                    ${headerBlock}
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">CHALLAN NO : ${invNo.replace('INV-', '')}</span>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 14px;">
+                        <thead style="background: #f8fafc;">
+                            <tr>
+                                <th style="width: 50px;">S/N</th>
+                                <th style="text-align: left;">Name of Items</th>
+                                <th style="width: 80px;">Unit</th>
+                                <th style="width: 80px;">Qty</th>
+                                <th style="width: 150px;">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
+                    </div>
+                `;
+            } else if(type === 'bill') {
+                (currentSale.items || []).forEach((item, index) => {
+                    const rate = item.sellRate || item.rate || 0;
+                    tableRows += `
+                    <tr>
+                        <td style="text-align: center;">${index + 1}</td>
+                        <td>${item.name} ${item.brand ? `(${item.brand})` : ''}</td>
+                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
+                        <td style="text-align: center;">${item.qty}</td>
+                        <td style="text-align: center;">${rate}</td>
+                        <td style="text-align: center; font-weight: bold;">${rate * item.qty}</td>
+                    </tr>`;
+                });
+
+                const wordText = numberToWords(currentSale.total_amount);
+                const discountRow = currentSale.discount > 0 ? `
+                    <tr>
+                        <td colspan="5" style="text-align: right; border: none !important;">Discount (-)=</td>
+                        <td style="text-align: center; color: red;">${currentSale.discount}</td>
+                    </tr>` : '';
+
+                printDiv.innerHTML = `
+                    ${headerBlock}
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">BILL NO : ${invNo.replace('INV-', '')}</span>
+                        <span style="float:right; font-size: 12px;">Date: ${dDate}</span>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 14px;">
+                        <thead style="background: #f8fafc;">
+                            <tr>
+                                <th style="width: 50px;">S/N</th>
+                                <th style="text-align: left;">Name of Items</th>
+                                <th style="width: 80px;">Unit</th>
+                                <th style="width: 80px;">Qty</th>
+                                <th style="width: 100px;">Rate Tk.</th>
+                                <th style="width: 120px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                            <tr>
+                                <td colspan="5" style="text-align: right; border: none !important; border-top: 1px solid #000 !important;">Subtotal=</td>
+                                <td style="text-align: center; border: none !important; border-top: 1px solid #000 !important;">${currentSale.subtotal || currentSale.sub_total || currentSale.total_amount}</td>
+                            </tr>
+                            ${discountRow}
+                            <tr>
+                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; border-top: 2px solid #000 !important;">Grand Total Tk=</td>
+                                <td style="text-align: center; font-weight: bold; font-size: 16px; border: none !important; border-top: 2px solid #000 !important;">${currentSale.total_amount}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; color: green;">Paid Tk=</td>
+                                <td style="text-align: center; font-weight: bold; border: none !important; color: green;">${currentSale.paid_amount || 0}</td>
+                            </tr>
+                            ${currentSale.due_amount > 0 ? `
+                            <tr>
+                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; color: red;">Due Tk=</td>
+                                <td style="text-align: center; font-weight: bold; border: none !important; color: red;">${currentSale.due_amount}</td>
+                            </tr>` : ''}
+                        </tbody>
+                    </table>
+                    
+                    <div style="border: 1px solid #000; padding: 10px; margin-top: 20px; font-size: 13px;">
+                        <strong>In Words :</strong> <span style="text-transform: capitalize;">${wordText}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
+                    </div>
+                `;
+            }
+
+            window.print();
+        };
+
+        // --- BULK PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
         window.downloadPDF = () => {
             if(filteredRecords.length === 0) {
                 alert("No records to generate PDF!");
@@ -342,7 +731,6 @@
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
 
-            // 1. Build Table Rows with Item Details
             let rowsHtml = '';
             let sumT = 0, sumP = 0, sumD = 0;
 
@@ -383,7 +771,6 @@
                 `;
             });
 
-            // 2. Default Template
             const defaultTemplate = `
                 <div style="font-family: 'Hind Siliguri', sans-serif; padding: 20px;">
                     <div style="text-align: center; margin-bottom: 20px;">
@@ -430,7 +817,6 @@
             finalTemplate = finalTemplate.replace(/{{TOTAL_PAID}}/g, sumP.toLocaleString());
             finalTemplate = finalTemplate.replace(/{{TOTAL_DUE}}/g, sumD.toLocaleString());
 
-            // 3. Generate Preview (Output to BlobURL)
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = finalTemplate;
             
@@ -441,7 +827,7 @@
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank'); // Opens preview in new tab
+                window.open(pdfUrl, '_blank');
                 btn.innerHTML = originalText;
             });
         };
