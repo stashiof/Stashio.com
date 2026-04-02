@@ -190,9 +190,7 @@
 
 
     <script type="module">
-        // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, push, update, get } from './firebase_config.js';
-        // runTransaction এর জন্য আলাদা ইমপোর্ট
         import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
@@ -231,7 +229,7 @@
                 }
             });
 
-            // Load History Data (Background)
+            // Load History Data 
             rtdbOnValue(rtdbRef(rtdb, 'due_history'), (snap) => {
                 allHistory = [];
                 if(snap.exists()) {
@@ -264,7 +262,6 @@
             });
         };
 
-        // Real-time Search Filter
         document.getElementById('searchName').addEventListener('input', renderDues);
 
         function renderDues() {
@@ -314,7 +311,6 @@
                 });
             }
 
-            // Update Top Boxes (Only overall totals)
             let overallRecv = 0, overallPay = 0;
             allDues.forEach(d => {
                 if(d.type === 'receive') overallRecv += Number(d.current_due);
@@ -360,19 +356,78 @@
             const actionText = type === 'receive' ? 'Received' : 'Paid';
 
             try {
-                // 1. Update Due Book
-                await update(rtdbRef(rtdb, `due_book/${id}`), { 
-                    current_due: newDue, 
-                    updated_at: Date.now() 
-                });
+                // 1. Prepare multi-path updates
+                const updates = {};
+                updates[`due_book/${id}/current_due`] = newDue;
+                updates[`due_book/${id}/updated_at`] = Date.now();
 
-                // 2. Add to Due History
-                await push(rtdbRef(rtdb, 'due_history'), {
+                const dueHistoryRef = push(rtdbRef(rtdb, 'due_history'));
+                updates[`due_history/${dueHistoryRef.key}`] = {
                     due_id: id, shop_id: SHOP_ID, name: name, type: type,
                     action: actionText, amount: payAmt, balance_left: newDue, date: Date.now()
-                });
+                };
 
-                // 3. Update Cash Box Automatically!
+                // 2. AUTO-DISTRIBUTE PAYMENT ACROSS INVOICES
+                let remainingPayAmt = payAmt;
+
+                if (type === 'receive') {
+                    // Update Sales Book Invoices
+                    const salesSnap = await get(rtdbRef(rtdb, 'sales_history'));
+                    if (salesSnap.exists()) {
+                        let sales = Object.entries(salesSnap.val())
+                            .map(([key, val]) => ({ key, ...val }))
+                            .filter(s => s.shop_id === SHOP_ID && (s.customer_name === name || s.customer === name) && Number(s.due_amount) > 0)
+                            .sort((a, b) => (a.created_at || a.date || 0) - (b.created_at || b.date || 0)); // Oldest first
+
+                        for (let sale of sales) {
+                            if (remainingPayAmt <= 0) break;
+                            
+                            let currentInvoiceDue = Number(sale.due_amount || 0);
+                            let currentInvoicePaid = Number(sale.paid_amount || 0);
+
+                            if (currentInvoiceDue <= remainingPayAmt) {
+                                remainingPayAmt -= currentInvoiceDue;
+                                updates[`sales_history/${sale.key}/paid_amount`] = currentInvoicePaid + currentInvoiceDue;
+                                updates[`sales_history/${sale.key}/due_amount`] = 0;
+                            } else {
+                                updates[`sales_history/${sale.key}/paid_amount`] = currentInvoicePaid + remainingPayAmt;
+                                updates[`sales_history/${sale.key}/due_amount`] = currentInvoiceDue - remainingPayAmt;
+                                remainingPayAmt = 0;
+                            }
+                        }
+                    }
+                } else if (type === 'pay') {
+                    // Update Purchase Book Invoices
+                    const purchSnap = await get(rtdbRef(rtdb, 'purchase_history'));
+                    if (purchSnap.exists()) {
+                        let purchases = Object.entries(purchSnap.val())
+                            .map(([key, val]) => ({ key, ...val }))
+                            .filter(p => p.shop_id === SHOP_ID && (p.supplier_name === name || p.supplier === name) && Number(p.due_amount) > 0)
+                            .sort((a, b) => (a.created_at || a.date || 0) - (b.created_at || b.date || 0)); // Oldest first
+
+                        for (let purch of purchases) {
+                            if (remainingPayAmt <= 0) break;
+                            
+                            let currentInvoiceDue = Number(purch.due_amount || 0);
+                            let currentInvoicePaid = Number(purch.paid_amount || 0);
+
+                            if (currentInvoiceDue <= remainingPayAmt) {
+                                remainingPayAmt -= currentInvoiceDue;
+                                updates[`purchase_history/${purch.key}/paid_amount`] = currentInvoicePaid + currentInvoiceDue;
+                                updates[`purchase_history/${purch.key}/due_amount`] = 0;
+                            } else {
+                                updates[`purchase_history/${purch.key}/paid_amount`] = currentInvoicePaid + remainingPayAmt;
+                                updates[`purchase_history/${purch.key}/due_amount`] = currentInvoiceDue - remainingPayAmt;
+                                remainingPayAmt = 0;
+                            }
+                        }
+                    }
+                }
+
+                // Execute all updates simultaneously
+                await update(rtdbRef(rtdb), updates);
+
+                // 3. Update Cash Box 
                 const cashType = type === 'receive' ? 'cash_in' : 'cash_out';
                 const modifier = type === 'receive' ? payAmt : -payAmt;
 
@@ -384,7 +439,6 @@
                 });
 
                 document.getElementById('payModal').style.display = 'none';
-                // No alert needed, UI updates in real-time
 
             } catch (err) {
                 alert("Error updating: " + err.message);
@@ -508,7 +562,7 @@
             tempDiv.innerHTML = finalTemplate;
             
             html2pdf().set({
-                margin: 10, filename: `Due_Ledger_${dateStr.replace(/\\//g, '-')}.pdf`,
+                margin: 10, filename: `Due_Ledger_${dateStr.replace(/\//g, '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
