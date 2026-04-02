@@ -31,15 +31,16 @@
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* --- PRINT STYLES --- */
+        /* --- PRINT STYLES (Matching your Excel screenshot) --- */
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 10mm; display: block !important; font-family: sans-serif; }
             .no-print { display: none !important; }
             body { background: white; }
-            table { border-collapse: collapse !important; width: 100% !important; }
-            th, td { border: 1px solid #000 !important; padding: 8px !important; }
+            table { border-collapse: collapse !important; width: 100% !important; border: 2px solid #000 !important; }
+            th, td { border: 1px solid #000 !important; padding: 6px !important; font-size: 12px !important; }
+            th { background-color: #fde047 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold; } /* Yellow header */
         }
 
         /* Header */
@@ -97,10 +98,11 @@
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
         
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .action-btn { padding: 12px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .action-btn { padding: 10px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-edit { background: #e0e7ff; color: #4F46E5; grid-column: span 2;}
         .btn-chalan { background: #f1f5f9; color: var(--text-dark); }
         .btn-bill { background: #fef3c7; color: #d97706; }
+        .btn-quo { background: #dbeafe; color: #2563eb; grid-column: span 2; }
         .btn-delete { background: #fee2e2; color: var(--danger); grid-column: span 2; }
 
         /* Edit Form Elements */
@@ -110,14 +112,12 @@
         .input-field:focus { border-color: var(--primary); background: white; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-        /* Customer Dropdown (From Sell Page) */
+        /* Customer Dropdown */
         .custom-dropdown-container { position: relative; }
         .custom-dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1000; display: none; margin-top: 5px; }
-        .dropdown-item-cust { padding: 12px 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-dark); transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .dropdown-item-cust { padding: 12px 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-dark); display: flex; justify-content: space-between; align-items: center; }
         .dropdown-item-cust:hover { background: #f0f5ff; color: var(--primary); }
-        .dropdown-item-cust:last-child { border-bottom: none; }
-        .dropdown-item-cust .cust-phone { font-size: 10px; color: var(--text-light); font-weight: 500; }
-
+        
         .item-row { background: white; padding: 12px; border: 1px solid #f1f5f9; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .item-row-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 13px; color: var(--text-dark); }
         .item-controls { display: flex; gap: 10px; align-items: center; }
@@ -200,12 +200,18 @@
                     <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;"><span>Bill Total:</span> <strong id="mTotal" style="font-size: 14px;"></strong></div>
                     <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--success);"><span>Paid Amount:</span> <strong id="mPaid"></strong></div>
                     <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: var(--danger); border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 8px;"><span>Due Amount:</span> <span id="mDue"></span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; color: var(--warning); font-weight: 700; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+                        <span>Estimated Profit:</span> <span id="mProfit"></span>
+                    </div>
                 </div>
 
                 <div class="action-grid">
                     <button class="action-btn btn-edit" onclick="openEditModal()"><i class="fas fa-edit"></i> Edit Sale (পরিবর্তন করুন)</button>
+                    
                     <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
                     <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
+                    <button class="action-btn btn-quo" onclick="printDocument('quotation')"><i class="fas fa-file-contract"></i> Print Quotation</button>
+
                     <button class="action-btn btn-delete" onclick="deleteFullSale()"><i class="fas fa-trash-alt"></i> Delete Full Sale</button>
                 </div>
             </div>
@@ -277,7 +283,7 @@
         let editingSaleData = null; 
         
         let allProducts = []; 
-        let allCustomers = []; // Fetch from DB for smart search
+        let allCustomers = []; 
         let globalPdfTemplateCode = ""; 
         let shopLogoImgUrl = ""; 
 
@@ -317,11 +323,7 @@
                 if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
             });
 
-            rtdbOnValue(rtdbRef(rtdb, `shops/${SHOP_ID}`), (snap) => {
-                if(snap.exists() && snap.val().image) shopLogoImgUrl = snap.val().image;
-            });
-
-            // Load Customers for Smart Dropdown
+            // Load Customers
             rtdbOnValue(rtdbRef(rtdb, 'contacts/customers'), (snap) => {
                 allCustomers = [{ name: 'Local (Walk-in)', phone: '' }]; 
                 if(snap.exists()){
@@ -331,7 +333,7 @@
                 }
             });
 
-            // Load All Products for Search
+            // Load All Products
             rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
                 if(snap.exists()) {
                     allProducts = Object.entries(snap.val())
@@ -418,6 +420,9 @@
             document.getElementById('mTotal').innerText = `৳${currentSale.total_amount}`;
             document.getElementById('mPaid').innerText = `৳${currentSale.paid_amount}`;
             document.getElementById('mDue').innerText = `৳${currentSale.due_amount > 0 ? currentSale.due_amount : 0}`;
+            
+            // Show Profit
+            document.getElementById('mProfit').innerText = `৳${currentSale.total_profit || 0}`;
 
             document.getElementById('manageModal').style.display = 'flex';
         };
@@ -626,7 +631,14 @@
 
             try {
                 const newCustName = document.getElementById('eCustomer').value.trim() || 'Local (Walk-in)';
+                
+                // --- DATE LOGIC FIX ---
                 const newDateStr = document.getElementById('eDate').value;
+                const actionDate = new Date(newDateStr);
+                const now = new Date();
+                actionDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+                const finalTimestamp = actionDate.getTime();
+                
                 const oldCustName = currentSale.customer_name || currentSale.customer || '';
                 
                 const oldPaid = Number(currentSale.paid_amount || 0);
@@ -651,7 +663,8 @@
 
                 editingSaleData.customer = newCustName;
                 editingSaleData.customer_name = newCustName;
-                editingSaleData.date = newDateStr;
+                editingSaleData.date = newDateStr;           // Date String
+                editingSaleData.created_at = finalTimestamp; // Fixed Timestamp for Filtering
                 editingSaleData.paid_amount = newPaid;
                 editingSaleData.due_amount = newDue;
                 editingSaleData.total_profit = newProfit;
@@ -669,7 +682,7 @@
                     await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - refundAmt);
                     await push(rtdbRef(rtdb, 'cash_transactions'), {
                         shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return',
-                        amount: refundAmt, note: `Refund for Edit: ${currentSale.invoice_no}`, created_at: Date.now()
+                        amount: refundAmt, note: `Refund for Edit: ${currentSale.invoice_no}`, created_at: finalTimestamp
                     });
                 }
 
@@ -704,7 +717,7 @@
                     } else {
                         await push(rtdbRef(rtdb, 'due_book'), {
                             shop_id: SHOP_ID, type: 'receive', name: newCustName,
-                            total_amount: newDue, current_due: newDue, created_at: Date.now()
+                            total_amount: newDue, current_due: newDue, created_at: finalTimestamp
                         });
                     }
                 }
@@ -760,6 +773,7 @@
             } catch(e) { alert("Error deleting sale: " + e.message); }
         };
 
+        // --- EXCEL DESIGN PRINT (CHALAN / BILL / QUOTATION) ---
         window.printDocument = (type) => {
             if(!currentSale) return;
             const printDiv = document.getElementById('printArea');
@@ -769,16 +783,21 @@
             const invNo = currentSale.invoice_no || 'N/A';
             const dDate = new Date(currentSale.created_at || currentSale.date).toLocaleDateString('en-GB');
 
+            let headerTitleText = "";
+            if (type === 'chalan') headerTitleText = `CHALLAN NO : ${invNo.replace('INV-', '')}`;
+            else if (type === 'bill') headerTitleText = `BILL NO : ${invNo.replace('INV-', '')}`;
+            else headerTitleText = `Quotation`;
+
             const headerBlock = `
-                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h1 style="font-size: 32px; font-weight: 800; margin: 0; color: #333;">${SHOP_NAME}</h1>
-                    <p style="font-size: 12px; margin: 5px 0 0 0; color: #555;">All Kinds of Office Stationary & Paper Wholesale Supplier</p>
-                </div>
-                <div style="font-size: 14px; margin-bottom: 20px;">
-                    <div style="display: flex; gap: 10px;">
-                        <span style="white-space: nowrap;">Deliver To :</span>
-                        <div style="flex: 1; border-bottom: 1px dashed #000; padding-bottom: 2px; font-weight: bold;">${custName}</div>
+                <div style="border: 2px solid #000; padding: 15px; margin-bottom: 10px; background: #e5e7eb;">
+                    <h1 style="font-size: 28px; font-weight: 800; margin: 0; color: #000; text-align: center;">${SHOP_NAME}</h1>
+                    <div style="text-align: center; margin-top: 5px; font-weight: bold; font-size: 16px;">
+                        ${headerTitleText}
                     </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; font-weight: bold; padding: 0 5px;">
+                    <div>Address : ${custName}</div>
+                    <div>Date : ${dDate}</div>
                 </div>
             `;
 
@@ -787,8 +806,9 @@
                     tableRows += `
                     <tr>
                         <td style="text-align: center;">${index + 1}</td>
-                        <td>${item.name} ${item.brand ? `(${item.brand})` : ''}</td>
+                        <td>${item.name}</td>
                         <td style="text-align: center;">${item.unit || 'Pcs'}</td>
+                        <td style="text-align: center;">${item.brand || ''}</td>
                         <td style="text-align: center; font-weight: bold;">${item.qty}</td>
                         <td></td>
                     </tr>`;
@@ -796,34 +816,34 @@
 
                 printDiv.innerHTML = `
                     ${headerBlock}
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">CHALLAN NO : ${invNo.replace('INV-', '')}</span>
-                    </div>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 14px;">
-                        <thead style="background: #f8fafc;">
+                        <thead>
                             <tr>
-                                <th style="width: 50px;">S/N</th>
+                                <th style="width: 40px;">S/N</th>
                                 <th style="text-align: left;">Name of Items</th>
-                                <th style="width: 80px;">Unit</th>
-                                <th style="width: 80px;">Qty</th>
-                                <th style="width: 150px;">Remarks</th>
+                                <th style="width: 60px;">Unit</th>
+                                <th style="width: 80px;">Brand</th>
+                                <th style="width: 80px;">Quantity</th>
+                                <th style="width: 120px;">Remarks</th>
                             </tr>
                         </thead>
                         <tbody>${tableRows}</tbody>
                     </table>
-                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 80px; padding: 0 10px;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">Customer Signature</div>
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">For ${SHOP_NAME}</div>
                     </div>
                 `;
-            } else if(type === 'bill') {
+            } else {
+                // For Bill and Quotation
                 (currentSale.items || []).forEach((item, index) => {
                     const rate = item.sellRate || item.rate || 0;
                     tableRows += `
                     <tr>
                         <td style="text-align: center;">${index + 1}</td>
-                        <td>${item.name} ${item.brand ? `(${item.brand})` : ''}</td>
+                        <td>${item.name}</td>
                         <td style="text-align: center;">${item.unit || 'Pcs'}</td>
+                        <td style="text-align: center;">${item.brand || ''}</td>
                         <td style="text-align: center;">${item.qty}</td>
                         <td style="text-align: center;">${rate}</td>
                         <td style="text-align: center; font-weight: bold;">${rate * item.qty}</td>
@@ -831,66 +851,43 @@
                 });
 
                 const wordText = numberToWords(currentSale.total_amount);
-                const subTotal = currentSale.subtotal || currentSale.sub_total || currentSale.total_amount;
-                const discountRow = currentSale.discount > 0 ? `
-                    <tr>
-                        <td colspan="5" style="text-align: right; border: none !important;">Discount (-)=</td>
-                        <td style="text-align: center; color: red;">${currentSale.discount}</td>
-                    </tr>` : '';
 
                 printDiv.innerHTML = `
                     ${headerBlock}
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">BILL NO : ${invNo.replace('INV-', '')}</span>
-                        <span style="float:right; font-size: 12px;">Date: ${dDate}</span>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 14px;">
-                        <thead style="background: #f8fafc;">
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 0; font-size: 14px;">
+                        <thead>
                             <tr>
-                                <th style="width: 50px;">S/N</th>
+                                <th style="width: 40px;">S/N</th>
                                 <th style="text-align: left;">Name of Items</th>
-                                <th style="width: 80px;">Unit</th>
-                                <th style="width: 80px;">Qty</th>
-                                <th style="width: 100px;">Rate Tk.</th>
-                                <th style="width: 120px;">Amount</th>
+                                <th style="width: 60px;">Unit</th>
+                                <th style="width: 80px;">Brand</th>
+                                <th style="width: 60px;">Quantity</th>
+                                <th style="width: 80px;">Rate</th>
+                                <th style="width: 100px;">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${tableRows}
                             <tr>
-                                <td colspan="5" style="text-align: right; border: none !important; border-top: 1px solid #000 !important;">Subtotal=</td>
-                                <td style="text-align: center; border: none !important; border-top: 1px solid #000 !important;">${subTotal}</td>
+                                <td colspan="6" style="text-align: right; font-weight: bold;">Total Tk =</td>
+                                <td style="text-align: center; font-weight: bold; background-color: #fde047 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${currentSale.total_amount}</td>
                             </tr>
-                            ${discountRow}
-                            <tr>
-                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; border-top: 2px solid #000 !important;">Grand Total Tk=</td>
-                                <td style="text-align: center; font-weight: bold; font-size: 16px; border: none !important; border-top: 2px solid #000 !important;">${currentSale.total_amount}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; color: green;">Paid Tk=</td>
-                                <td style="text-align: center; font-weight: bold; border: none !important; color: green;">${currentSale.paid_amount || 0}</td>
-                            </tr>
-                            ${currentSale.due_amount > 0 ? `
-                            <tr>
-                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; color: red;">Due Tk=</td>
-                                <td style="text-align: center; font-weight: bold; border: none !important; color: red;">${currentSale.due_amount}</td>
-                            </tr>` : ''}
                         </tbody>
                     </table>
-                    
-                    <div style="border: 1px solid #000; padding: 10px; margin-top: 20px; font-size: 13px;">
-                        <strong>In Words :</strong> <span style="text-transform: capitalize;">${wordText}</span>
+                    <div style="border: 2px solid #000; border-top: none; padding: 10px; font-size: 13px;">
+                        In Word : <span style="text-transform: capitalize;">${wordText}</span>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 80px; padding: 0 10px;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">Customer Signature</div>
+                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">For ${SHOP_NAME}</div>
                     </div>
                 `;
             }
             window.print();
         };
 
+        // --- BULK PDF EXPORT ---
         window.downloadPDF = () => {
             if(filteredRecords.length === 0) { alert("No records to generate PDF!"); return; }
             const btn = document.querySelector('.btn-pdf');
