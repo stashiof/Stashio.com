@@ -251,6 +251,7 @@
     <script type="module">
         // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -300,12 +301,13 @@
             document.getElementById('certShopName').innerText = SHOP_NAME;
 
             // Data Analysis Logic
-            rtdbOnValue(rtdbRef(rtdb, 'sales_history'), (snap) => {
+            const salesQuery = query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(salesQuery, (snap) => {
                 let productSalesQty = {}; let productProfit = {}; let customerPurchases = {};
 
                 if(snap.exists()) {
                     Object.values(snap.val()).forEach(sale => {
-                        if(sale.shop_id === SHOP_ID && !sale.is_deleted) {
+                        if(!sale.is_deleted) {
                             let custName = sale.customer || sale.customer_name;
                             if(!custName || custName.trim() === "") custName = "Walk-in Customer";
                             customerPurchases[custName] = (customerPurchases[custName] || 0) + Number(sale.total_amount || 0);

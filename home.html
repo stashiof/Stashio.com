@@ -245,6 +245,7 @@
     <script type="module">
         // ১. মডুলার ফায়ারবেস কনফিগ ফাইল ইমপোর্ট করা
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName');
@@ -290,11 +291,12 @@
             });
 
             // 2. Get Today's Sales
-            rtdbOnValue(rtdbRef(rtdb, 'sales_history'), (snap) => {
+            const salesQuery = query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(salesQuery, (snap) => {
                 let todaySales = 0;
                 if(snap.exists()) {
                     Object.values(snap.val()).forEach(s => {
-                        if(s.shop_id === SHOP_ID && (s.created_at || new Date(s.date).getTime()) >= todayStr) {
+                        if((s.created_at || new Date(s.date).getTime()) >= todayStr) {
                             todaySales += Number(s.total_amount || 0);
                         }
                     });
@@ -303,11 +305,12 @@
             });
 
             // 3. Get Today's Expenses
-            rtdbOnValue(rtdbRef(rtdb, 'expenses_book'), (snap) => {
+            const expensesQuery = query(rtdbRef(rtdb, 'expenses_book'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(expensesQuery, (snap) => {
                 let todayExp = 0;
                 if(snap.exists()) {
                     Object.values(snap.val()).forEach(e => {
-                        if(e.shop_id === SHOP_ID && e.date >= todayStr) {
+                        if(e.date >= todayStr) {
                             todayExp += Number(e.amount || 0);
                         }
                     });
@@ -316,11 +319,12 @@
             });
 
             // 4. Get Total Due 
-            rtdbOnValue(rtdbRef(rtdb, 'due_book'), (snap) => {
+            const dueQuery = query(rtdbRef(rtdb, 'due_book'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(dueQuery, (snap) => {
                 let toRecv = 0, toPay = 0;
                 if(snap.exists()) {
                     Object.values(snap.val()).forEach(d => {
-                        if(d.shop_id === SHOP_ID && d.current_due > 0) {
+                        if(d.current_due > 0) {
                             if(d.type === 'receive') toRecv += Number(d.current_due);
                             if(d.type === 'pay') toPay += Number(d.current_due);
                         }
@@ -331,11 +335,12 @@
             });
 
             // 5. Get Total Stock Qty
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snap) => {
                 let totalQty = 0;
                 if(snap.exists()) {
                     Object.values(snap.val()).forEach(p => {
-                        if(p.shop_id === SHOP_ID && !p.is_deleted) {
+                        if(!p.is_deleted) {
                             totalQty += Number(p.stock || 0);
                         }
                     });
@@ -345,4 +350,4 @@
         };
     </script>
 </body>
-</hhtml> 
+</html>

@@ -331,7 +331,10 @@
             listDiv.innerHTML = ""; 
             loader.style.display = "flex"; 
 
-            db.collection("shops").get()
+            // "members" সবসময় owner-কেও অন্তর্ভুক্ত করে (saveShop() দেখুন), তাই এই একটি
+            // array-contains কোয়েরিই owner ও employee উভয়ের দোকান আনে —
+            // পুরো "shops" কালেকশন সবার জন্য ডাউনলোড করার দরকার নেই।
+            db.collection("shops").where("members", "array-contains", activeUserPhone).get()
             .then((querySnapshot) => {
                 loader.style.display = "none";
                 let shopCount = 0;
@@ -649,7 +652,7 @@
                     btnConfirm.disabled = false;
                 });
             } else {
-                setStatus('otpModalStatus', "Incorrect PIN! Try again.", "var(--danger)");
+                setStatus('otpModalStatus', "Incorrect Code! Try again.", "var(--danger)");
                 document.getElementById('deleteOtpInput').value = "";
             }
         }

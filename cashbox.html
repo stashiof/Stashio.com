@@ -236,7 +236,7 @@
     <script type="module">
         // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, push, onValue as rtdbOnValue } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -288,13 +288,13 @@
             }
 
             // Realtime History Sync
-            rtdbOnValue(rtdbRef(rtdb, 'cash_transactions'), (snapshot) => {
+            const trxQuery = query(rtdbRef(rtdb, 'cash_transactions'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(trxQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 allTransactions = [];
                 if (snapshot.exists()) {
                     allTransactions = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(t => t.shop_id === SHOP_ID)
                         .reverse(); 
                     
                     localStorage.setItem(`cash_trx_${SHOP_ID}`, JSON.stringify(allTransactions));

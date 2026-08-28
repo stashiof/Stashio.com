@@ -327,6 +327,7 @@
 
                    <script type="module">
         import { rtdb, ref, push, update, remove, onValue, get } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
         const SHOP_ID = localStorage.getItem('activeShopId');
@@ -364,12 +365,12 @@
             }
 
             // Real-time Firebase Sync
-            onValue(ref(rtdb, 'product_list'), (snapshot) => {
+            const productsQuery = query(ref(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            onValue(productsQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
                     allProducts = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(p => p.shop_id === SHOP_ID)
                         .reverse();
                     
                     localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(allProducts));

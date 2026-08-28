@@ -308,11 +308,10 @@
             }
 
             // Realtime Sync
-            rtdb.ref(`contacts/${type}`).on('value', (snapshot) => {
+            rtdb.ref(`contacts/${type}`).orderByChild('shop_id').equalTo(SHOP_ID).on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const filteredData = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(c => c.shop_id === SHOP_ID)
                         .reverse();
                     
                     contactsData[type] = filteredData;
@@ -593,10 +592,10 @@
                 // 1. CUSTOMER HISTORY (From Sales Book)
                 if (currentTab === 'customers') {
                     document.getElementById('historyHeading').innerText = "Purchase & Ledger History";
-                    const snap = await rtdb.ref('sales_history').get();
+                    const snap = await rtdb.ref('sales_history').orderByChild('shop_id').equalTo(SHOP_ID).get();
                     if(snap.exists()) {
                         Object.values(snap.val()).forEach(sale => {
-                            if(sale.shop_id === SHOP_ID && (sale.customer === c.name || sale.customer_name === c.name || sale.customer_phone === c.phone)) {
+                            if(sale.customer === c.name || sale.customer_name === c.name || sale.customer_phone === c.phone) {
                                 logs.push({ 
                                     date: sale.created_at || new Date(sale.date).getTime(), 
                                     ref: `Invoice: #${sale.invoice_no}`, 
@@ -611,10 +610,10 @@
                 // 2. SUPPLIER HISTORY (From Purchase Book)
                 else if (currentTab === 'suppliers') {
                     document.getElementById('historyHeading').innerText = "Supply & Payment History";
-                    const snap = await rtdb.ref('purchase_history').get();
+                    const snap = await rtdb.ref('purchase_history').orderByChild('shop_id').equalTo(SHOP_ID).get();
                     if(snap.exists()) {
                         Object.values(snap.val()).forEach(purch => {
-                            if(purch.shop_id === SHOP_ID && purch.supplier === c.name) {
+                            if(purch.supplier === c.name) {
                                 logs.push({ 
                                     date: purch.created_at || new Date(purch.date).getTime(), 
                                     ref: `Challan: #${purch.challan_no}`, 

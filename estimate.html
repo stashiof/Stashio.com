@@ -163,6 +163,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, get, onValue as rtdbOnValue, push, update, remove } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
         
@@ -177,12 +178,13 @@
 
         window.onload = () => {
             // Load Inventory
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snap) => {
                 document.getElementById('loading').style.display = 'none';
                 if(snap.exists()) {
                     allProducts = Object.entries(snap.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
+                        .filter(p => !p.is_deleted);
                     applySearch(''); 
                 } else {
                     document.getElementById('productGrid').innerHTML = '<div style="text-align:center; padding: 20px; color:#9ca3af;">No products found in inventory.</div>';
@@ -190,11 +192,11 @@
             });
 
             // Load Saved Quotations
-            rtdbOnValue(rtdbRef(rtdb, 'quotations'), (snap) => {
+            const quotesQuery = query(rtdbRef(rtdb, 'quotations'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(quotesQuery, (snap) => {
                 if(snap.exists()) {
                     allSavedQuotes = Object.entries(snap.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(q => q.shop_id === SHOP_ID)
                         .reverse();
                 } else {
                     allSavedQuotes = [];

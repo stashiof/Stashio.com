@@ -95,7 +95,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, get, update, push } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         let currentChallanData = null;
@@ -109,11 +109,11 @@
             document.getElementById('itemList').innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-spin text-primary"></i> Searching...</div>';
             
             try {
-                const snap = await get(rtdbRef(rtdb, 'purchase_history'));
+                const snap = await get(query(rtdbRef(rtdb, 'purchase_history'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                 if(snap.exists()) {
                     const allPurchases = snap.val();
                     const purchaseKey = Object.keys(allPurchases).find(key => 
-                        allPurchases[key].shop_id === SHOP_ID && allPurchases[key].challan_no === challanNo
+                        allPurchases[key].challan_no === challanNo
                     );
 
                     if(purchaseKey) {

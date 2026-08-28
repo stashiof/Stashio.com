@@ -167,7 +167,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, update, push } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
@@ -191,10 +191,11 @@
         }
 
         window.onload = () => {
-            rtdbOnValue(rtdbRef(rtdb, 'sales_orders'), (snapshot) => {
+            const ordersQuery = query(rtdbRef(rtdb, 'sales_orders'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(ordersQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
-                    allOrders = Object.entries(snapshot.val()).map(([id, val]) => ({ id, ...val })).filter(o => o.shop_id === SHOP_ID && o.status !== 'Cancelled').reverse();
+                    allOrders = Object.entries(snapshot.val()).map(([id, val]) => ({ id, ...val })).filter(o => o.status !== 'Cancelled').reverse();
                     renderOrders(allOrders);
                 } else {
                     allOrders = []; document.getElementById('orderList').innerHTML = '<div style="text-align:center; padding: 40px; color:#9ca3af;">No active orders found.</div>';

@@ -272,7 +272,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get, update, push, remove } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -324,31 +324,31 @@
             });
 
             // Load Customers
-            rtdbOnValue(rtdbRef(rtdb, 'contacts/customers'), (snap) => {
+            const customersQuery = query(rtdbRef(rtdb, 'contacts/customers'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(customersQuery, (snap) => {
                 allCustomers = [{ name: 'Local (Walk-in)', phone: '' }]; 
                 if(snap.exists()){
-                    Object.values(snap.val()).forEach(c => { 
-                        if(c.shop_id === SHOP_ID) allCustomers.push(c); 
-                    });
+                    Object.values(snap.val()).forEach(c => allCustomers.push(c));
                 }
             });
 
             // Load All Products
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snap) => {
                 if(snap.exists()) {
                     allProducts = Object.entries(snap.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
+                        .filter(p => !p.is_deleted);
                 }
             });
 
             // Load Sales
-            rtdbOnValue(rtdbRef(rtdb, 'sales_history'), (snapshot) => {
+            const salesQuery = query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(salesQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
                     allRecords = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(r => r.shop_id === SHOP_ID) 
                         .reverse();
                 } else { allRecords = []; }
                 loadHistory(); 
@@ -690,11 +690,11 @@
                 const oldDue = Number(currentSale.due_amount || 0);
                 
                 if(oldDue > 0 && oldCustName && oldCustName !== "Local (Walk-in)") {
-                    const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
+                    const dueSnap = await get(query(rtdbRef(rtdb, 'due_book'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                     let oldDueKey = null;
                     if(dueSnap.exists()){
                         Object.entries(dueSnap.val()).forEach(([key, val]) => {
-                            if(val.shop_id === SHOP_ID && val.name === oldCustName && val.type === 'receive') oldDueKey = key;
+                            if(val.name === oldCustName && val.type === 'receive') oldDueKey = key;
                         });
                     }
                     if(oldDueKey) {
@@ -705,11 +705,11 @@
                 }
                 
                 if(newDue > 0 && newCustName !== "Local (Walk-in)") {
-                    const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
+                    const dueSnap = await get(query(rtdbRef(rtdb, 'due_book'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                     let newDueKey = null;
                     if(dueSnap.exists()){
                         Object.entries(dueSnap.val()).forEach(([key, val]) => {
-                            if(val.shop_id === SHOP_ID && val.name === newCustName && val.type === 'receive') newDueKey = key;
+                            if(val.name === newCustName && val.type === 'receive') newDueKey = key;
                         });
                     }
                     if(newDueKey) {
@@ -752,11 +752,11 @@
                 const due = Number(currentSale.due_amount || 0);
                 const custName = currentSale.customer_name || currentSale.customer || '';
                 if(due > 0 && custName && custName !== "Local (Walk-in)") {
-                    const dueSnap = await get(rtdbRef(rtdb, 'due_book'));
+                    const dueSnap = await get(query(rtdbRef(rtdb, 'due_book'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                     let dueKey = null;
                     if(dueSnap.exists()){
                         Object.entries(dueSnap.val()).forEach(([key, val]) => {
-                            if(val.shop_id === SHOP_ID && val.name === custName && val.type === 'receive') dueKey = key;
+                            if(val.name === custName && val.type === 'receive') dueKey = key;
                         });
                     }
                     if(dueKey) {

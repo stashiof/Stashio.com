@@ -191,7 +191,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, push, update, get } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -230,7 +230,8 @@
             });
 
             // Load History Data 
-            rtdbOnValue(rtdbRef(rtdb, 'due_history'), (snap) => {
+            const historyQuery = query(rtdbRef(rtdb, 'due_history'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(historyQuery, (snap) => {
                 allHistory = [];
                 if(snap.exists()) {
                     allHistory = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).reverse();
@@ -245,13 +246,14 @@
             }
 
             // Realtime Sync Due Book
-            rtdbOnValue(rtdbRef(rtdb, 'due_book'), (snapshot) => {
+            const dueBookQuery = query(rtdbRef(rtdb, 'due_book'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(dueBookQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 allDues = [];
                 if (snapshot.exists()) {
                     allDues = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(d => d.shop_id === SHOP_ID && d.current_due > 0) // Only active dues
+                        .filter(d => d.current_due > 0) // Only active dues
                         .reverse();
                     
                     localStorage.setItem(`due_book_${SHOP_ID}`, JSON.stringify(allDues));
@@ -372,11 +374,11 @@
 
                 if (type === 'receive') {
                     // Update Sales Book Invoices
-                    const salesSnap = await get(rtdbRef(rtdb, 'sales_history'));
+                    const salesSnap = await get(query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                     if (salesSnap.exists()) {
                         let sales = Object.entries(salesSnap.val())
                             .map(([key, val]) => ({ key, ...val }))
-                            .filter(s => s.shop_id === SHOP_ID && (s.customer_name === name || s.customer === name) && Number(s.due_amount) > 0)
+                            .filter(s => (s.customer_name === name || s.customer === name) && Number(s.due_amount) > 0)
                             .sort((a, b) => (a.created_at || a.date || 0) - (b.created_at || b.date || 0)); // Oldest first
 
                         for (let sale of sales) {
@@ -398,11 +400,11 @@
                     }
                 } else if (type === 'pay') {
                     // Update Purchase Book Invoices
-                    const purchSnap = await get(rtdbRef(rtdb, 'purchase_history'));
+                    const purchSnap = await get(query(rtdbRef(rtdb, 'purchase_history'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                     if (purchSnap.exists()) {
                         let purchases = Object.entries(purchSnap.val())
                             .map(([key, val]) => ({ key, ...val }))
-                            .filter(p => p.shop_id === SHOP_ID && (p.supplier_name === name || p.supplier === name) && Number(p.due_amount) > 0)
+                            .filter(p => (p.supplier_name === name || p.supplier === name) && Number(p.due_amount) > 0)
                             .sort((a, b) => (a.created_at || a.date || 0) - (b.created_at || b.date || 0)); // Oldest first
 
                         for (let purch of purchases) {

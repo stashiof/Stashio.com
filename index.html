@@ -273,6 +273,14 @@
     let tempUser = {};
     let currentFlow = "";
 
+    // --- PIN HASHING (SHA-256 via built-in Web Crypto API) ---
+    // Plain-text PINs are never stored or compared; only this hash is.
+    async function hashPin(pin) {
+        const data = new TextEncoder().encode(pin);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     // --- AUTO LOGIN CHECK (Permanent Storage) ---
     window.onload = function() {
         const phone = localStorage.getItem('userPhone');
@@ -303,29 +311,39 @@
     }
 
     // --- LOGIN LOGIC ---
-    function handleLogin() {
+    async function handleLogin() {
         const phone = document.getElementById('loginPhone').value;
         const pin = document.getElementById('loginPin').value;
 
         if (!phone || !pin) return showToast("Enter Phone & PIN!", "error");
 
         toggleLoader(true);
+        const pinHash = await hashPin(pin);
 
-        db.collection("users").doc(phone).get().then((doc) => {
-            toggleLoader(false);
+        db.collection("users").doc(phone).get().then(async (doc) => {
             if (doc.exists) {
                 const data = doc.data();
-                if (data.pin == pin) {
+                // pinHash: new secure format. pin: legacy plain-text (older accounts) —
+                // matched once then silently upgraded to a hash so it's never stored in plain text again.
+                let match = data.pinHash ? (data.pinHash === pinHash) : (data.pin == pin);
+
+                if (match) {
+                    if (!data.pinHash) {
+                        await db.collection("users").doc(phone).update({ pinHash: pinHash, pin: firebase.firestore.FieldValue.delete() });
+                    }
                     // Save credentials permanently
                     localStorage.setItem('userPhone', phone);
                     localStorage.setItem('tempUserName', data.name);
                     
+                    toggleLoader(false);
                     showToast("Login Successful!", "success");
                     setTimeout(() => { window.location.replace("dashboard.html"); }, 1000);
                 } else { 
+                    toggleLoader(false);
                     showToast("Incorrect PIN!", "error"); 
                 }
             } else { 
+                toggleLoader(false);
                 showToast("Account Not Found!", "error"); 
             }
         }).catch(err => { 
@@ -418,15 +436,16 @@
         }
     }
 
-    function savePin() {
+    async function savePin() {
         const pin = document.getElementById('newPin').value;
         const confirm = document.getElementById('confirmPin').value;
         
         if (pin.length !== 6 || pin !== confirm) return showToast("PIN must be 6 digits & match!", "error");
 
         toggleLoader(true);
+        const pinHash = await hashPin(pin);
 
-        let dataToSave = { pin: pin, updatedAt: new Date().toISOString() };
+        let dataToSave = { pinHash: pinHash, pin: firebase.firestore.FieldValue.delete(), updatedAt: new Date().toISOString() };
 
         if (currentFlow === 'register') {
             dataToSave.name = tempUser.name;

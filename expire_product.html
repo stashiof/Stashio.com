@@ -228,6 +228,7 @@
     <script type="module">
         // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, update, remove } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -255,12 +256,12 @@
             }
 
             // Realtime Sync
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snapshot) => {
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
                     let rawData = Object.entries(snapshot.val())
-                        .map(([id, val]) => ({ id, ...val }))
-                        .filter(p => p.shop_id === SHOP_ID); // NO is_deleted check needed anymore since we hard-delete
+                        .map(([id, val]) => ({ id, ...val })); // NO is_deleted check needed anymore since we hard-delete
                     
                     localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(rawData));
                     processAndRenderProducts(rawData);

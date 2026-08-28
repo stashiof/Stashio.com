@@ -233,7 +233,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, push, onValue as rtdbOnValue } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -269,13 +269,13 @@
             }
 
             // Realtime Sync
-            rtdbOnValue(rtdbRef(rtdb, 'expenses_book'), (snapshot) => {
+            const expensesQuery = query(rtdbRef(rtdb, 'expenses_book'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(expensesQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 allExpenses = [];
                 if (snapshot.exists()) {
                     allExpenses = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(e => e.shop_id === SHOP_ID) 
                         .reverse();
                     
                     localStorage.setItem(`expenses_${SHOP_ID}`, JSON.stringify(allExpenses));
@@ -286,17 +286,16 @@
             });
 
             // Fetch Staffs from Contacts
-            rtdbOnValue(rtdbRef(rtdb, 'contacts/employees'), (snapshot) => {
+            const staffQuery = query(rtdbRef(rtdb, 'contacts/employees'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(staffQuery, (snapshot) => {
                 const staffSelect = document.getElementById('eStaffSelect');
                 staffSelect.innerHTML = '<option value="">-- Choose a Staff --</option>';
                 allStaffs = [];
 
                 if (snapshot.exists()) {
                     Object.entries(snapshot.val()).forEach(([id, staff]) => {
-                        if (staff.shop_id === SHOP_ID) {
-                            allStaffs.push({ id, ...staff });
-                            staffSelect.innerHTML += `<option value="${id}">${staff.name} (Salary: ৳${staff.salary || 0})</option>`;
-                        }
+                        allStaffs.push({ id, ...staff });
+                        staffSelect.innerHTML += `<option value="${id}">${staff.name} (Salary: ৳${staff.salary || 0})</option>`;
                     });
                 }
             });

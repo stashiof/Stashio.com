@@ -116,7 +116,7 @@
         <div class="checkout-content">
             <div class="form-card">
                 <div class="grid-2">
-                    <div class="input-group"><label>Invoice No</label><input type="text" id="invoiceNo" class="input-field" style="font-family: monospace; font-weight: bold;" readonly></div>
+                    <div class="input-group"><label>Invoice No</label><input type="text" id="invoiceNo" class="input-field" style="font-family: monospace; font-weight: bold;" placeholder="Auto (on confirm)" readonly></div>
                     <div class="input-group"><label>Date (Auto sets properly)</label><input type="date" id="sellDate" class="input-field"></div>
                 </div>
                 <div class="input-group custom-dropdown-container">
@@ -188,7 +188,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, get } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId'); 
         let allProducts = [], displayedProducts = [], itemsPerPage = 20, currentPage = 1;
@@ -196,16 +196,16 @@
 
         window.onload = () => {
             document.getElementById('sellDate').valueAsDate = new Date();
-            document.getElementById('invoiceNo').value = "INV-" + Math.floor(100000 + Math.random() * 900000);
 
             const cachedProducts = localStorage.getItem(`products_${SHOP_ID}`);
             if(cachedProducts) { allProducts = JSON.parse(cachedProducts); initPagination(allProducts); }
 
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snap) => {
                 const loader = document.getElementById('loading');
                 if(loader) loader.style.display = 'none';
                 if (snap.exists()) {
-                    allProducts = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
+                    allProducts = Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })).filter(p => !p.is_deleted);
                     localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(allProducts));
                     if(document.getElementById('searchInput').value.trim() === '') initPagination(allProducts);
                 } else {
@@ -214,9 +214,10 @@
                 }
             });
 
-            rtdbOnValue(rtdbRef(rtdb, 'contacts/customers'), (snap) => {
+            const customersQuery = query(rtdbRef(rtdb, 'contacts/customers'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(customersQuery, (snap) => {
                 allCustomers = [{ name: 'Local (Walk-in)', phone: '' }]; 
-                if(snap.exists()){ Object.values(snap.val()).forEach(c => { if(c.shop_id === SHOP_ID) allCustomers.push(c); }); }
+                if(snap.exists()){ Object.values(snap.val()).forEach(c => allCustomers.push(c)); }
             });
         };
 
@@ -410,7 +411,6 @@
 
             const customerName = document.getElementById('customerName').value || "Local (Walk-in)";
             const { subtotal, discount, grandTotal, paid, due } = window.checkoutSummary;
-            const orderNo = "ORD-" + Math.floor(100000 + Math.random() * 900000);
             const finalTimestamp = getActionTimestamp(); // BACKDATED TIME
             
             let estimatedProfit = 0;
@@ -429,15 +429,20 @@
 
             estimatedProfit = estimatedProfit - discount; // Deduct discount from profit
 
-            const orderData = {
-                shop_id: SHOP_ID, order_no: orderNo, customer: customerName,
-                date: document.getElementById('sellDate').value,
-                items: itemsToSave, subtotal: subtotal, discount: discount, total_amount: grandTotal,
-                advance_paid: paid, estimated_profit: estimatedProfit,
-                status: 'Pending', created_at: finalTimestamp
-            };
-
             try {
+                // Atomically generate a sequential order number so two orders saved
+                // at the same moment never collide.
+                const counterResult = await runTransaction(rtdbRef(rtdb, `counters/${SHOP_ID}/order_no`), (current) => (current || 0) + 1);
+                const orderNo = "ORD-" + String(counterResult.snapshot.val()).padStart(6, '0');
+
+                const orderData = {
+                    shop_id: SHOP_ID, order_no: orderNo, customer: customerName,
+                    date: document.getElementById('sellDate').value,
+                    items: itemsToSave, subtotal: subtotal, discount: discount, total_amount: grandTotal,
+                    advance_paid: paid, estimated_profit: estimatedProfit,
+                    status: 'Pending', created_at: finalTimestamp
+                };
+
                 await push(rtdbRef(rtdb, 'sales_orders'), orderData);
                 if(paid > 0) {
                     await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + paid);
@@ -463,7 +468,6 @@
 
             const customerName = document.getElementById('customerName').value || "Local (Walk-in)";
             const { subtotal, discount, grandTotal, paid, due } = window.checkoutSummary;
-            const invoiceNo = document.getElementById('invoiceNo').value;
             const finalTimestamp = getActionTimestamp(); // BACKDATED TIME
             
             let totalProfit = 0; const itemsToSave = [];
@@ -474,23 +478,47 @@
             });
             totalProfit = totalProfit - discount;
 
-            const sellData = {
-                shop_id: SHOP_ID, invoice_no: invoiceNo, customer: customerName,
-                date: document.getElementById('sellDate').value,
-                items: itemsToSave, subtotal: subtotal, discount: discount, total_amount: grandTotal,
-                paid_amount: paid, due_amount: due, total_profit: totalProfit,
-                payment_method: document.querySelector('input[name="payMethod"]:checked').value,
-                created_at: finalTimestamp
-            };
-
+            const decrementedItems = []; // track successful decrements for rollback on failure
             try {
+                // Atomically generate a sequential invoice number so two sales confirmed
+                // at the same moment never collide (unlike the old random INV-XXXXXX).
+                const counterResult = await runTransaction(rtdbRef(rtdb, `counters/${SHOP_ID}/invoice_no`), (current) => (current || 0) + 1);
+                const invoiceNo = "INV-" + String(counterResult.snapshot.val()).padStart(6, '0');
+                document.getElementById('invoiceNo').value = invoiceNo;
+
+                const sellData = {
+                    shop_id: SHOP_ID, invoice_no: invoiceNo, customer: customerName,
+                    date: document.getElementById('sellDate').value,
+                    items: itemsToSave, subtotal: subtotal, discount: discount, total_amount: grandTotal,
+                    paid_amount: paid, due_amount: due, total_profit: totalProfit,
+                    payment_method: document.querySelector('input[name="payMethod"]:checked').value,
+                    created_at: finalTimestamp
+                };
+
+                // Atomically decrement stock per item so concurrent sales never overwrite
+                // each other's stock changes (prevents over-selling / negative stock).
+                for (const item of Object.values(cart)) {
+                    const stockResult = await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => {
+                        const stock = currentStock || 0;
+                        if (stock < item.qty) return; // abort: not enough stock anymore
+                        return stock - item.qty;
+                    });
+                    if (!stockResult.committed) {
+                        // Roll back any items already decremented in this sale before failing
+                        for (const done of decrementedItems) {
+                            await runTransaction(rtdbRef(rtdb, `product_list/${done.id}/stock`), (s) => (s || 0) + done.qty);
+                        }
+                        throw new Error(`"${item.name}" এর স্টক পর্যাপ্ত নেই (আরেকজন হয়তো একই সময়ে বিক্রি করেছে)। আবার চেষ্টা করুন।`);
+                    }
+                    decrementedItems.push({ id: item.id, qty: item.qty });
+                }
+
                 await push(rtdbRef(rtdb, 'sales_history'), sellData);
                 const updates = {};
                 Object.values(cart).forEach(item => {
-                    const newStock = item.stock - item.qty; updates[`product_list/${item.id}/stock`] = newStock;
                     if(customerName !== "Local (Walk-in)" && customerName.trim() !== "") updates[`customer_prices/${SHOP_ID}/${customerName}/${item.id}`] = item.sellRate;
                 });
-                await update(rtdbRef(rtdb), updates);
+                if (Object.keys(updates).length > 0) await update(rtdbRef(rtdb), updates);
 
                 if(paid > 0) {
                     await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + paid);

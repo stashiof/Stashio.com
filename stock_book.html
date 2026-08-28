@@ -198,6 +198,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -229,12 +230,13 @@
             }
 
             // Realtime Sync
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snapshot) => {
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
                     allProducts = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
+                        .filter(p => !p.is_deleted);
                         
                     localStorage.setItem(`stock_${SHOP_ID}`, JSON.stringify(allProducts));
                     
@@ -373,9 +375,9 @@
             try {
                 // এখন তিনটি জায়গা থেকে ডেটা টানবে: Purchase, Sales, এবং Stock History
                 const [purchaseSnap, salesSnap, stockSnap] = await Promise.all([
-                    get(rtdbRef(rtdb, 'purchase_history')),
-                    get(rtdbRef(rtdb, 'sales_history')),
-                    get(rtdbRef(rtdb, 'stock_history')) // <--- নতুন ফোল্ডার যুক্ত করা হলো
+                    get(query(rtdbRef(rtdb, 'purchase_history'), orderByChild('shop_id'), equalTo(SHOP_ID))),
+                    get(query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID))),
+                    get(query(rtdbRef(rtdb, 'stock_history'), orderByChild('shop_id'), equalTo(SHOP_ID))) // <--- নতুন ফোল্ডার যুক্ত করা হলো
                 ]);
 
                 let historyLogs = [];
@@ -383,14 +385,12 @@
                 // ১. Purchase History পার্স করা
                 if(purchaseSnap.exists()) {
                     Object.values(purchaseSnap.val()).forEach(purchase => {
-                        if (purchase.shop_id === SHOP_ID) {
-                            const item = purchase.items?.find(i => i.id === productId);
-                            if(item) {
-                                historyLogs.push({
-                                    type: 'in', date: purchase.created_at || new Date(purchase.date).getTime(),
-                                    qty: item.qty, rate: item.purchaseRate, ref: `Purchase: ${purchase.challan_no || 'N/A'}`
-                                });
-                            }
+                        const item = purchase.items?.find(i => i.id === productId);
+                        if(item) {
+                            historyLogs.push({
+                                type: 'in', date: purchase.created_at || new Date(purchase.date).getTime(),
+                                qty: item.qty, rate: item.purchaseRate, ref: `Purchase: ${purchase.challan_no || 'N/A'}`
+                            });
                         }
                     });
                 }
@@ -398,14 +398,12 @@
                 // ২. Sales History পার্স করা
                 if(salesSnap.exists()) {
                     Object.values(salesSnap.val()).forEach(sale => {
-                        if (sale.shop_id === SHOP_ID) {
-                            const item = sale.items?.find(i => i.id === productId);
-                            if(item) {
-                                historyLogs.push({
-                                    type: 'out', date: sale.created_at || new Date(sale.date).getTime(),
-                                    qty: item.qty, rate: item.sellRate, ref: `Sale: ${sale.invoice_no || 'N/A'}`
-                                });
-                            }
+                        const item = sale.items?.find(i => i.id === productId);
+                        if(item) {
+                            historyLogs.push({
+                                type: 'out', date: sale.created_at || new Date(sale.date).getTime(),
+                                qty: item.qty, rate: item.sellRate, ref: `Sale: ${sale.invoice_no || 'N/A'}`
+                            });
                         }
                     });
                 }
@@ -413,7 +411,7 @@
                 // ৩. নতুন Stock History (Opening / Manual Update) পার্স করা
                 if(stockSnap.exists()) {
                     Object.values(stockSnap.val()).forEach(log => {
-                        if (log.shop_id === SHOP_ID && log.product_id === productId) {
+                        if (log.product_id === productId) {
                             // যদি লেখার মাঝে Reduce কথাটি থাকে, তার মানে স্টক কমানো হয়েছে (out), নাহলে বাড়ানো হয়েছে (in)
                             const isOut = log.action && log.action.toLowerCase().includes("reduce");
                             historyLogs.push({

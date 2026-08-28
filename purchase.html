@@ -337,7 +337,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue } from './firebase_config.js';
-        import { runTransaction } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
         const SHOP_ID = localStorage.getItem('activeShopId'); 
@@ -378,11 +378,12 @@
             }
 
             // 2. ONLINE SYNC 
-            rtdbOnValue(rtdbRef(rtdb, 'product_list'), (snap) => {
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snap) => {
                 if (snap.exists()) {
                     allProducts = Object.entries(snap.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(p => p.shop_id === SHOP_ID && !p.is_deleted);
+                        .filter(p => !p.is_deleted);
                     
                     localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(allProducts));
                     
@@ -397,14 +398,13 @@
             });
 
             // 3. LOAD SUPPLIERS
-            rtdbOnValue(rtdbRef(rtdb, 'contacts/suppliers'), (snap) => {
+            const suppliersQuery = query(rtdbRef(rtdb, 'contacts/suppliers'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(suppliersQuery, (snap) => {
                 const select = document.getElementById('supplierSelect');
                 select.innerHTML = '<option value="Local">Local (Walk-in)</option>';
                 if(snap.exists()){
                     Object.values(snap.val()).forEach(s => { 
-                        if(s.shop_id === SHOP_ID) {
-                            select.innerHTML += `<option value="${s.name}">${s.name}</option>`; 
-                        }
+                        select.innerHTML += `<option value="${s.name}">${s.name}</option>`; 
                     });
                 }
             });
@@ -594,12 +594,14 @@
             try {
                 await push(rtdbRef(rtdb, 'purchase_history'), purchaseData);
 
+                // Atomically increment stock per item so concurrent purchases/sales
+                // never overwrite each other's stock changes.
+                for (const item of purchaseData.items) {
+                    await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => (currentStock || 0) + item.qty);
+                }
                 const updates = {};
                 purchaseData.items.forEach(item => {
-                    const currentProduct = allProducts.find(p => p.id === item.id);
-                    const newStock = (currentProduct ? Number(currentProduct.stock) : 0) + item.qty;
-                    updates[`product_list/${item.id}/stock`] = newStock;
-                    updates[`product_list/${item.id}/buy_price`] = item.purchaseRate; 
+                    updates[`product_list/${item.id}/buy_price`] = item.purchaseRate;
                 });
                 await update(rtdbRef(rtdb), updates);
 

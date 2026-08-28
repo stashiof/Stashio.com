@@ -198,10 +198,10 @@
             let loaded = 0;
             const checkLoad = () => { loaded++; if(loaded === 4) calculateReport(); };
 
-            db.ref('sales_history').on('value', snap => { salesData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
-            db.ref('purchase_history').on('value', snap => { purchaseData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
-            db.ref('expenses_book').on('value', snap => { expenseData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID) : []; checkLoad(); });
-            db.ref('due_book').on('value', snap => { dueData = snap.exists() ? Object.values(snap.val()).filter(r => r.shop_id === SHOP_ID && r.current_due > 0) : []; checkLoad(); });
+            db.ref('sales_history').orderByChild('shop_id').equalTo(SHOP_ID).on('value', snap => { salesData = snap.exists() ? Object.values(snap.val()) : []; checkLoad(); });
+            db.ref('purchase_history').orderByChild('shop_id').equalTo(SHOP_ID).on('value', snap => { purchaseData = snap.exists() ? Object.values(snap.val()) : []; checkLoad(); });
+            db.ref('expenses_book').orderByChild('shop_id').equalTo(SHOP_ID).on('value', snap => { expenseData = snap.exists() ? Object.values(snap.val()) : []; checkLoad(); });
+            db.ref('due_book').orderByChild('shop_id').equalTo(SHOP_ID).on('value', snap => { dueData = snap.exists() ? Object.values(snap.val()).filter(r => r.current_due > 0) : []; checkLoad(); });
         }
 
         window.calculateReport = () => {

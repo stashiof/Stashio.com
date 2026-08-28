@@ -159,6 +159,7 @@
     <script type="module">
         // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -205,12 +206,12 @@
             }
 
             // Realtime Sync
-            rtdbOnValue(rtdbRef(rtdb, 'purchase_history'), (snapshot) => {
+            const purchaseQuery = query(rtdbRef(rtdb, 'purchase_history'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(purchaseQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
                     allRecords = Object.entries(snapshot.val())
                         .map(([id, val]) => ({ id, ...val }))
-                        .filter(r => r.shop_id === SHOP_ID) 
                         .reverse();
                     
                     localStorage.setItem(`purchase_history_${SHOP_ID}`, JSON.stringify(allRecords));
