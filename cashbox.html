@@ -237,6 +237,7 @@
         // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, push, onValue as rtdbOnValue } from './firebase_config.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { showPdfPreview } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -503,14 +504,8 @@
                 </table>
             `;
             tempDiv.innerHTML = html;
-            
-            html2pdf().set({
-                margin: 10, filename: `CashBox_Report_${dateFrom}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank');
+
+            showPdfPreview(tempDiv, `CashBox_Report_${dateFrom}.pdf`).finally(() => {
                 btn.innerHTML = originalText;
             });
         };

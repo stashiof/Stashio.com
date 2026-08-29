@@ -16,6 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -124,8 +125,8 @@
         /* Print Styles */
         @media print {
             body * { visibility: hidden; }
-            #view-receipt, #view-receipt * { visibility: visible; }
-            #view-receipt { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
+            #printableInvoiceHolder, #printableInvoiceHolder * { visibility: visible; }
+            #printableInvoiceHolder { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none !important; }
         }
     </style>
@@ -274,61 +275,25 @@
         </div>
     </div>
 
-    <div id="view-receipt" class="view-container" style="background: white;">
-        <div style="padding: 20px; flex: 1; overflow-y: auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="font-size: 24px; font-weight: 800; color: var(--text-dark);" id="rShopName">Stashio Store</h2>
-                <p style="font-size: 12px; color: var(--text-light); font-weight: 600;">PURCHASE MEMO</p>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 20px; border-bottom: 2px dashed #e5e7eb; padding-bottom: 15px;">
-                <div>
-                    <p style="margin-bottom: 5px;">Supplier: <strong id="rSupplier"></strong></p>
-                    <p>Date: <span id="rDate"></span></p>
-                </div>
-                <div style="text-align: right;">
-                    <p style="margin-bottom: 5px;">Challan: <strong id="rChallan"></strong></p>
-                    <p>Batch: <span id="rBatch"></span></p>
-                </div>
-            </div>
-
-            <table style="width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 20px;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--text-dark);">
-                        <th style="text-align: left; padding-bottom: 8px;">Item</th>
-                        <th style="text-align: center; padding-bottom: 8px;">Qty</th>
-                        <th style="text-align: right; padding-bottom: 8px;">Total</th>
-                    </tr>
-                </thead>
-                <tbody id="rTableBody"></tbody>
-            </table>
-
-            <div style="border-top: 2px solid var(--text-dark); padding-top: 10px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 700;">
-                    <span>Grand Total:</span>
-                    <span id="rTotal"></span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: var(--text-light);">
-                    <span>Paid:</span>
-                    <span id="rPaid"></span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--danger);">
-                    <span>Due:</span>
-                    <span id="rDue"></span>
-                </div>
-            </div>
-            <p style="font-size: 11px; color: var(--text-light); margin-top: 20px; text-align: center;">Method: <strong id="rMethod"></strong></p>
+    <div id="view-receipt" class="view-container" style="background: #f1f5f9;">
+        <div style="padding: 15px; flex: 1; overflow-y: auto;">
+            <div id="receiptRenderTarget"></div>
         </div>
 
-        <div class="no-print" style="padding: 20px; display: flex; gap: 15px;">
-            <button onclick="window.print()" style="flex: 1; padding: 15px; background: var(--text-dark); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
+        <div class="no-print" style="padding: 20px; display: flex; gap: 12px;">
+            <button onclick="window.printLastPurchase()" style="flex: 1; padding: 15px; background: var(--text-dark); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
                 <i class="fas fa-print"></i> Print
             </button>
-            <button onclick="location.reload()" style="flex: 1; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
+            <button onclick="window.downloadLastPurchasePdf()" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button onclick="location.reload()" style="flex: 1; padding: 15px; background: var(--success); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
                 New Entry
             </button>
         </div>
     </div>
+
+    <div id="printableInvoiceHolder" style="display:none;"></div>
 
     <div id="scannerModal">
         <div id="reader"></div>
@@ -338,6 +303,7 @@
     <script type="module">
         import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue } from './firebase_config.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
 
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
         const SHOP_ID = localStorage.getItem('activeShopId'); 
@@ -625,7 +591,7 @@
                     });
                 }
 
-                generateReceipt(purchaseData);
+                await generateReceipt(purchaseData);
                 showView('view-receipt');
 
             } catch (err) {
@@ -679,31 +645,45 @@
             };
         };
 
-        function generateReceipt(data) {
-            document.getElementById('rShopName').innerText = localStorage.getItem('activeShopName') || "Stashio Store"; 
-            document.getElementById('rSupplier').innerText = data.supplier;
-            document.getElementById('rDate').innerText = data.date;
-            document.getElementById('rChallan').innerText = data.challan_no;
-            document.getElementById('rBatch').innerText = data.batch_no;
-            
-            const tbody = document.getElementById('rTableBody');
-            tbody.innerHTML = '';
-            data.items.forEach(item => {
-                const brandHtml = item.brand ? `<br><span style="font-size:9px; color:#6b7280;">(${item.brand})</span>` : '';
-                tbody.innerHTML += `<tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
-                        ${item.name} ${brandHtml}
-                        <br><span style="color: var(--text-light); font-size: 10px;">@ ৳${item.purchaseRate}</span>
-                    </td>
-                    <td style="text-align: center; border-bottom: 1px solid #f3f4f6;">${item.qty}</td>
-                    <td style="text-align: right; font-weight: bold; border-bottom: 1px solid #f3f4f6;">৳${item.qty * item.purchaseRate}</td>
-                </tr>`;
+        let lastPurchaseData = null; // পরে Print/PDF বাটনে ব্যবহারের জন্য
+
+        async function generateReceipt(data) {
+            lastPurchaseData = data;
+            const shop = await getShopBranding(SHOP_ID);
+
+            const items = data.items.map(item => ({
+                name: item.name, brand: item.brand, unit: 'pcs',
+                qty: item.qty, rate: item.purchaseRate, amount: item.qty * item.purchaseRate
+            }));
+
+            const html = renderPremiumDocument({
+                docType: 'PURCHASE',
+                docNo: data.challan_no,
+                docDate: data.date,
+                shop: shop,
+                partyLabel: 'Supplier',
+                partyName: data.supplier,
+                items: items,
+                subtotal: data.total_amount,
+                discount: 0,
+                total: data.total_amount,
+                paid: data.paid_amount,
+                due: data.due_amount,
+                extraNote: `Batch: ${data.batch_no || 'N/A'} | Method: ${data.payment_method}`,
+                footerNote: 'Purchase recorded successfully.'
             });
-            document.getElementById('rTotal').innerText = "৳" + data.total_amount;
-            document.getElementById('rPaid').innerText = "৳" + data.paid_amount;
-            document.getElementById('rDue').innerText = "৳" + data.due_amount;
-            document.getElementById('rMethod').innerText = data.payment_method;
+
+            document.getElementById('receiptRenderTarget').innerHTML = html;
+            document.getElementById('printableInvoiceHolder').innerHTML = html;
         }
+
+        window.printLastPurchase = () => { window.print(); };
+
+        window.downloadLastPurchasePdf = () => {
+            if (!lastPurchaseData) return;
+            const el = document.getElementById('printableInvoiceHolder');
+            showPdfPreview(el.innerHTML, `Purchase_${lastPurchaseData.challan_no}.pdf`);
+        };
 
         window.showView = (id) => {
             ['view-selection', 'view-checkout', 'view-receipt'].forEach(v => document.getElementById(v).classList.remove('active'));

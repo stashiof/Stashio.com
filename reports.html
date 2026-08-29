@@ -252,6 +252,7 @@
         // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { showPdfPreview } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -391,13 +392,13 @@
 
         window.downloadCertificate = () => {
             const btn = document.getElementById('btnDownloadCert'); const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
             const element = document.getElementById('printableCertificate'); const custName = document.getElementById('certCustName').innerText;
-            html2pdf().set({
-                margin: 0, filename: `Stashio_Award_${custName}.pdf`, image: { type: 'jpeg', quality: 1 },
+            showPdfPreview(element, `Stashio_Award_${custName}.pdf`, {
+                margin: 0, image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 3, useCORS: true, backgroundColor: '#0a0a0a' },
-                jsPDF: { unit: 'mm', format: [120, 160], orientation: 'portrait' } 
-            }).from(element).save().then(() => { btn.innerHTML = originalHTML; });
+                jsPDF: { unit: 'mm', format: [120, 160], orientation: 'portrait' }
+            }).finally(() => { btn.innerHTML = originalHTML; });
         };
     </script>
 </body>

@@ -16,6 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root { --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --border-radius: 20px; --shadow: 0 10px 25px rgba(0,0,0,0.05); }
@@ -81,7 +82,7 @@
         .btn-close-scanner { margin-top: 30px; background: white; color: var(--danger); border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; }
         #priceToast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #f59e0b; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: none; z-index: 1000; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3); animation: slideDown 0.3s; }
         @keyframes slideDown { from { top: 50px; opacity: 0; } to { top: 80px; opacity: 1; } }
-        @media print { body * { visibility: hidden; } #view-receipt, #view-receipt * { visibility: visible; } #view-receipt { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; } .no-print { display: none !important; } }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
@@ -160,35 +161,32 @@
         </div>
     </div>
 
-    <div id="view-receipt" class="view-container" style="background: white;">
-        <div style="padding: 20px; flex: 1; overflow-y: auto;">
-            <div style="text-align: center; margin-bottom: 30px;"><h2 style="font-size: 24px; font-weight: 800; color: var(--text-dark);" id="rShopName">Stashio Store</h2><p style="font-size: 12px; color: var(--text-light); font-weight: 600;">CASH MEMO / INVOICE</p></div>
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 20px; border-bottom: 2px dashed #e5e7eb; padding-bottom: 15px;"><div><p style="margin-bottom: 5px;">Customer: <strong id="rCustomer"></strong></p><p>Date: <span id="rDate"></span></p></div><div style="text-align: right;"><p style="margin-bottom: 5px;">Invoice No: <strong id="rInvoice"></strong></p></div></div>
-            <table style="width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 20px;">
-                <thead><tr style="border-bottom: 2px solid var(--text-dark);"><th style="text-align: left; padding-bottom: 8px;">Item & Brand</th><th style="text-align: center; padding-bottom: 8px;">Qty</th><th style="text-align: right; padding-bottom: 8px;">Total</th></tr></thead>
-                <tbody id="rTableBody"></tbody>
-            </table>
-            <div style="border-top: 2px solid var(--text-dark); padding-top: 10px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Subtotal:</span><span id="rSubtotal"></span></div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: var(--danger);"><span>Discount:</span><span id="rDiscount"></span></div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 700; font-size: 15px;"><span>Grand Total:</span><span id="rTotal"></span></div>
-                <div style="border-top: 1px dashed #cbd5e1; margin: 10px 0;"></div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: var(--text-light);"><span>Received:</span><span id="rPaid"></span></div>
-                <div style="display: flex; justify-content: space-between; font-weight: 700;" id="rDueRow"><span>Due:</span><span id="rDue" style="color: var(--danger);"></span></div>
-            </div>
-            <div style="margin-top: 30px; text-align: center;"><p style="font-size: 11px; color: var(--text-light); margin-bottom: 5px;">Method: <strong id="rMethod"></strong></p><p style="font-size: 12px; font-weight: 700; color: var(--text-dark);">Thank you for shopping with us!</p></div>
+    <div id="view-receipt" class="view-container" style="background: #f1f5f9;">
+        <div style="padding: 15px; flex: 1; overflow-y: auto;">
+            <div id="receiptRenderTarget"></div>
         </div>
-        <div class="no-print" style="padding: 20px; display: flex; gap: 15px;">
-            <button onclick="window.print()" style="flex: 1; padding: 15px; background: var(--text-dark); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;"><i class="fas fa-print"></i> Print</button>
-            <button onclick="location.reload()" style="flex: 1; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">New Sale</button>
+        <div class="no-print" style="padding: 20px; display: flex; gap: 12px;">
+            <button onclick="window.printLastSale()" style="flex: 1; padding: 15px; background: var(--text-dark); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;"><i class="fas fa-print"></i> Print</button>
+            <button onclick="window.downloadLastSalePdf()" style="flex: 1; padding: 15px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button onclick="location.reload()" style="flex: 1; padding: 15px; background: var(--success); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">New Sale</button>
         </div>
     </div>
+
+    <div id="printableInvoiceHolder" style="display:none;"></div>
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #printableInvoiceHolder, #printableInvoiceHolder * { visibility: visible; }
+            #printableInvoiceHolder { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
 
     <div id="scannerModal"><div id="reader"></div><button onclick="stopScanner()" class="btn-close-scanner">Close Camera</button></div>
 
     <script type="module">
         import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, get } from './firebase_config.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId'); 
         let allProducts = [], displayedProducts = [], itemsPerPage = 20, currentPage = 1;
@@ -532,23 +530,49 @@
                     await push(rtdbRef(rtdb, 'due_history'), { due_id: dueRef.key, name: customerName, type: 'receive', action: 'Created (Invoice: ' + invoiceNo + ')', amount: due, date: finalTimestamp });
                 }
 
-                generateReceipt(sellData); showView('view-receipt');
+                await generateReceipt(sellData); showView('view-receipt');
             } catch (err) { alert("Error: " + err.message); btn.innerHTML = 'Confirm Sale <i class="fas fa-check-circle" style="margin-left: 5px;"></i>'; btn.disabled = false; }
         };
 
-        function generateReceipt(data) {
-            document.getElementById('rShopName').innerText = localStorage.getItem('activeShopName') || "Stashio Store"; 
-            document.getElementById('rCustomer').innerText = data.customer; document.getElementById('rDate').innerText = data.date; document.getElementById('rInvoice').innerText = data.invoice_no;
-            const tbody = document.getElementById('rTableBody'); tbody.innerHTML = '';
-            data.items.forEach(item => {
-                const brandHtml = item.brand ? `<br><span style="font-size:9px; color:#6b7280;">(${item.brand})</span>` : '';
-                tbody.innerHTML += `<tr><td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">${item.name} ${brandHtml}<br><span style="color: var(--text-light); font-size: 10px;">@ ৳${item.sellRate}</span></td><td style="text-align: center; border-bottom: 1px solid #f3f4f6;">${item.qty}</td><td style="text-align: right; font-weight: bold; border-bottom: 1px solid #f3f4f6;">৳${item.qty * item.sellRate}</td></tr>`;
+        let lastSaleData = null; // পরে Print/PDF বাটনে ব্যবহারের জন্য
+
+        async function generateReceipt(data) {
+            lastSaleData = data;
+            const shop = await getShopBranding(SHOP_ID);
+
+            const items = data.items.map(item => ({
+                name: item.name, brand: item.brand, unit: 'pcs',
+                qty: item.qty, rate: item.sellRate, amount: item.qty * item.sellRate
+            }));
+
+            const html = renderPremiumDocument({
+                docType: 'INVOICE',
+                docNo: data.invoice_no,
+                docDate: data.date,
+                shop: shop,
+                partyLabel: 'Bill To',
+                partyName: data.customer,
+                items: items,
+                subtotal: data.subtotal,
+                discount: data.discount,
+                total: data.total_amount,
+                paid: data.paid_amount,
+                due: data.due_amount,
+                extraNote: `Payment Method: ${data.payment_method}`,
+                footerNote: 'Thank you for shopping with us!'
             });
-            document.getElementById('rSubtotal').innerText = "৳" + data.subtotal; document.getElementById('rDiscount').innerText = "- ৳" + data.discount;
-            document.getElementById('rTotal').innerText = "৳" + data.total_amount; document.getElementById('rPaid').innerText = "৳" + data.paid_amount;
-            if(data.due_amount > 0) { document.getElementById('rDueRow').style.display = 'flex'; document.getElementById('rDue').innerText = "৳" + data.due_amount; } else { document.getElementById('rDueRow').style.display = 'none'; }
-            document.getElementById('rMethod').innerText = data.payment_method;
+
+            document.getElementById('receiptRenderTarget').innerHTML = html;
+            document.getElementById('printableInvoiceHolder').innerHTML = html;
         }
+
+        window.printLastSale = () => { window.print(); };
+
+        window.downloadLastSalePdf = () => {
+            if (!lastSaleData) return;
+            const el = document.getElementById('printableInvoiceHolder');
+            showPdfPreview(el.innerHTML, `Invoice_${lastSaleData.invoice_no}.pdf`);
+        };
 
         window.showView = (id) => { ['view-selection', 'view-checkout', 'view-receipt'].forEach(v => document.getElementById(v).classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0, 0); };
         document.getElementById('searchInput').addEventListener('input', (e) => { const term = e.target.value.toLowerCase().trim(); if(term === '') { initPagination(allProducts); } else { const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term) || (p.brand && p.brand.toLowerCase().includes(term)) || (p.barcode && p.barcode.toString().toLowerCase().includes(term))); initPagination(filtered); } });

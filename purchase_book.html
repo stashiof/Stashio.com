@@ -160,6 +160,7 @@
         // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getShopBranding, showPdfPreview } from './invoice_kit.js';
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -191,11 +192,6 @@
             // Fetch Dynamic PDF Template from Admin
             rtdbOnValue(rtdbRef(rtdb, `global_settings/pdf_purchase_template`), (snap) => {
                 if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
-            });
-
-            // Fetch Shop Logo
-            rtdbOnValue(rtdbRef(rtdb, `shops/${SHOP_ID}`), (snap) => {
-                if(snap.exists() && snap.val().image) shopLogoImgUrl = snap.val().image;
             });
 
             // Fetch Purchase History (Offline Cache First)
@@ -332,7 +328,7 @@
         };
 
         // --- DIRECT PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
-        window.downloadPDF = () => {
+        window.downloadPDF = async () => {
             if(filteredRecords.length === 0) {
                 alert("No records to generate PDF!");
                 return;
@@ -341,6 +337,9 @@
             const btn = document.querySelector('.btn-pdf');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            const shop = await getShopBranding(SHOP_ID);
+            shopLogoImgUrl = shop.logo || "";
 
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
@@ -437,15 +436,8 @@
             // 4. Generate Preview
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = finalTemplate;
-            
-            html2pdf().set({
-                margin: 10, 
-                filename: `Purchase_Report_${dateFrom}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank'); 
+
+            showPdfPreview(tempDiv, `Purchase_Report_${dateFrom}.pdf`).finally(() => {
                 btn.innerHTML = originalText;
             });
         };

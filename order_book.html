@@ -15,6 +15,7 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root { --primary: #14b8a6; --secondary: #0d9488; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -134,7 +135,9 @@
                     <button id="btnReceivePay" class="action-btn btn-pay" onclick="receivePayment()"><i class="fas fa-hand-holding-dollar"></i> Receive Due</button>
                     
                     <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
+                    <button class="action-btn btn-chalan" style="background:#ede9fe; color:#7c3aed;" onclick="downloadOrderPdf('chalan')"><i class="fas fa-file-pdf"></i> Chalan PDF</button>
                     <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
+                    <button class="action-btn btn-bill" style="background:#e0e7ff; color:#4F46E5;" onclick="downloadOrderPdf('bill')"><i class="fas fa-file-pdf"></i> Bill PDF</button>
                     
                     <button id="btnCancelOrder" class="action-btn btn-cancel" onclick="cancelOrder()"><i class="fas fa-times-circle"></i> Cancel Order</button>
                 </div>
@@ -168,6 +171,7 @@
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, update, push } from './firebase_config.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
@@ -468,113 +472,49 @@
         };
 
         // --- PRINT CHALAN OR BILL (MATCHING YOUR DESIGN) ---
-        window.printDocument = (type) => {
-            if(!currentOrder) return;
-            
-            const printDiv = document.getElementById('printArea');
-            let tableRows = '';
-            
-            // Header Block for Both
-            const headerBlock = `
-                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h1 style="font-size: 32px; font-weight: 800; margin: 0; color: #333;">${SHOP_NAME}</h1>
-                    <p style="font-size: 12px; margin: 5px 0 0 0; color: #555;">All Kinds of Office Stationary & Paper Wholesale Supplier</p>
-                </div>
-                <div style="font-size: 14px; margin-bottom: 20px;">
-                    <div style="display: flex; gap: 10px;">
-                        <span style="white-space: nowrap;">Deliver To :</span>
-                        <div style="flex: 1; border-bottom: 1px dashed #000; padding-bottom: 2px;">${currentOrder.customer}</div>
-                    </div>
-                </div>
-            `;
+        async function buildOrderDocumentHtml(type) {
+            const shop = await getShopBranding(SHOP_ID);
+            const orderNoShort = (currentOrder.order_no || 'N/A').replace('ORD-', '');
 
-            if(type === 'chalan') {
-                currentOrder.items.forEach((item, index) => {
-                    tableRows += `
-                    <tr>
-                        <td style="text-align: center;">${index + 1}</td>
-                        <td>${item.name}</td>
-                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
-                        <td style="text-align: center; font-weight: bold;">${item.qty}</td>
-                        <td></td>
-                    </tr>`;
-                });
-
-                printDiv.innerHTML = `
-                    ${headerBlock}
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">CHALLAN NO : ${currentOrder.order_no.replace('ORD-', '')}</span>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 14px;">
-                        <thead style="background: #f8fafc;">
-                            <tr>
-                                <th style="width: 50px;">S/N</th>
-                                <th style="text-align: left;">Name of Items</th>
-                                <th style="width: 80px;">Unit</th>
-                                <th style="width: 80px;">Qty</th>
-                                <th style="width: 150px;">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
-                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
-                    </div>
-                `;
-            } else if(type === 'bill') {
-                currentOrder.items.forEach((item, index) => {
-                    tableRows += `
-                    <tr>
-                        <td style="text-align: center;">${index + 1}</td>
-                        <td>${item.name}</td>
-                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
-                        <td style="text-align: center;">${item.qty}</td>
-                        <td style="text-align: center;">${item.sellRate}</td>
-                        <td style="text-align: center; font-weight: bold;">${item.sellRate * item.qty}</td>
-                    </tr>`;
-                });
-
-                const wordText = numberToWords(currentOrder.total_amount);
-
-                printDiv.innerHTML = `
-                    ${headerBlock}
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <span style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">BILL NO : ${currentOrder.order_no.replace('ORD-', '')}</span>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 14px;">
-                        <thead style="background: #f8fafc;">
-                            <tr>
-                                <th style="width: 50px;">S/N</th>
-                                <th style="text-align: left;">Name of Items</th>
-                                <th style="width: 80px;">Unit</th>
-                                <th style="width: 80px;">Qty</th>
-                                <th style="width: 100px;">Rate Tk.</th>
-                                <th style="width: 120px;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableRows}
-                            <tr>
-                                <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; border-top: 1px solid #000 !important;">Total Tk=</td>
-                                <td style="text-align: center; font-weight: bold; font-size: 16px;">${currentOrder.total_amount}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <div style="border: 1px solid #000; padding: 10px; margin-top: 20px; font-size: 13px;">
-                        <strong>In Words :</strong> <span style="text-transform: capitalize;">${wordText}</span>
-                    </div>
-
-                    <div style="display: flex; justify-content: space-between; margin-top: 100px;">
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Customer Signature</div>
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">For ${SHOP_NAME}</div>
-                    </div>
-                `;
+            if (type === 'chalan') {
+                const items = (currentOrder.items || []).map(item => ({
+                    name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: 0, amount: 0
+                }));
+                return renderPremiumDocument({
+                    docType: 'INVOICE', docNo: `CHALLAN-${orderNoShort}`, docDate: new Date().toLocaleDateString('en-GB'),
+                    shop: shop, partyLabel: 'Deliver To', partyName: currentOrder.customer, items: items,
+                    subtotal: 0, discount: 0, total: 0, paid: null, due: null,
+                    extraNote: 'Delivery Challan — prices not shown',
+                    footerNote: 'Please verify items upon receipt.'
+                }).replace(/৳0/g, '—');
             }
 
-            // Trigger Print
+            const items = (currentOrder.items || []).map(item => ({
+                name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty,
+                rate: item.sellRate, amount: item.sellRate * item.qty
+            }));
+            return renderPremiumDocument({
+                docType: 'INVOICE', docNo: `BILL-${orderNoShort}`, docDate: new Date().toLocaleDateString('en-GB'),
+                shop: shop, partyLabel: 'Bill To', partyName: currentOrder.customer, items: items,
+                subtotal: currentOrder.total_amount, discount: 0, total: currentOrder.total_amount,
+                paid: currentOrder.advance_paid || 0, due: (currentOrder.total_amount - (currentOrder.advance_paid || 0)),
+                footerNote: 'Thank you for your order!'
+            });
+        }
+
+        window.printDocument = async (type) => {
+            if(!currentOrder) return;
+            const html = await buildOrderDocumentHtml(type);
+            document.getElementById('printArea').innerHTML = html;
             window.print();
+        };
+
+        window.downloadOrderPdf = async (type) => {
+            if(!currentOrder) return;
+            const html = await buildOrderDocumentHtml(type);
+            document.getElementById('printArea').innerHTML = html;
+            const orderNoShort = (currentOrder.order_no || 'N/A').replace('ORD-', '');
+            showPdfPreview(html, `${type === 'chalan' ? 'Challan' : 'Bill'}_${orderNoShort}.pdf`);
         };
     </script>
 </body>

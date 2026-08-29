@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root { --primary: #f59e0b; --secondary: #d97706; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -21,11 +22,9 @@
         
         @media print {
             body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
+            #printableInvoiceHolder, #printableInvoiceHolder * { visibility: visible; }
+            #printableInvoiceHolder { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
             .no-print { display: none !important; }
-            table { border-collapse: collapse !important; width: 100% !important; }
-            th, td { border: 1px solid #000 !important; padding: 8px !important; }
         }
 
         /* Header */
@@ -138,11 +137,36 @@
 
     <div class="action-grid no-print">
         <button class="btn-action" style="background: var(--success); color: white; grid-column: span 2;" onclick="saveQuotation()"><i class="fas fa-save"></i> Save / Update Quotation</button>
-        <button class="btn-action" style="background: var(--text-dark); color: white;" onclick="printQuotation()"><i class="fas fa-print"></i> Print</button>
-        <button class="btn-action" style="background: #fee2e2; color: var(--danger);" onclick="clearEstimate()"><i class="fas fa-times"></i> Clear All</button>
+        <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; grid-column: span 2;" onclick="openClientDetailsModal()"><i class="fas fa-file-invoice"></i> Generate Quotation PDF</button>
+        <button class="btn-action" style="background: #fee2e2; color: var(--danger); grid-column: span 2;" onclick="clearEstimate()"><i class="fas fa-times"></i> Clear All</button>
     </div>
 
-    <div id="printArea" style="display: none;"></div>
+    <div id="printableInvoiceHolder" style="display:none;"></div>
+
+    <!-- Client Details Modal — quotation বানানোর আগে ক্লায়েন্টের তথ্য ও বৈধতার মেয়াদ নেয় -->
+    <div class="modal-overlay no-print" id="clientDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 16px;">Quotation Details</h3>
+                <button onclick="closeClientDetailsModal()" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <div class="input-box" style="text-align:left;">
+                    <label style="text-align:left;">Client / Company Name *</label>
+                    <input type="text" id="qClientName" placeholder="e.g. ABC Traders" style="text-align:left; padding:12px;">
+                </div>
+                <div class="input-box" style="text-align:left;">
+                    <label style="text-align:left;">Client Phone (optional)</label>
+                    <input type="text" id="qClientPhone" placeholder="e.g. 01XXXXXXXXX" style="text-align:left; padding:12px;">
+                </div>
+                <div class="input-box" style="text-align:left;">
+                    <label style="text-align:left;">Valid Until</label>
+                    <input type="date" id="qValidUntil" style="text-align:left; padding:12px;">
+                </div>
+                <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;" onclick="generateQuotationPdf()"><i class="fas fa-check"></i> Generate PDF Preview</button>
+            </div>
+        </div>
+    </div>
 
     <div class="modal-overlay no-print" id="savedModal">
         <div class="modal-content">
@@ -164,6 +188,7 @@
     <script type="module">
         import { rtdb, ref as rtdbRef, get, onValue as rtdbOnValue, push, update, remove } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
         
@@ -442,68 +467,61 @@
             renderCart();
         };
 
-        // --- PRINT QUOTATION ---
-        window.printQuotation = () => {
+        // --- QUOTATION PDF GENERATION (নতুন প্রিমিয়াম সিস্টেম) ---
+        let quoteSequence = 0; // simple session-level running number for the visible doc no.
+
+        window.openClientDetailsModal = () => {
             if(Object.keys(estimateCart).length === 0) return alert("Please add items to estimate first!");
-            
-            let defaultName = editingClientName || "";
-            const companyName = prompt("Enter Company/Client Name for Quotation:", defaultName);
-            if(!companyName) return;
+            document.getElementById('qClientName').value = editingClientName || '';
+            // ডিফল্টভাবে ৭ দিন পর মেয়াদ শেষ দেখানো হচ্ছে, ইউজার চাইলে বদলাতে পারবে
+            const defaultValid = new Date(); defaultValid.setDate(defaultValid.getDate() + 7);
+            document.getElementById('qValidUntil').value = defaultValid.toISOString().split('T')[0];
+            document.getElementById('clientDetailsModal').style.display = 'flex';
+        };
+        window.closeClientDetailsModal = () => { document.getElementById('clientDetailsModal').style.display = 'none'; };
 
-            editingClientName = companyName; // save for future
+        window.generateQuotationPdf = async () => {
+            const clientName = document.getElementById('qClientName').value.trim();
+            const clientPhone = document.getElementById('qClientPhone').value.trim();
+            const validUntil = document.getElementById('qValidUntil').value;
+            if(!clientName) return alert("Client/Company name is required!");
 
-            let tableRows = '';
+            editingClientName = clientName; // future save-এর জন্য মনে রাখা হচ্ছে
+
+            const shop = await getShopBranding(SHOP_ID);
+            quoteSequence += 1;
+            const docNo = "QUO-" + new Date().getFullYear() + "-" + String(quoteSequence).padStart(3, '0');
+
             let finalTotal = 0;
-
-            Object.values(estimateCart).forEach((item, index) => {
-                const lineTotal = item.estSell * item.estQty;
-                finalTotal += lineTotal;
-                tableRows += `
-                <tr>
-                    <td style="text-align: center;">${index + 1}</td>
-                    <td>${item.name} ${item.brand ? `(${item.brand})` : ''}</td>
-                    <td style="text-align: center;">${item.unit || 'Pcs'}</td>
-                    <td style="text-align: center;">${item.estQty}</td>
-                    <td style="text-align: center;">${item.estSell}</td>
-                    <td style="text-align: right; font-weight: bold;">${lineTotal}</td>
-                </tr>`;
+            const items = Object.values(estimateCart).map(item => {
+                const amount = item.estSell * item.estQty;
+                finalTotal += amount;
+                return { name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.estQty, rate: item.estSell, amount: amount };
             });
 
-            document.getElementById('printArea').innerHTML = `
-                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h1 style="font-size: 32px; font-weight: 800; margin: 0; color: #333;">${SHOP_NAME}</h1>
-                    <p style="font-size: 14px; margin: 5px 0 0 0; font-weight: bold; background: #e5e7eb; display: inline-block; padding: 5px 15px; border-radius: 5px;">ESTIMATE / QUOTATION</p>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px;">
-                    <div><p style="margin:0;"><strong>To:</strong> ${companyName}</p></div>
-                    <div><p style="margin:0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</p></div>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-                    <thead style="background: #f8fafc;">
-                        <tr>
-                            <th style="width: 40px; border: 1px solid #000; padding: 8px;">S/N</th>
-                            <th style="text-align: left; border: 1px solid #000; padding: 8px;">Description of Items</th>
-                            <th style="width: 60px; border: 1px solid #000; padding: 8px;">Unit</th>
-                            <th style="width: 60px; border: 1px solid #000; padding: 8px;">Qty</th>
-                            <th style="width: 80px; border: 1px solid #000; padding: 8px;">Rate (Tk)</th>
-                            <th style="width: 120px; text-align: right; border: 1px solid #000; padding: 8px;">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows}
-                        <tr>
-                            <td colspan="5" style="text-align: right; font-weight: bold; border: none !important; border-top: 2px solid #000 !important; padding-top: 10px !important;">Grand Total =</td>
-                            <td style="text-align: right; font-weight: bold; font-size: 18px; border: none !important; border-top: 2px solid #000 !important; padding-top: 10px !important;">${finalTotal}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div style="margin-top: 50px; font-size: 12px; color: #6b7280; text-align: center;">* This is an estimate only and subject to market availability and price changes.</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 80px;">
-                    <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Client Signature</div>
-                    <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px;">Authorized Signature</div>
-                </div>
-            `;
-            window.print();
+            const validNote = validUntil ? `Valid Until: ${new Date(validUntil).toLocaleDateString('en-GB')}` : '';
+
+            const html = renderPremiumDocument({
+                docType: 'QUOTATION',
+                docNo: docNo,
+                docDate: new Date().toLocaleDateString('en-GB'),
+                shop: shop,
+                partyLabel: 'Quotation For',
+                partyName: clientName,
+                partyPhone: clientPhone,
+                items: items,
+                subtotal: finalTotal,
+                discount: 0,
+                total: finalTotal,
+                paid: null, // quotation-এ paid/due দেখানো হবে না
+                due: null,
+                extraNote: validNote,
+                footerNote: 'This is an estimate only and subject to market availability & price changes.'
+            });
+
+            document.getElementById('printableInvoiceHolder').innerHTML = html;
+            closeClientDetailsModal();
+            showPdfPreview(html, `Quotation_${clientName.replace(/\s+/g, '_')}.pdf`);
         };
 
         // --- BARCODE SCANNER ---

@@ -209,8 +209,11 @@
                     <button class="action-btn btn-edit" onclick="openEditModal()"><i class="fas fa-edit"></i> Edit Sale (পরিবর্তন করুন)</button>
                     
                     <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
+                    <button class="action-btn btn-chalan" style="background:#ede9fe; color:#7c3aed;" onclick="downloadDocumentPdf('chalan')"><i class="fas fa-file-pdf"></i> Chalan PDF</button>
                     <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
+                    <button class="action-btn btn-bill" style="background:#e0e7ff; color:#4F46E5;" onclick="downloadDocumentPdf('bill')"><i class="fas fa-file-pdf"></i> Bill PDF</button>
                     <button class="action-btn btn-quo" onclick="printDocument('quotation')"><i class="fas fa-file-contract"></i> Print Quotation</button>
+                    <button class="action-btn btn-quo" style="background:#cffafe; color:#0891b2;" onclick="downloadDocumentPdf('quotation')"><i class="fas fa-file-pdf"></i> Quotation PDF</button>
 
                     <button class="action-btn btn-delete" onclick="deleteFullSale()"><i class="fas fa-trash-alt"></i> Delete Full Sale</button>
                 </div>
@@ -273,6 +276,7 @@
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get, update, push, remove } from './firebase_config.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
@@ -774,125 +778,71 @@
         };
 
         // --- EXCEL DESIGN PRINT (CHALAN / BILL / QUOTATION) ---
-        window.printDocument = (type) => {
-            if(!currentSale) return;
-            const printDiv = document.getElementById('printArea');
-            let tableRows = '';
-            
+        // চালান/বিল/কোটেশন — তিনটাই প্রিমিয়াম টেমপ্লেট ব্যবহার করে, শুধু কনটেন্ট ভিন্ন
+        async function buildDocumentHtml(type) {
+            const shop = await getShopBranding(SHOP_ID);
             const custName = currentSale.customer_name || currentSale.customer || 'Walk-in';
             const invNo = currentSale.invoice_no || 'N/A';
             const dDate = new Date(currentSale.created_at || currentSale.date).toLocaleDateString('en-GB');
 
-            let headerTitleText = "";
-            if (type === 'chalan') headerTitleText = `CHALLAN NO : ${invNo.replace('INV-', '')}`;
-            else if (type === 'bill') headerTitleText = `BILL NO : ${invNo.replace('INV-', '')}`;
-            else headerTitleText = `Quotation`;
-
-            const headerBlock = `
-                <div style="border: 2px solid #000; padding: 15px; margin-bottom: 10px; background: #e5e7eb;">
-                    <h1 style="font-size: 28px; font-weight: 800; margin: 0; color: #000; text-align: center;">${SHOP_NAME}</h1>
-                    <div style="text-align: center; margin-top: 5px; font-weight: bold; font-size: 16px;">
-                        ${headerTitleText}
-                    </div>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; font-weight: bold; padding: 0 5px;">
-                    <div>Address : ${custName}</div>
-                    <div>Date : ${dDate}</div>
-                </div>
-            `;
-
-            if(type === 'chalan') {
-                (currentSale.items || []).forEach((item, index) => {
-                    tableRows += `
-                    <tr>
-                        <td style="text-align: center;">${index + 1}</td>
-                        <td>${item.name}</td>
-                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
-                        <td style="text-align: center;">${item.brand || ''}</td>
-                        <td style="text-align: center; font-weight: bold;">${item.qty}</td>
-                        <td></td>
-                    </tr>`;
-                });
-
-                printDiv.innerHTML = `
-                    ${headerBlock}
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 14px;">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">S/N</th>
-                                <th style="text-align: left;">Name of Items</th>
-                                <th style="width: 60px;">Unit</th>
-                                <th style="width: 80px;">Brand</th>
-                                <th style="width: 80px;">Quantity</th>
-                                <th style="width: 120px;">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
-                    <div style="display: flex; justify-content: space-between; margin-top: 80px; padding: 0 10px;">
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">Customer Signature</div>
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">For ${SHOP_NAME}</div>
-                    </div>
-                `;
-            } else {
-                // For Bill and Quotation
-                (currentSale.items || []).forEach((item, index) => {
-                    const rate = item.sellRate || item.rate || 0;
-                    tableRows += `
-                    <tr>
-                        <td style="text-align: center;">${index + 1}</td>
-                        <td>${item.name}</td>
-                        <td style="text-align: center;">${item.unit || 'Pcs'}</td>
-                        <td style="text-align: center;">${item.brand || ''}</td>
-                        <td style="text-align: center;">${item.qty}</td>
-                        <td style="text-align: center;">${rate}</td>
-                        <td style="text-align: center; font-weight: bold;">${rate * item.qty}</td>
-                    </tr>`;
-                });
-
-                const wordText = numberToWords(currentSale.total_amount);
-
-                printDiv.innerHTML = `
-                    ${headerBlock}
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 0; font-size: 14px;">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">S/N</th>
-                                <th style="text-align: left;">Name of Items</th>
-                                <th style="width: 60px;">Unit</th>
-                                <th style="width: 80px;">Brand</th>
-                                <th style="width: 60px;">Quantity</th>
-                                <th style="width: 80px;">Rate</th>
-                                <th style="width: 100px;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableRows}
-                            <tr>
-                                <td colspan="6" style="text-align: right; font-weight: bold;">Total Tk =</td>
-                                <td style="text-align: center; font-weight: bold; background-color: #fde047 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${currentSale.total_amount}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div style="border: 2px solid #000; border-top: none; padding: 10px; font-size: 13px;">
-                        In Word : <span style="text-transform: capitalize;">${wordText}</span>
-                    </div>
-
-                    <div style="display: flex; justify-content: space-between; margin-top: 80px; padding: 0 10px;">
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">Customer Signature</div>
-                        <div style="border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-size: 12px; font-weight: bold;">For ${SHOP_NAME}</div>
-                    </div>
-                `;
+            if (type === 'chalan') {
+                // চালানে দাম দেখানো হয় না, শুধু আইটেম ও পরিমাণ — ডেলিভারি প্রমাণ হিসেবে
+                const items = (currentSale.items || []).map(item => ({
+                    name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: 0, amount: 0
+                }));
+                return renderPremiumDocument({
+                    docType: 'INVOICE', docNo: `CHALLAN-${invNo.replace('INV-', '')}`, docDate: dDate,
+                    shop: shop, partyLabel: 'Delivered To', partyName: custName, items: items,
+                    subtotal: 0, discount: 0, total: 0, paid: null, due: null,
+                    extraNote: 'Delivery Challan — prices not shown',
+                    footerNote: 'Please verify items upon receipt.'
+                }).replace(/৳0/g, '—'); // চালানে ৳0 না দেখিয়ে ড্যাশ দেখানো হচ্ছে যেহেতু দাম প্রযোজ্য নয়
             }
+
+            const items = (currentSale.items || []).map(item => {
+                const rate = item.sellRate || item.rate || 0;
+                return { name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: rate, amount: rate * item.qty };
+            });
+            const isQuotation = type === 'quotation';
+
+            return renderPremiumDocument({
+                docType: isQuotation ? 'QUOTATION' : 'INVOICE',
+                docNo: isQuotation ? `QUO-${invNo.replace('INV-', '')}` : invNo,
+                docDate: dDate, shop: shop,
+                partyLabel: isQuotation ? 'Quotation For' : 'Bill To', partyName: custName,
+                items: items, subtotal: currentSale.subtotal || currentSale.total_amount, discount: currentSale.discount || 0,
+                total: currentSale.total_amount,
+                paid: isQuotation ? null : currentSale.paid_amount,
+                due: isQuotation ? null : currentSale.due_amount,
+                footerNote: isQuotation ? 'This is an estimate only and subject to change.' : 'Thank you for your business!'
+            });
+        }
+
+        window.printDocument = async (type) => {
+            if(!currentSale) return;
+            const html = await buildDocumentHtml(type);
+            document.getElementById('printArea').innerHTML = html;
             window.print();
         };
 
+        window.downloadDocumentPdf = async (type) => {
+            if(!currentSale) return;
+            const html = await buildDocumentHtml(type);
+            document.getElementById('printArea').innerHTML = html;
+            const invNo = currentSale.invoice_no || 'N/A';
+            const nameMap = { chalan: 'Challan', bill: 'Bill', quotation: 'Quotation' };
+            showPdfPreview(html, `${nameMap[type] || 'Document'}_${invNo}.pdf`);
+        };
+
         // --- BULK PDF EXPORT ---
-        window.downloadPDF = () => {
+        window.downloadPDF = async () => {
             if(filteredRecords.length === 0) { alert("No records to generate PDF!"); return; }
             const btn = document.querySelector('.btn-pdf');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            const shop = await getShopBranding(SHOP_ID);
+            shopLogoImgUrl = shop.logo || "";
 
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
@@ -966,14 +916,8 @@
 
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = finalTemplate;
-            
-            html2pdf().set({
-                margin: 10, filename: `Sales_Report_${dateFrom}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank'); 
+
+            showPdfPreview(tempDiv, `Sales_Report_${dateFrom}.pdf`).finally(() => {
                 btn.innerHTML = originalText;
             });
         };

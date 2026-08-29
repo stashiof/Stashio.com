@@ -191,6 +191,7 @@
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, push, update, get } from './firebase_config.js';
+        import { showPdfPreview } from './invoice_kit.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
@@ -562,14 +563,8 @@
 
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = finalTemplate;
-            
-            html2pdf().set({
-                margin: 10, filename: `Due_Ledger_${dateStr.replace(/\//g, '-')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank');
+
+            showPdfPreview(tempDiv, `Due_Ledger_${dateStr.replace(/\//g, '-')}.pdf`).finally(() => {
                 btn.innerHTML = originalText;
             });
         };

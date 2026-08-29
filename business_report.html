@@ -168,6 +168,11 @@
         </a>
     </div>
 
+    <script type="module">
+        import { showPdfPreview } from './invoice_kit.js';
+        window.showPdfPreview = showPdfPreview; // v8-style script থেকে ব্যবহারের জন্য গ্লোবালি এক্সপোজ করা হলো
+    </script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
@@ -299,13 +304,7 @@
                 </table>
             `;
             
-            html2pdf().set({
-                margin: 10, filename: `Business_Report_${dFrom}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(tempDiv).outputPdf('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank');
+            window.showPdfPreview(tempDiv, `Business_Report_${dFrom}.pdf`).finally(() => {
                 btn.innerHTML = originalText;
             });
         };
