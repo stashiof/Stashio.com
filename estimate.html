@@ -138,16 +138,17 @@
     <div class="action-grid no-print">
         <button class="btn-action" style="background: var(--success); color: white; grid-column: span 2;" onclick="saveQuotation()"><i class="fas fa-save"></i> Save / Update Quotation</button>
         <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; grid-column: span 2;" onclick="openClientDetailsModal()"><i class="fas fa-file-invoice"></i> Generate Quotation PDF</button>
+        <button class="btn-action" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; grid-column: span 2;" onclick="convertToSale()"><i class="fas fa-cash-register"></i> Convert to Sale (এই দামে বিক্রি করুন)</button>
         <button class="btn-action" style="background: #fee2e2; color: var(--danger); grid-column: span 2;" onclick="clearEstimate()"><i class="fas fa-times"></i> Clear All</button>
     </div>
 
     <div id="printableInvoiceHolder" style="display:none;"></div>
 
-    <!-- Client Details Modal — quotation বানানোর আগে ক্লায়েন্টের তথ্য ও বৈধতার মেয়াদ নেয় -->
+    <!-- Client Details Modal — quotation সেভ বা PDF বানানোর আগে ক্লায়েন্টের তথ্য নেয় -->
     <div class="modal-overlay no-print" id="clientDetailsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="margin: 0; font-size: 16px;">Quotation Details</h3>
+                <h3 style="margin: 0; font-size: 16px;" id="clientModalTitle">Quotation Details</h3>
                 <button onclick="closeClientDetailsModal()" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
             <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
@@ -155,15 +156,15 @@
                     <label style="text-align:left;">Client / Company Name *</label>
                     <input type="text" id="qClientName" placeholder="e.g. ABC Traders" style="text-align:left; padding:12px;">
                 </div>
-                <div class="input-box" style="text-align:left;">
+                <div class="input-box" style="text-align:left;" id="qPhoneBox">
                     <label style="text-align:left;">Client Phone (optional)</label>
                     <input type="text" id="qClientPhone" placeholder="e.g. 01XXXXXXXXX" style="text-align:left; padding:12px;">
                 </div>
-                <div class="input-box" style="text-align:left;">
+                <div class="input-box" style="text-align:left;" id="qValidUntilBox">
                     <label style="text-align:left;">Valid Until</label>
                     <input type="date" id="qValidUntil" style="text-align:left; padding:12px;">
                 </div>
-                <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;" onclick="generateQuotationPdf()"><i class="fas fa-check"></i> Generate PDF Preview</button>
+                <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;" onclick="generateQuotationPdf()" id="clientModalActionBtn"><i class="fas fa-check"></i> Generate PDF Preview</button>
             </div>
         </div>
     </div>
@@ -227,6 +228,23 @@
                     allSavedQuotes = [];
                 }
                 renderSavedQuotesList();
+
+                // contacts.html-এর কাস্টমার প্রোফাইল থেকে "View/Edit in Estimate" চাপলে
+                // এখানে ?loadCustomer= প্যারামিটার দিয়ে আসে — সেই কাস্টমারের সবচেয়ে
+                // সাম্প্রতিক quotation স্বয়ংক্রিয়ভাবে লোড করে দেওয়া হয়।
+                const params = new URLSearchParams(window.location.search);
+                const loadCustomerName = params.get('loadCustomer');
+                if (loadCustomerName && !editingQuoteId) {
+                    const match = allSavedQuotes.find(q => q.client_name === loadCustomerName);
+                    if (match) {
+                        loadSavedQuotation(match.id);
+                    } else {
+                        // এই কাস্টমারের নামে কোনো quotation নেই — শুধু নামটা প্রি-ফিল করে রাখি
+                        editingClientName = loadCustomerName;
+                        document.getElementById('currentClientLabel').innerText = `New Quotation For: ${loadCustomerName}`;
+                        document.getElementById('currentClientLabel').style.display = 'inline-block';
+                    }
+                }
             });
         };
 
@@ -355,22 +373,36 @@
         }
 
         // --- SAVE / UPDATE LOGIC ---
+        // Firebase RTDB key-তে '.', '#', '$', '[', ']', '/' অক্ষর নিষিদ্ধ — sell.html-এর
+        // sanitizeKey()-এর সাথে হুবহু মিলিয়ে রাখা হলো, নাহলে দুই ফাইল ভিন্ন path-এ লিখবে/পড়বে।
+        function safeKey(name) { return name.trim().replace(/[.#$\[\]\/]/g, '_'); }
+
         window.saveQuotation = async () => {
             if(Object.keys(estimateCart).length === 0) return alert("Cart is empty! Add items first.");
-            
+
             let clientName = editingClientName;
             if(!clientName) {
-                clientName = prompt("Enter Client or Company Name to save this Quotation:");
-                if(!clientName) return;
+                // নতুন quotation-এর জন্য নাম জিজ্ঞেস করি — client details modal-ই ব্যবহার করছি,
+                // prompt() এর বদলে, যাতে সাথে সাথে ফোন নম্বরও নেওয়া যায়
+                pendingSaveAfterModal = true;
+                openClientDetailsModal(true);
+                return;
             }
+            await performSaveQuotation(clientName);
+        };
 
+        let pendingSaveAfterModal = false;
+
+        async function performSaveQuotation(clientName, silent = false) {
             let totalBuy = 0, totalSell = 0;
             const itemsToSave = [];
-            
+            const priceUpdates = {}; // customer_prices/{SHOP_ID}/{clientName}/{productId} — sell.html-এ auto-apply হওয়ার জন্য
+
             Object.values(estimateCart).forEach(item => {
                 totalBuy += (item.estBuy * item.estQty);
                 totalSell += (item.estSell * item.estQty);
                 itemsToSave.push({ id: item.id, name: item.name, brand: item.brand||"", estQty: item.estQty, estBuy: item.estBuy, estSell: item.estSell, unit: item.unit||"Pcs" });
+                priceUpdates[`customer_prices/${SHOP_ID}/${safeKey(clientName)}/${item.id}`] = item.estSell;
             });
 
             const quoteData = {
@@ -386,7 +418,6 @@
             try {
                 if(editingQuoteId) {
                     await update(rtdbRef(rtdb, `quotations/${editingQuoteId}`), quoteData);
-                    alert("Quotation updated successfully!");
                 } else {
                     quoteData.created_at = Date.now();
                     const newRef = await push(rtdbRef(rtdb, 'quotations'), quoteData);
@@ -394,10 +425,22 @@
                     editingClientName = clientName;
                     document.getElementById('currentClientLabel').innerText = `Editing: ${clientName}`;
                     document.getElementById('currentClientLabel').style.display = 'inline-block';
-                    alert("Quotation saved successfully!");
+                }
+
+                // কাস্টমার-নাম-ভিত্তিক quick-lookup কপি — contacts.html প্রোফাইল থেকে সরাসরি দেখানোর জন্য
+                await update(rtdbRef(rtdb), {
+                    [`customer_quotations/${SHOP_ID}/${safeKey(clientName)}`]: {
+                        quote_id: editingQuoteId, customer_name: clientName,
+                        items: itemsToSave, total: totalSell, date: Date.now()
+                    },
+                    ...priceUpdates
+                });
+
+                if (!silent) {
+                    alert(`Quotation ${editingQuoteId ? 'updated' : 'saved'} successfully! এই দামগুলো এখন "${clientName}" নামে সেল করলে স্বয়ংক্রিয়ভাবে বসে যাবে।`);
                 }
             } catch(e) { alert("Error saving quotation: " + e.message); }
-        };
+        }
 
         // --- SAVED MODAL LOGIC ---
         window.openSavedModal = () => { document.getElementById('savedModal').style.display = 'flex'; };
@@ -467,15 +510,42 @@
             renderCart();
         };
 
+        // --- CONVERT TO SALE ---
+        // Quotation-এর দাম customer_prices-এ সেভ করে sell.html-এ পাঠিয়ে দেয়, যেখানে
+        // কাস্টমার নাম অটো-ফিল থাকবে এবং sell.html-এর existing pricing mechanism
+        // (triggerSpecialPriceFetch) স্বয়ংক্রিয়ভাবে এই quotation-এর রেট বসিয়ে দেবে।
+        window.convertToSale = async () => {
+            if(Object.keys(estimateCart).length === 0) return alert("Cart is empty! Add items first.");
+
+            let clientName = editingClientName;
+            if(!clientName) {
+                clientName = prompt("এই quotation কোন কাস্টমারের নামে সেভ করে বিক্রি করতে চান?");
+                if(!clientName || !clientName.trim()) return;
+                clientName = clientName.trim();
+            }
+
+            await performSaveQuotation(clientName, true);
+            window.location.href = `sell.html?prefillCustomer=${encodeURIComponent(clientName)}`;
+        };
+
         // --- QUOTATION PDF GENERATION (নতুন প্রিমিয়াম সিস্টেম) ---
         let quoteSequence = 0; // simple session-level running number for the visible doc no.
 
-        window.openClientDetailsModal = () => {
+        window.openClientDetailsModal = (isSaveMode = false) => {
             if(Object.keys(estimateCart).length === 0) return alert("Please add items to estimate first!");
             document.getElementById('qClientName').value = editingClientName || '';
             // ডিফল্টভাবে ৭ দিন পর মেয়াদ শেষ দেখানো হচ্ছে, ইউজার চাইলে বদলাতে পারবে
             const defaultValid = new Date(); defaultValid.setDate(defaultValid.getDate() + 7);
             document.getElementById('qValidUntil').value = defaultValid.toISOString().split('T')[0];
+
+            // Save mode-এ ফোন/মেয়াদ ফিল্ড লুকানো থাকে (সেভের জন্য শুধু নাম যথেষ্ট), PDF mode-এ দেখা যায়
+            document.getElementById('qPhoneBox').style.display = isSaveMode ? 'none' : 'block';
+            document.getElementById('qValidUntilBox').style.display = isSaveMode ? 'none' : 'block';
+            document.getElementById('clientModalTitle').innerText = isSaveMode ? 'Save Quotation As' : 'Quotation Details';
+            document.getElementById('clientModalActionBtn').innerHTML = isSaveMode
+                ? '<i class="fas fa-save"></i> Save Quotation'
+                : '<i class="fas fa-check"></i> Generate PDF Preview';
+
             document.getElementById('clientDetailsModal').style.display = 'flex';
         };
         window.closeClientDetailsModal = () => { document.getElementById('clientDetailsModal').style.display = 'none'; };
@@ -487,6 +557,14 @@
             if(!clientName) return alert("Client/Company name is required!");
 
             editingClientName = clientName; // future save-এর জন্য মনে রাখা হচ্ছে
+            closeClientDetailsModal();
+
+            // যদি "Save" বাটন থেকে এই মোডাল খোলা হয়ে থাকে, PDF না বানিয়ে সরাসরি সেভ করি
+            if (pendingSaveAfterModal) {
+                pendingSaveAfterModal = false;
+                await performSaveQuotation(clientName);
+                return;
+            }
 
             const shop = await getShopBranding(SHOP_ID);
             quoteSequence += 1;
@@ -520,7 +598,6 @@
             });
 
             document.getElementById('printableInvoiceHolder').innerHTML = html;
-            closeClientDetailsModal();
             showPdfPreview(html, `Quotation_${clientName.replace(/\s+/g, '_')}.pdf`);
         };
 

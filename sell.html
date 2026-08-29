@@ -138,7 +138,7 @@
                 <div class="grid-2">
                     <div class="input-group">
                         <label>Received / Advance (৳)</label>
-                        <input type="number" id="paidInput" class="input-field" oninput="calculateSummary()" placeholder="0" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
+                        <input type="number" id="paidInput" class="input-field" readonly value="0" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary); background:#f8fafc;">
                     </div>
                     <div style="text-align: right;">
                         <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;" id="dueOrReturnLabel">Due Amount</label>
@@ -146,11 +146,20 @@
                     </div>
                 </div>
                 <div style="margin-top: 10px;">
-                    <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Payment Method</label>
-                    <div class="payment-methods">
-                        <label class="pay-method-label"><input type="radio" name="payMethod" value="Cash" checked><div class="pay-method-box">Cash</div></label>
-                        <label class="pay-method-label"><input type="radio" name="payMethod" value="MFS"><div class="pay-method-box">Bkash/Nagad</div></label>
-                        <label class="pay-method-label"><input type="radio" name="payMethod" value="Bank"><div class="pay-method-box">Bank</div></label>
+                    <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Payment Breakdown (একাধিক মাধ্যমে টাকা পেলে প্রতিটায় আলাদা লিখুন)</label>
+                    <div class="grid-3" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:6px;">
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label style="font-size:10px;"><i class="fas fa-money-bill-wave" style="color:#16a34a;"></i> Cash</label>
+                            <input type="number" id="payCash" class="input-field" oninput="calculateSummary()" placeholder="0" style="padding:8px; font-size:13px;">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label style="font-size:10px;"><i class="fas fa-mobile-alt" style="color:#e11d48;"></i> Bkash/Nagad</label>
+                            <input type="number" id="payMFS" class="input-field" oninput="calculateSummary()" placeholder="0" style="padding:8px; font-size:13px;">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label style="font-size:10px;"><i class="fas fa-university" style="color:#2563eb;"></i> Bank</label>
+                            <input type="number" id="payBank" class="input-field" oninput="calculateSummary()" placeholder="0" style="padding:8px; font-size:13px;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -188,6 +197,11 @@
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
 
+        // Firebase RTDB key-তে '.', '#', '$', '[', ']', '/' অক্ষর নিষিদ্ধ — কাস্টমারের
+        // নামে এসব থাকলে (যেমন "M/S ABC Traders.") raw নাম দিয়ে path বানালে write silently
+        // fail করে। তাই customer-নাম-ভিত্তিক সব path-এ এই sanitize করা key ব্যবহার হয়।
+        function sanitizeKey(name) { return name.trim().replace(/[.#$\[\]\/]/g, '_'); }
+
         const SHOP_ID = localStorage.getItem('activeShopId'); 
         let allProducts = [], displayedProducts = [], itemsPerPage = 20, currentPage = 1;
         let allCustomers = [], cart = {}, html5QrcodeScanner = null, currentCustomerPrices = {}; 
@@ -217,6 +231,15 @@
                 allCustomers = [{ name: 'Local (Walk-in)', phone: '' }]; 
                 if(snap.exists()){ Object.values(snap.val()).forEach(c => allCustomers.push(c)); }
             });
+
+            // estimate.html-এর "Convert to Sale" থেকে আসলে কাস্টমার নাম অটো-ফিল করা হয়,
+            // যাতে সেই কাস্টমারের quotation-এর দাম triggerSpecialPriceFetch দিয়ে অটো বসে যায়।
+            const params = new URLSearchParams(window.location.search);
+            const prefillCustomer = params.get('prefillCustomer');
+            if (prefillCustomer) {
+                custInput.value = prefillCustomer;
+                triggerSpecialPriceFetch(prefillCustomer);
+            }
         };
 
         // Date Parser for History
@@ -274,7 +297,7 @@
             custName = custName.trim();
             if(!custName || custName === "Local (Walk-in)") { currentCustomerPrices = {}; return; }
             try {
-                const snap = await get(rtdbRef(rtdb, `customer_prices/${SHOP_ID}/${custName}`));
+                const snap = await get(rtdbRef(rtdb, `customer_prices/${SHOP_ID}/${sanitizeKey(custName)}`));
                 if(snap.exists()) {
                     currentCustomerPrices = snap.val(); let updated = false;
                     Object.keys(cart).forEach(id => { if(currentCustomerPrices[id]) { cart[id].sellRate = currentCustomerPrices[id]; updated = true; } });
@@ -381,10 +404,24 @@
             const discount = Number(document.getElementById('discountInput').value) || 0;
             const grandTotal = subtotal - discount;
             document.getElementById('grandTotalDisplay').innerText = `৳${grandTotal}`;
-            
-            const paidInput = document.getElementById('paidInput');
-            if(autoFill || paidInput.value === '') paidInput.value = grandTotal;
-            const paid = Number(paidInput.value) || 0;
+
+            const cashEl = document.getElementById('payCash');
+            const mfsEl = document.getElementById('payMFS');
+            const bankEl = document.getElementById('payBank');
+
+            // নতুন কার্ট/আইটেম যোগের সময় (autoFill) ডিফল্টভাবে পুরো টাকাটা Cash-এ বসিয়ে দেওয়া হয়,
+            // যাতে সাধারণ single-payment বিক্রির জন্য আলাদা করে কিছু টাইপ করতে না হয়।
+            // ইউজার চাইলে এই মান বদলে একাধিক মাধ্যমে ভাগ করে দিতে পারবে (split payment)।
+            if (autoFill && cashEl.value === '' && mfsEl.value === '' && bankEl.value === '') {
+                cashEl.value = grandTotal;
+            }
+
+            const cash = Number(cashEl.value) || 0;
+            const mfs = Number(mfsEl.value) || 0;
+            const bank = Number(bankEl.value) || 0;
+            const paid = cash + mfs + bank;
+
+            document.getElementById('paidInput').value = paid;
             const due = grandTotal - paid;
             
             if(due < 0) {
@@ -396,7 +433,16 @@
                 document.getElementById('dueDisplay').innerText = `৳${due}`;
                 document.getElementById('dueDisplay').style.color = "var(--danger)";
             }
-            window.checkoutSummary = { subtotal, discount, grandTotal, paid, due: due > 0 ? due : 0 };
+
+            // পেমেন্ট breakdown সেভ করার জন্য — একাধিক মাধ্যমে টাকা এলে সবগুলো রেকর্ডে থাকবে
+            const paymentBreakdown = {};
+            if (cash > 0) paymentBreakdown.Cash = cash;
+            if (mfs > 0) paymentBreakdown.MFS = mfs;
+            if (bank > 0) paymentBreakdown.Bank = bank;
+            // চালান/রিসিটে দেখানোর জন্য একটা সংক্ষিপ্ত লেবেল (যেমন "Cash + Bank")
+            const methodLabel = Object.keys(paymentBreakdown).join(' + ') || 'Cash';
+
+            window.checkoutSummary = { subtotal, discount, grandTotal, paid, due: due > 0 ? due : 0, paymentBreakdown, methodLabel };
         };
 
         // ============================================
@@ -408,7 +454,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; btn.disabled = true;
 
             const customerName = document.getElementById('customerName').value || "Local (Walk-in)";
-            const { subtotal, discount, grandTotal, paid, due } = window.checkoutSummary;
+            const { subtotal, discount, grandTotal, paid, due, paymentBreakdown } = window.checkoutSummary;
             const finalTimestamp = getActionTimestamp(); // BACKDATED TIME
             
             let estimatedProfit = 0;
@@ -442,11 +488,14 @@
                 };
 
                 await push(rtdbRef(rtdb, 'sales_orders'), orderData);
-                if(paid > 0) {
-                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + paid);
+                // শুধু Cash অংশটাই দোকানের ফিজিক্যাল ক্যাশবক্সে যোগ হয় — MFS/Bank-এ পাওয়া
+                // টাকা দোকানদারের হাতে নগদ আসে না, তাই cash_settings-এ যোগ করা হয় না।
+                const cashPortion = (paymentBreakdown && paymentBreakdown.Cash) || 0;
+                if(cashPortion > 0) {
+                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + cashPortion);
                     await push(rtdbRef(rtdb, 'cash_transactions'), {
                         shop_id: SHOP_ID, type: 'cash_in', source: 'order_advance',
-                        amount: paid, note: `Advance for Order: ${orderNo}`, created_at: finalTimestamp
+                        amount: cashPortion, note: `Advance (Cash) for Order: ${orderNo}`, created_at: finalTimestamp
                     });
                 }
                 alert("Order saved successfully!"); location.reload(); 
@@ -465,7 +514,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; btn.disabled = true;
 
             const customerName = document.getElementById('customerName').value || "Local (Walk-in)";
-            const { subtotal, discount, grandTotal, paid, due } = window.checkoutSummary;
+            const { subtotal, discount, grandTotal, paid, due, paymentBreakdown, methodLabel } = window.checkoutSummary;
             const finalTimestamp = getActionTimestamp(); // BACKDATED TIME
             
             let totalProfit = 0; const itemsToSave = [];
@@ -489,7 +538,8 @@
                     date: document.getElementById('sellDate').value,
                     items: itemsToSave, subtotal: subtotal, discount: discount, total_amount: grandTotal,
                     paid_amount: paid, due_amount: due, total_profit: totalProfit,
-                    payment_method: document.querySelector('input[name="payMethod"]:checked').value,
+                    payment_method: methodLabel || 'Cash',
+                    payment_breakdown: paymentBreakdown || {},
                     created_at: finalTimestamp
                 };
 
@@ -514,16 +564,19 @@
                 await push(rtdbRef(rtdb, 'sales_history'), sellData);
                 const updates = {};
                 Object.values(cart).forEach(item => {
-                    if(customerName !== "Local (Walk-in)" && customerName.trim() !== "") updates[`customer_prices/${SHOP_ID}/${customerName}/${item.id}`] = item.sellRate;
+                    if(customerName !== "Local (Walk-in)" && customerName.trim() !== "") updates[`customer_prices/${SHOP_ID}/${sanitizeKey(customerName)}/${item.id}`] = item.sellRate;
                 });
                 if (Object.keys(updates).length > 0) await update(rtdbRef(rtdb), updates);
 
                 if(paid > 0) {
-                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + paid);
-                    await push(rtdbRef(rtdb, 'cash_transactions'), {
-                        shop_id: SHOP_ID, type: 'cash_in', source: 'sell',
-                        amount: paid, note: `Sale: ${invoiceNo}`, created_at: finalTimestamp
-                    });
+                    const cashPortion = (paymentBreakdown && paymentBreakdown.Cash) || 0;
+                    if(cashPortion > 0) {
+                        await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + cashPortion);
+                        await push(rtdbRef(rtdb, 'cash_transactions'), {
+                            shop_id: SHOP_ID, type: 'cash_in', source: 'sell',
+                            amount: cashPortion, note: `Sale (Cash): ${invoiceNo}`, created_at: finalTimestamp
+                        });
+                    }
                 }
                 if(due > 0 && customerName !== "Local (Walk-in)") {
                     const dueRef = await push(rtdbRef(rtdb, 'due_book'), { shop_id: SHOP_ID, type: 'receive', name: customerName, total_amount: due, current_due: due, created_at: finalTimestamp });

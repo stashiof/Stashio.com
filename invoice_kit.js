@@ -195,8 +195,8 @@ function ensurePdfKitStyles() {
         #pdfPreviewBar button { font-family:'Poppins',sans-serif; border:none; cursor:pointer; font-weight:700; border-radius:10px; padding:9px 16px; font-size:13px; display:flex; align-items:center; gap:6px; }
         .pdf-btn-close { background:#334155; color:white; }
         .pdf-btn-download { background:linear-gradient(135deg,#4F46E5,#7c3aed); color:white; }
-        #pdfPreviewFrameWrap { flex:1; overflow:hidden; background:#525659; }
-        #pdfPreviewFrameWrap iframe { width:100%; height:100%; border:none; }
+        #pdfPreviewFrameWrap { flex:1; overflow-y:auto; overflow-x:hidden; background:#525659; padding:14px 0; }
+        #pdfPreviewFrameWrap img.pdf-page-img { display:block; width:calc(100% - 24px); max-width:700px; margin:0 auto 14px auto; box-shadow:0 4px 18px rgba(0,0,0,0.35); border-radius:2px; }
         #pdfPreviewLoading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Poppins',sans-serif; gap:12px; }
     `;
     document.head.appendChild(style);
@@ -204,7 +204,11 @@ function ensurePdfKitStyles() {
 }
 
 /**
- * htmlContent (string বা DOM element) থেকে PDF বানিয়ে প্রিভিউ মোডাল দেখায়।
+ * htmlContent (string বা DOM element) থেকে PDF-এর প্রতিটা পেজকে ছবি হিসেবে
+ * রেন্ডার করে প্রিভিউ মোডাল দেখায়। এটা <iframe src="blob:...">-এর চেয়ে বেশি
+ * নির্ভরযোগ্য কারণ মোবাইল Chrome/Safari প্রায়ই blob PDF-কে ইনলাইনে না দেখিয়ে
+ * সরাসরি ডাউনলোড-প্রম্পট দেখায়। ছবি-ভিত্তিক প্রিভিউ সব ব্রাউজারে একই রকম কাজ করে।
+ * আসল PDF ফাইল শুধুই Download বাটনে চাপলে জেনারেট হয়।
  * filename: ডাউনলোড করলে যে নামে সেভ হবে।
  * options: html2pdf-এর jsPDF/html2canvas অপশন override করার জন্য (ঐচ্ছিক)।
  */
@@ -227,13 +231,20 @@ export async function showPdfPreview(htmlContent, filename, options = {}) {
         </div>
     `;
     document.body.appendChild(overlay);
-    document.getElementById('pdfKitCloseBtn').onclick = () => overlay.remove();
-
-    // কন্টেন্ট তৈরি — string হলে অস্থায়ী div-এ বসানো
     let sourceEl = htmlContent;
+    let tempWrapper = null;
+    document.getElementById('pdfKitCloseBtn').onclick = () => {
+        overlay.remove();
+        if (tempWrapper) tempWrapper.remove();
+    };
+
+    // কন্টেন্ট তৈরি — string হলে অস্থায়ী div-এ বসানো (viewport-এর বাইরে, যাতে দেখা না যায় কিন্তু render হয়)
     if (typeof htmlContent === 'string') {
-        sourceEl = document.createElement('div');
-        sourceEl.innerHTML = htmlContent;
+        tempWrapper = document.createElement('div');
+        tempWrapper.style.cssText = 'position:fixed; left:-9999px; top:0;';
+        tempWrapper.innerHTML = htmlContent;
+        document.body.appendChild(tempWrapper);
+        sourceEl = tempWrapper;
     }
 
     const pdfOptions = Object.assign({
@@ -245,23 +256,42 @@ export async function showPdfPreview(htmlContent, filename, options = {}) {
     }, options);
 
     try {
-        const pdfBlob = await window.html2pdf().set(pdfOptions).from(sourceEl).outputPdf('blob');
-        const blobUrl = URL.createObjectURL(pdfBlob);
-
         const frameWrap = document.getElementById('pdfPreviewFrameWrap');
+
+        // html2canvas দিয়ে সোর্স এলিমেন্টকে সরাসরি একটা লম্বা ছবিতে ক্যাপচার করে
+        // প্রিভিউতে দেখানো হচ্ছে (স্ক্রলযোগ্য) — এটা মোবাইল ব্রাউজারে সবসময় নির্ভরযোগ্যভাবে
+        // কাজ করে, blob PDF-কে iframe-এ দেখানোর মতো নয়।
+        const canvas = await window.html2canvas(sourceEl, { scale: 2, useCORS: true, allowTaint: true });
+        const imgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
         if (frameWrap) {
-            frameWrap.innerHTML = `<iframe src="${blobUrl}"></iframe>`;
+            frameWrap.innerHTML = '';
+            const img = document.createElement('img');
+            img.className = 'pdf-page-img';
+            img.src = imgDataUrl;
+            frameWrap.appendChild(img);
         }
+
         const downloadBtn = document.getElementById('pdfKitDownloadBtn');
         if (downloadBtn) {
             downloadBtn.disabled = false;
-            downloadBtn.onclick = () => {
-                const a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = pdfOptions.filename;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
+            downloadBtn.onclick = async () => {
+                downloadBtn.disabled = true;
+                downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
+                try {
+                    const pdfBlob = await window.html2pdf().set(pdfOptions).from(sourceEl).outputPdf('blob');
+                    const blobUrl = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = pdfOptions.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+                } finally {
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+                }
             };
         }
     } catch (err) {

@@ -249,6 +249,16 @@
                     <button class="btn-delete-full" id="btnDeleteProfile"><i class="fas fa-trash"></i> Delete</button>
                 </div>
 
+                <!-- Active Quotation card — শুধু কাস্টমারদের জন্য দেখানো হয় -->
+                <div id="profQuotationSection" style="display:none; margin: 16px 0; padding: 14px; background: linear-gradient(135deg, #ecfeff, #f0fdfa); border: 1px solid #a5f3fc; border-radius: 14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="font-size:12px; font-weight:800; color:#0891b2; text-transform:uppercase; letter-spacing:0.5px;"><i class="fas fa-file-invoice"></i> Active Quotation</div>
+                        <span id="profQuotationDate" style="font-size:10px; color:#64748b;"></span>
+                    </div>
+                    <div id="profQuotationSummary" style="font-size:13px; color:#0f172a; margin-bottom:10px;"></div>
+                    <button onclick="openQuotationInEstimate()" style="width:100%; padding:10px; background:#0891b2; color:white; border:none; border-radius:10px; font-weight:700; font-size:12px; cursor:pointer;"><i class="fas fa-edit"></i> View / Edit in Estimate Page</button>
+                </div>
+
                 <div class="history-section">
                     <div class="history-title"><i class="fas fa-history text-primary"></i> <span id="historyHeading">Recent Activity</span></div>
                     <div class="timeline" id="historyTimeline">
@@ -280,6 +290,11 @@
         let currentTab = 'customers'; 
         let contactsData = { customers: [], suppliers: [], employees: [] };
         let activeProfileId = null;
+
+        window.openQuotationInEstimate = () => {
+            if (!window.currentProfileCustomerName) return;
+            window.location.href = `estimate.html?loadCustomer=${encodeURIComponent(window.currentProfileCustomerName)}`;
+        };
 
         window.onload = () => {
             // Theme sync
@@ -580,6 +595,27 @@
                 openModal('edit', id);
             };
             document.getElementById('btnDeleteProfile').onclick = () => deleteContact(id);
+
+            // --- Active Quotation card — শুধু কাস্টমার প্রোফাইলে দেখানো হয় ---
+            const quoSection = document.getElementById('profQuotationSection');
+            if (currentTab === 'customers') {
+                try {
+                    const quoSnap = await rtdb.ref(`customer_quotations/${SHOP_ID}/${c.name.trim().replace(/[.#$\[\]\/]/g, '_')}`).get();
+                    if (quoSnap.exists()) {
+                        const q = quoSnap.val();
+                        const itemCount = (q.items || []).length;
+                        document.getElementById('profQuotationSummary').innerHTML =
+                            `${itemCount} item${itemCount !== 1 ? 's' : ''} • Total: <strong>৳${Number(q.total || 0).toLocaleString()}</strong>`;
+                        document.getElementById('profQuotationDate').innerText = q.date ? new Date(q.date).toLocaleDateString('en-GB') : '';
+                        quoSection.style.display = 'block';
+                        window.currentProfileCustomerName = c.name; // estimate.html-এ পাঠানোর জন্য মনে রাখা
+                    } else {
+                        quoSection.style.display = 'none';
+                    }
+                } catch (e) { quoSection.style.display = 'none'; }
+            } else {
+                quoSection.style.display = 'none';
+            }
 
             const timeline = document.getElementById('historyTimeline');
             timeline.innerHTML = '<div class="empty-state" style="padding:10px;"><i class="fas fa-spinner fa-spin text-primary"></i> Fetching records...</div>';

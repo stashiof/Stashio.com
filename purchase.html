@@ -240,7 +240,7 @@
                 <div class="grid-2">
                     <div class="input-group">
                         <label>Paid Amount (৳)</label>
-                        <input type="number" id="paidInput" oninput="calculateSummary()" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary);" step="any">
+                        <input type="number" id="paidInput" readonly value="0" style="font-size: 16px; font-weight: bold; border-color: var(--primary); color: var(--primary); background:#f8fafc;" step="any">
                     </div>
                     <div style="text-align: right;">
                         <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Due Amount</label>
@@ -249,20 +249,20 @@
                 </div>
 
                 <div style="margin-top: 10px;">
-                    <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Payment Method</label>
-                    <div class="payment-methods">
-                        <label class="pay-method-label">
-                            <input type="radio" name="payMethod" value="Cash" checked>
-                            <div class="pay-method-box">Cash</div>
-                        </label>
-                        <label class="pay-method-label">
-                            <input type="radio" name="payMethod" value="MFS">
-                            <div class="pay-method-box">Bkash/Nagad</div>
-                        </label>
-                        <label class="pay-method-label">
-                            <input type="radio" name="payMethod" value="Bank">
-                            <div class="pay-method-box">Bank</div>
-                        </label>
+                    <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Payment Breakdown (একাধিক মাধ্যমে দিলে প্রতিটায় আলাদা লিখুন)</label>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:6px;">
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label style="font-size:10px;"><i class="fas fa-money-bill-wave" style="color:#16a34a;"></i> Cash</label>
+                            <input type="number" id="payCash" class="input-field" oninput="calculateSummary()" placeholder="0" style="padding:8px; font-size:13px;">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label style="font-size:10px;"><i class="fas fa-mobile-alt" style="color:#e11d48;"></i> Bkash/Nagad</label>
+                            <input type="number" id="payMFS" class="input-field" oninput="calculateSummary()" placeholder="0" style="padding:8px; font-size:13px;">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label style="font-size:10px;"><i class="fas fa-university" style="color:#2563eb;"></i> Bank</label>
+                            <input type="number" id="payBank" class="input-field" oninput="calculateSummary()" placeholder="0" style="padding:8px; font-size:13px;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -505,18 +505,34 @@
             let total = 0;
             Object.values(cart).forEach(item => { total += item.qty * item.purchaseRate; });
             document.getElementById('grandTotalDisplay').innerText = `৳${total}`;
-            
-            const paidInput = document.getElementById('paidInput');
-            
-            if(autoFill || paidInput.value === '') {
-                paidInput.value = total;
+
+            const cashEl = document.getElementById('payCash');
+            const mfsEl = document.getElementById('payMFS');
+            const bankEl = document.getElementById('payBank');
+
+            // নতুন কার্ট/আইটেম যোগের সময় ডিফল্টভাবে পুরো টাকাটা Cash-এ বসিয়ে দেওয়া হয়,
+            // সাধারণ single-payment ক্রয়ের জন্য; ইউজার চাইলে একাধিক মাধ্যমে ভাগ করে দিতে পারবে।
+            if (autoFill && cashEl.value === '' && mfsEl.value === '' && bankEl.value === '') {
+                cashEl.value = total;
             }
-            
-            const paid = Number(paidInput.value);
+
+            const cash = Number(cashEl.value) || 0;
+            const mfs = Number(mfsEl.value) || 0;
+            const bank = Number(bankEl.value) || 0;
+            const paid = cash + mfs + bank;
+
+            document.getElementById('paidInput').value = paid;
             const due = total - paid;
-            
+
             document.getElementById('dueDisplay').innerText = `৳${due > 0 ? due : 0}`;
-            window.checkoutSummary = { total, paid, due: due > 0 ? due : 0 };
+
+            const paymentBreakdown = {};
+            if (cash > 0) paymentBreakdown.Cash = cash;
+            if (mfs > 0) paymentBreakdown.MFS = mfs;
+            if (bank > 0) paymentBreakdown.Bank = bank;
+            const methodLabel = Object.keys(paymentBreakdown).join(' + ') || 'Cash';
+
+            window.checkoutSummary = { total, paid, due: due > 0 ? due : 0, paymentBreakdown, methodLabel };
         };
 
 
@@ -528,7 +544,7 @@
             btn.disabled = true;
 
             const supplierName = document.getElementById('supplierSelect').value;
-            const { total, paid, due } = window.checkoutSummary;
+            const { total, paid, due, paymentBreakdown, methodLabel } = window.checkoutSummary;
             
             const itemsToSave = [];
             Object.values(cart).forEach(item => {
@@ -552,7 +568,8 @@
                 total_amount: total,
                 paid_amount: paid,
                 due_amount: due > 0 ? due : 0,
-                payment_method: document.querySelector('input[name="payMethod"]:checked').value,
+                payment_method: methodLabel || 'Cash',
+                payment_breakdown: paymentBreakdown || {},
                 memo_image: memoUrl,
                 created_at: Date.now()
             };
@@ -572,11 +589,14 @@
                 await update(rtdbRef(rtdb), updates);
 
                 if(paid > 0) {
-                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - paid);
-                    await push(rtdbRef(rtdb, 'cash_transactions'), {
-                        shop_id: SHOP_ID, type: 'cash_out', source: 'purchase',
-                        amount: paid, note: `Purchase: ${purchaseData.challan_no}`, created_at: Date.now()
-                    });
+                    const cashPortion = (paymentBreakdown && paymentBreakdown.Cash) || 0;
+                    if(cashPortion > 0) {
+                        await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - cashPortion);
+                        await push(rtdbRef(rtdb, 'cash_transactions'), {
+                            shop_id: SHOP_ID, type: 'cash_out', source: 'purchase',
+                            amount: cashPortion, note: `Purchase (Cash): ${purchaseData.challan_no}`, created_at: Date.now()
+                        });
+                    }
                 }
 
                 // SUPPLIER DUE LOGIC (ADDED)
