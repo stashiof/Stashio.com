@@ -24,6 +24,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -267,6 +268,15 @@
             </div>
         </div>
     </div>
+
+    <div id="printableInvoiceHolder" style="display:none;"></div>
+
+    <script type="module">
+        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
+        window.getShopBranding = getShopBranding;
+        window.renderPremiumDocument = renderPremiumDocument;
+        window.showPdfPreview = showPdfPreview; // v8-style script থেকে ব্যবহারের জন্য গ্লোবালি এক্সপোজ করা হলো
+    </script>
 
     <script>
         // --- FIREBASE CONFIGURATION (V8 STANDARD) ---
@@ -630,14 +640,15 @@
                     document.getElementById('historyHeading').innerText = "Purchase & Ledger History";
                     const snap = await rtdb.ref('sales_history').orderByChild('shop_id').equalTo(SHOP_ID).get();
                     if(snap.exists()) {
-                        Object.values(snap.val()).forEach(sale => {
+                        Object.entries(snap.val()).forEach(([key, sale]) => {
                             if(sale.customer === c.name || sale.customer_name === c.name || sale.customer_phone === c.phone) {
                                 logs.push({ 
                                     date: sale.created_at || new Date(sale.date).getTime(), 
                                     ref: `Invoice: #${sale.invoice_no}`, 
                                     amt: sale.total_amount,
                                     paid: sale.paid_amount || 0,
-                                    due: sale.due_amount || 0
+                                    due: sale.due_amount || 0,
+                                    docType: 'sale', fullData: sale
                                 });
                             }
                         });
@@ -648,14 +659,15 @@
                     document.getElementById('historyHeading').innerText = "Supply & Payment History";
                     const snap = await rtdb.ref('purchase_history').orderByChild('shop_id').equalTo(SHOP_ID).get();
                     if(snap.exists()) {
-                        Object.values(snap.val()).forEach(purch => {
+                        Object.entries(snap.val()).forEach(([key, purch]) => {
                             if(purch.supplier === c.name) {
                                 logs.push({ 
                                     date: purch.created_at || new Date(purch.date).getTime(), 
                                     ref: `Challan: #${purch.challan_no}`, 
                                     amt: purch.total_amount,
                                     paid: purch.paid_amount || 0,
-                                    due: purch.due_amount || 0
+                                    due: purch.due_amount || 0,
+                                    docType: 'purchase', fullData: purch
                                 });
                             }
                         });
@@ -692,7 +704,8 @@
                     timeline.innerHTML = '<p style="font-size:12px; color:#9ca3af; text-align:center; padding: 20px;">No transaction history found yet.</p>';
                 } else {
                     timeline.innerHTML = '';
-                    logs.forEach(l => {
+                    window.currentTimelineLogs = logs; // ইনডেক্স দিয়ে পরে ক্লিকে রেফার করার জন্য
+                    logs.forEach((l, idx) => {
                         const d = new Date(l.date).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
                         
                         let financeHtml = '';
@@ -705,11 +718,15 @@
                             `;
                         }
 
+                        const isClickable = !!l.fullData;
+                        const clickAttr = isClickable ? `onclick="viewTimelineDoc(${idx})" style="cursor:pointer;"` : '';
+                        const viewIcon = isClickable ? `<i class="fas fa-eye" style="color:var(--primary); margin-left:6px; font-size:11px;"></i>` : '';
+
                         timeline.innerHTML += `
-                        <div class="timeline-item">
+                        <div class="timeline-item" ${clickAttr}>
                             <div class="tl-date"><i class="far fa-clock"></i> ${d}</div>
                             <div class="tl-row">
-                                <span class="tl-desc">${l.ref}</span>
+                                <span class="tl-desc">${l.ref} ${viewIcon}</span>
                                 <span class="tl-amt">${l.amt === 'N/A' || isNaN(l.amt) ? l.amt : `৳${Number(l.amt).toLocaleString()}`}</span>
                             </div>
                             ${financeHtml}
@@ -721,6 +738,47 @@
                 timeline.innerHTML = '<p style="font-size:12px; color:red; text-align:center;">Error fetching history.</p>'; 
             }
         }
+
+        window.viewTimelineDoc = async (idx) => {
+            const log = window.currentTimelineLogs[idx];
+            if (!log || !log.fullData) return;
+            const data = log.fullData;
+            const shop = await window.getShopBranding(SHOP_ID);
+
+            let html;
+            if (log.docType === 'sale') {
+                const items = (data.items || []).map(item => ({
+                    name: item.name, brand: item.brand, unit: 'pcs',
+                    qty: item.qty, rate: item.sellRate, amount: item.qty * item.sellRate
+                }));
+                html = window.renderPremiumDocument({
+                    docType: 'INVOICE', docNo: data.invoice_no, docDate: data.date,
+                    shop: shop, partyLabel: 'Bill To', partyName: data.customer,
+                    items: items, subtotal: data.subtotal, discount: data.discount, total: data.total_amount,
+                    paid: data.paid_amount, due: data.due_amount,
+                    extraNote: `Payment Method: ${data.payment_method || 'Cash'}`,
+                    footerNote: 'Thank you for shopping with us!'
+                });
+            } else if (log.docType === 'purchase') {
+                const items = (data.items || []).map(item => ({
+                    name: item.name, brand: item.brand, unit: item.unit || 'pcs',
+                    qty: item.qty, rate: item.purchaseRate, amount: item.qty * item.purchaseRate
+                }));
+                html = window.renderPremiumDocument({
+                    docType: 'PURCHASE', docNo: data.challan_no, docDate: data.date,
+                    shop: shop, partyLabel: 'Supplier', partyName: data.supplier,
+                    items: items, subtotal: data.total_amount, discount: 0, total: data.total_amount,
+                    paid: data.paid_amount, due: data.due_amount,
+                    extraNote: `Batch: ${data.batch_no || 'N/A'} | Method: ${data.payment_method || 'Cash'}`,
+                    footerNote: 'Purchase recorded successfully.'
+                });
+            }
+            if (html) {
+                document.getElementById('printableInvoiceHolder').innerHTML = html;
+                const fileTag = log.docType === 'sale' ? `Invoice_${data.invoice_no}` : `Purchase_${data.challan_no}`;
+                window.showPdfPreview(html, `${fileTag}.pdf`);
+            }
+        };
 
         async function deleteContact(id) {
             if(!confirm(`Are you sure you want to permanently delete this record?`)) return;

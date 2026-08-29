@@ -170,6 +170,15 @@
                         <input type="number" id="payAmount" required style="font-size: 16px; font-weight: bold; border-color: var(--primary); text-align: center;">
                     </div>
 
+                    <div class="input-group" style="margin-bottom: 15px;">
+                        <label>Received/Paid Via</label>
+                        <select id="payMethod" style="width:100%; padding:10px; border:2px solid #f1f5f9; border-radius:10px; background:#f8fafc; font-size:14px; font-family:inherit;">
+                            <option value="Cash">Cash (ক্যাশবক্সে যোগ হবে)</option>
+                            <option value="MFS">Bkash/Nagad</option>
+                            <option value="Bank">Bank</option>
+                        </select>
+                    </div>
+
                     <button type="submit" class="btn-submit" id="paySubmitBtn">Confirm Update</button>
                 </form>
             </div>
@@ -430,15 +439,21 @@
                 // Execute all updates simultaneously
                 await update(rtdbRef(rtdb), updates);
 
-                // 3. Update Cash Box 
+                // 3. Update Cash Box — শুধু "Cash" মেথড হলে ফিজিক্যাল ক্যাশবক্স আপডেট হয়;
+                // Bkash/Nagad/Bank-এ পাওয়া বা দেওয়া টাকা দোকানের নগদ ক্যাশে প্রভাব ফেলে না।
+                const payMethod = document.getElementById('payMethod').value;
                 const cashType = type === 'receive' ? 'cash_in' : 'cash_out';
                 const modifier = type === 'receive' ? payAmt : -payAmt;
 
-                await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + modifier);
-                
+                if (payMethod === 'Cash') {
+                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + modifier);
+                }
+
                 await push(rtdbRef(rtdb, 'cash_transactions'), {
                     shop_id: SHOP_ID, type: cashType, source: 'due_ledger',
-                    amount: payAmt, note: `Due ${actionText}: ${name}`, created_at: Date.now()
+                    amount: payAmt, method: payMethod,
+                    note: `Due ${actionText} (${payMethod}): ${name}`, created_at: Date.now(),
+                    affects_cashbox: payMethod === 'Cash'
                 });
 
                 document.getElementById('payModal').style.display = 'none';

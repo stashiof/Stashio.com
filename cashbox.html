@@ -242,6 +242,27 @@
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
 
+        // কেন্দ্রীয় সোর্স-লেবেল ম্যাপার — লেনদেনের internal 'source' ভ্যালুকে
+        // মানুষের পড়ার উপযোগী নামে রূপান্তর করে। সব cash_transactions সোর্স
+        // (sell.html/purchase.html/due_book.html/order_book.html ইত্যাদি থেকে আসা)
+        // এখানে কভার করা হয়েছে, যাতে কোনো লেনদেনে raw internal নাম না দেখায়।
+        function getSourceLabel(source) {
+            const labels = {
+                'sell': 'Sale Receipt',
+                'purchase': 'Purchase Payment',
+                'expense': 'Expense Payment',
+                'manual_in': 'Cash Added',
+                'manual_out': 'Cash Withdrawn',
+                'due_ledger': 'Due Ledger Adjustment',
+                'sales_return': 'Sales Return Refund',
+                'purchase_return': 'Purchase Return Refund',
+                'order_advance': 'Order Advance Payment',
+                'order_payment': 'Order Final Payment',
+                'order_refund': 'Order Refund (Cancelled)'
+            };
+            return labels[source] || (source ? source.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Transaction');
+        }
+
         let currentBalance = 0;
         let allTransactions = [];
         let filteredTrx = [];
@@ -341,30 +362,30 @@
                 const isIn = t.type === 'cash_in';
                 const d = new Date(t.created_at);
                 const amt = Number(t.amount || 0);
-                
-                if(isIn) totalIn += amt; else totalOut += amt;
+                // পুরনো এন্ট্রিতে affects_cashbox ফিল্ড নাও থাকতে পারে (এই ফিচার যোগ হওয়ার আগের
+                // রেকর্ড) — undefined মানে ধরে নেওয়া হয় এটা cashbox-কে প্রভাবিত করেছিল (আগের আচরণ)।
+                const affectsCashbox = t.affects_cashbox !== false;
+
+                if (affectsCashbox) {
+                    if(isIn) totalIn += amt; else totalOut += amt;
+                }
                 
                 let iconClass = isIn ? 'icon-in' : 'icon-out';
                 let iconName = isIn ? 'fa-arrow-down' : 'fa-arrow-up';
                 let amtClass = isIn ? 'amt-in' : 'amt-out';
                 let sign = isIn ? '+' : '-';
 
-                let sourceName = t.source;
-                if(sourceName === 'sale') sourceName = "Sale Receipt";
-                else if(sourceName === 'purchase') sourceName = "Purchase Payment";
-                else if(sourceName === 'expense') sourceName = "Expense Payment";
-                else if(sourceName === 'manual_in') sourceName = "Cash Added";
-                else if(sourceName === 'manual_out') sourceName = "Cash Withdrawn";
-                else if(sourceName === 'due_ledger') sourceName = "Due Ledger Adjustment";
-                else if(sourceName === 'sales_return') sourceName = "Sales Return Refund";
-                else if(sourceName === 'purchase_return') sourceName = "Purchase Return Refund";
+                const sourceName = getSourceLabel(t.source);
+                const nonCashBadge = !affectsCashbox
+                    ? `<span style="font-size:9px; font-weight:700; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:6px; margin-left:6px;">${t.method || 'Non-Cash'} — ক্যাশবক্সে প্রভাব ফেলেনি</span>`
+                    : '';
 
                 const html = `
                 <div class="trx-card">
                     <div class="trx-left">
                         <div class="trx-icon ${iconClass}"><i class="fas ${iconName}"></i></div>
                         <div class="trx-info">
-                            <div class="trx-title">${sourceName}</div>
+                            <div class="trx-title">${sourceName}${nonCashBadge}</div>
                             <div class="trx-note">${t.note || '-'}</div>
                             <div class="trx-date">${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
@@ -459,18 +480,16 @@
             filteredTrx.forEach(t => {
                 const isIn = t.type === 'cash_in';
                 const amt = Number(t.amount || 0);
-                if(isIn) totalIn += amt; else totalOut += amt;
+                const affectsCashbox = t.affects_cashbox !== false;
+                if (affectsCashbox) {
+                    if(isIn) totalIn += amt; else totalOut += amt;
+                }
                 
                 const d = new Date(t.created_at).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
                 const sign = isIn ? '+' : '-';
                 const color = isIn ? 'green' : 'red';
                 
-                let sourceName = t.source;
-                if(sourceName === 'sale') sourceName = "Sale Receipt";
-                else if(sourceName === 'purchase') sourceName = "Purchase Payment";
-                else if(sourceName === 'expense') sourceName = "Expense Payment";
-                else if(sourceName === 'manual_in') sourceName = "Cash Added";
-                else if(sourceName === 'manual_out') sourceName = "Cash Withdrawn";
+                const sourceName = getSourceLabel(t.source) + (!affectsCashbox ? ` (${t.method || 'Non-Cash'})` : '');
 
                 trRows += `
                     <tr>
