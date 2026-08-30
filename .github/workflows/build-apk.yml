@@ -1,1 +1,64 @@
+name: Build Android APK
 
+# কখন এই workflow চলবে:
+# - main ব্রাঞ্চে কোনো পুশ হলে
+# - GitHub-এর "Actions" ট্যাব থেকে ম্যানুয়ালি চালালে (workflow_dispatch)
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ১. রিপোজিটরির কোড চেকআউট করা
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ২. Node.js সেটআপ (Capacitor CLI চালানোর জন্য দরকার)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # ৩. Java (JDK 17) সেটআপ — Android বিল্ডের জন্য আবশ্যক
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ৪. npm প্যাকেজ ইনস্টল (Capacitor core/cli/android)
+      - name: Install dependencies
+        run: npm install
+
+      # ৫. যদি android/ ফোল্ডার আগে থেকে তৈরি করা না থাকে, প্রথমবার তৈরি করা।
+      #    (পরবর্তী পুশগুলোতে android/ ফোল্ডার রিপোতে থাকলে এই ধাপ স্কিপ হবে)
+      - name: Add Android platform if missing
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      # ৬. www/ ফোল্ডারের সর্বশেষ ওয়েব কোড Android প্রজেক্টে সিঙ্ক করা
+      - name: Sync web assets to Android project
+        run: npx cap sync android
+
+      # ৭. Gradle wrapper-কে এক্সিকিউটেবল পারমিশন দেওয়া (Linux রানারে দরকার)
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      # ৮. Debug APK বিল্ড করা (সরাসরি ইনস্টলযোগ্য, সাইনিং ছাড়া — টেস্টিং/ব্যক্তিগত ব্যবহারের জন্য)
+      - name: Build Debug APK
+        run: cd android && ./gradlew assembleDebug
+
+      # ৯. তৈরি হওয়া APK ফাইলটি GitHub Actions-এর "Artifacts" সেকশনে আপলোড করা,
+      #    যাতে Actions ট্যাব থেকে সরাসরি ডাউনলোড করা যায়।
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: poysha-pos-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
