@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Purchase Return (Challan Based) - Poysha POS</title>
+    
+    <meta name="theme-color" content="#f97316">
+    <script>
+        const activeShopId = localStorage.getItem('activeShopId');
+        if (!activeShopId) window.location.replace("dashboard.html");
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #f97316; /* Orange Theme */
+            --secondary: #c2410c; 
+            --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 100px; }
+        
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+
+        .search-card { background: white; margin: -20px 15px 15px 15px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); position: relative; z-index: 10; }
+        .search-box { position: relative; display: flex; gap: 10px; }
+        .search-box input { flex: 1; padding: 14px 15px; border-radius: 12px; border: 2px solid #f1f5f9; outline: none; font-size: 14px; font-weight: 600; }
+        .search-box input:focus { border-color: var(--primary); }
+        .btn-search { background: var(--text-dark); color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        .invoice-details { background: white; margin: 0 15px 15px 15px; padding: 15px; border-radius: 16px; display: none; box-shadow: var(--shadow); border: 1px dashed var(--primary); }
+        .inv-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        .inv-row span { color: var(--text-light); }
+        .inv-row strong { color: var(--text-dark); font-weight: 700; }
+
+        .item-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .item-card { background: white; padding: 15px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+        .item-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 5px; }
+        .item-controls { display: flex; justify-content: space-between; align-items: center; background: #fff7ed; padding: 10px; border-radius: 10px; margin-top: 10px; }
+        
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { width: 30px; height: 30px; border: none; background: white; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: var(--primary); }
+        .qty-input { width: 40px; text-align: center; border: none; background: transparent; font-weight: 800; font-size: 16px; color: var(--primary); }
+        
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-top-left-radius: 20px; border-top-right-radius: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .btn-confirm { background: var(--primary); color: white; padding: 12px 25px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .btn-confirm:disabled { background: #cbd5e1; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-title">
+            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+            <span>Purchase Return (Challan)</span>
+        </div>
+    </div>
+
+    <div class="search-card">
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 5px; display: block;">Enter Purchase Challan No</label>
+        <div class="search-box">
+            <input type="text" id="challanInput" placeholder="e.g. PUR-1234">
+            <button onclick="searchChallan()" class="btn-search"><i class="fas fa-search"></i></button>
+        </div>
+        <p id="searchError" style="color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 10px; display: none;">Challan not found or does not belong to this shop.</p>
+    </div>
+
+    <div id="challanDetails" class="invoice-details">
+        <div class="inv-row"><span>Supplier:</span> <strong id="dSupplier"></strong></div>
+        <div class="inv-row"><span>Date:</span> <strong id="dDate"></strong></div>
+        <div class="inv-row"><span>Original Bill:</span> <strong id="dTotal"></strong></div>
+    </div>
+
+    <div class="item-list" id="itemList">
+        <div style="text-align: center; color: #9ca3af; padding: 40px 0; font-size: 14px;">
+            <i class="fas fa-file-invoice-dollar" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;"></i><br>
+            Search a challan to start returning goods.
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <div>
+            <p style="margin:0; font-size: 11px; color: var(--text-light); font-weight: 600;">Receivable Amount</p>
+            <h3 style="margin:0; font-size: 20px; color: var(--primary); font-weight: 800;" id="refundTotal">৳0</h3>
+        </div>
+        <button id="btnProcess" class="btn-confirm" disabled onclick="processReturn()">Confirm Return</button>
+    </div>
+
+    <script type="module">
+        import { rtdb, ref as rtdbRef, get, update, push } from './firebase_config.js';
+        import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        let currentChallanData = null;
+        let returnCart = {}; 
+
+        window.searchChallan = async () => {
+            const challanNo = document.getElementById('challanInput').value.trim();
+            if(!challanNo) return;
+
+            document.getElementById('searchError').style.display = 'none';
+            document.getElementById('itemList').innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-spin text-primary"></i> Searching...</div>';
+            
+            try {
+                const snap = await get(query(rtdbRef(rtdb, 'purchase_history'), orderByChild('shop_id'), equalTo(SHOP_ID)));
+                if(snap.exists()) {
+                    const allPurchases = snap.val();
+                    const purchaseKey = Object.keys(allPurchases).find(key => 
+                        allPurchases[key].challan_no === challanNo
+                    );
+
+                    if(purchaseKey) {
+                        currentChallanData = { id: purchaseKey, ...allPurchases[purchaseKey] };
+                        renderChallanItems();
+                    } else {
+                        document.getElementById('searchError').style.display = 'block';
+                        document.getElementById('itemList').innerHTML = '';
+                        document.getElementById('challanDetails').style.display = 'none';
+                    }
+                }
+            } catch(e) { console.log(e); }
+        };
+
+        function renderChallanItems() {
+            document.getElementById('dSupplier').innerText = currentChallanData.supplier || 'Local';
+            document.getElementById('dDate').innerText = new Date(currentChallanData.created_at || currentChallanData.date).toLocaleDateString();
+            document.getElementById('dTotal').innerText = `৳${currentChallanData.total_amount || currentChallanData.grandTotal}`;
+            document.getElementById('challanDetails').style.display = 'block';
+
+            const listEl = document.getElementById('itemList');
+            listEl.innerHTML = '';
+            returnCart = {}; 
+
+            currentChallanData.items.forEach((item, index) => {
+                const maxReturnable = item.qty; // Current available quantity in invoice
+
+                if (maxReturnable > 0) {
+                    returnCart[index] = 0; 
+                    
+                    // Purchase rate could be saved as purchaseRate or buy_price depending on older codes
+                    const rate = item.purchaseRate || item.buy_price || 0;
+
+                    const html = `
+                    <div class="item-card">
+                        <div class="item-name">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-light); display: flex; justify-content: space-between;">
+                            <span>Bought Qty: <strong style="color:var(--text-dark);">${item.qty}</strong></span>
+                            <span style="color: var(--primary); font-weight: bold;">Rate: ৳${rate}</span>
+                        </div>
+                        <div class="item-controls">
+                            <span style="font-size: 12px; font-weight: 700;">Return Qty:</span>
+                            <div class="qty-controls">
+                                <button onclick="changeQty(${index}, -1, ${maxReturnable})" class="qty-btn">-</button>
+                                <input type="text" id="qty_${index}" value="0" class="qty-input" readonly>
+                                <button onclick="changeQty(${index}, 1, ${maxReturnable})" class="qty-btn">+</button>
+                            </div>
+                        </div>
+                    </div>`;
+                    listEl.insertAdjacentHTML('beforeend', html);
+                }
+            });
+
+            if(listEl.innerHTML === '') {
+                listEl.innerHTML = '<div style="text-align:center; color: var(--success); font-weight:bold; padding: 20px;">No items left in this challan to return.</div>';
+            }
+            calculateRefund();
+        }
+
+        window.changeQty = (itemIndex, change, maxAllowed) => {
+            let current = returnCart[itemIndex];
+            let newQty = current + change;
+            
+            if(newQty < 0) newQty = 0;
+            if(newQty > maxAllowed) {
+                alert(`You can only return maximum ${maxAllowed} items!`);
+                newQty = maxAllowed;
+            }
+            
+            returnCart[itemIndex] = newQty;
+            document.getElementById(`qty_${itemIndex}`).value = newQty;
+            calculateRefund();
+        };
+
+        function calculateRefund() {
+            let totalRefund = 0;
+            let hasItemsToReturn = false;
+
+            currentChallanData.items.forEach((item, index) => {
+                if(returnCart[index] > 0) {
+                    const rate = item.purchaseRate || item.buy_price || 0;
+                    totalRefund += returnCart[index] * rate;
+                    hasItemsToReturn = true;
+                }
+            });
+
+            document.getElementById('refundTotal').innerText = `৳${totalRefund}`;
+            document.getElementById('btnProcess').disabled = !hasItemsToReturn;
+        }
+
+        window.processReturn = async () => {
+            if(!confirm("Are you sure? Items will be removed from your stock and the Purchase Book will be updated. You will receive cash or due deduction from the supplier.")) return;
+            
+            const btn = document.getElementById('btnProcess');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; 
+            btn.disabled = true;
+
+            let totalRefund = 0;
+            let returnedItemsLog = [];
+            let finalInvoiceItems = [];
+            const updates = {};
+
+            // 1. Prepare data and deductions
+            currentChallanData.items.forEach((item, index) => {
+                const rQty = returnCart[index] || 0;
+                const rate = item.purchaseRate || item.buy_price || 0;
+                
+                if(rQty > 0) {
+                    totalRefund += rQty * rate;
+                    returnedItemsLog.push({ id: item.id, name: item.name, qty_returned: rQty, rate: rate });
+                }
+
+                // REDUCE QTY
+                const remainingQty = item.qty - rQty;
+                if(remainingQty > 0) {
+                    finalInvoiceItems.push({ ...item, qty: remainingQty });
+                }
+            });
+
+            try {
+                // 2. DEDUCT returned items from Stock
+                for (let log of returnedItemsLog) {
+                    await runTransaction(rtdbRef(rtdb, `product_list/${log.id}/stock`), (currentStock) => {
+                        let newStock = (Number(currentStock) || 0) - log.qty_returned;
+                        return newStock < 0 ? 0 : newStock; // Protect from negative stock
+                    });
+                }
+
+                // Variables for financial adjustments
+                let cashToReceive = 0;
+
+                // 3. Update Original Invoice in Purchase Book
+                if (finalInvoiceItems.length === 0) {
+                    // IF ALL ITEMS RETURNED -> Delete the whole challan completely
+                    updates[`purchase_history/${currentChallanData.id}`] = null;
+                    
+                    // The supplier owes us the entire amount of the challan we paid for
+                    let currentDue = Number(currentChallanData.due_amount || 0);
+                    let deductFromDue = Math.min(totalRefund, currentDue);
+                    cashToReceive = totalRefund - deductFromDue;
+
+                } else {
+                    // IF SOME ITEMS LEFT -> Update challan totals
+                    let newTotal = Number(currentChallanData.total_amount || 0) - totalRefund;
+                    let newSubtotal = Number(currentChallanData.subtotal || currentChallanData.total_amount || 0) - totalRefund;
+                    let currentPaid = Number(currentChallanData.paid_amount || 0);
+                    let currentDue = Number(currentChallanData.due_amount || 0);
+
+                    // LOGIC: If we have a Due to the supplier, the return value FIRST clears our Due. 
+                    // Any remaining value is returned as Cash.
+                    let deductFromDue = Math.min(totalRefund, currentDue);
+                    currentDue -= deductFromDue;
+                    
+                    cashToReceive = totalRefund - deductFromDue;
+                    currentPaid -= cashToReceive; // We are getting this cash back, so our "Paid" amount goes down
+                    if(currentPaid < 0) currentPaid = 0;
+
+                    updates[`purchase_history/${currentChallanData.id}/items`] = finalInvoiceItems;
+                    updates[`purchase_history/${currentChallanData.id}/total_amount`] = newTotal;
+                    updates[`purchase_history/${currentChallanData.id}/subtotal`] = newSubtotal; 
+                    updates[`purchase_history/${currentChallanData.id}/paid_amount`] = currentPaid;
+                    updates[`purchase_history/${currentChallanData.id}/due_amount`] = currentDue;
+                    updates[`purchase_history/${currentChallanData.id}/has_returns`] = true; 
+                }
+
+                // 4. ADD to Cashbox (if the supplier paid us back in cash)
+                if (cashToReceive > 0) {
+                    await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + cashToReceive);
+                    
+                    // Log Cash Transaction
+                    await push(rtdbRef(rtdb, 'cash_transactions'), {
+                        shop_id: SHOP_ID, type: 'cash_in', source: 'purchase_return',
+                        amount: cashToReceive, note: `Refund from Supplier (Challan ${currentChallanData.challan_no})`, created_at: Date.now()
+                    });
+                }
+
+                // 5. Save Return History for records
+                await push(rtdbRef(rtdb, 'purchase_return_history'), {
+                    shop_id: SHOP_ID, supplier: currentChallanData.supplier, challan_no: currentChallanData.challan_no,
+                    returned_items: returnedItemsLog, total_refund: totalRefund, cash_received: cashToReceive, date: Date.now()
+                });
+
+                // Commit all updates to database
+                await update(rtdbRef(rtdb), updates);
+
+                alert("Purchase Return processed! Items have been deducted from stock and Purchase Book is updated.");
+                location.reload(); 
+
+            } catch (err) {
+                alert("Error processing return: " + err.message);
+                btn.innerHTML = 'Confirm Return'; btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
