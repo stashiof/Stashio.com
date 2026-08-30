@@ -1,0 +1,18 @@
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Android build outputs (এগুলো প্রতিবার বিল্ডে তৈরি হয়, repo-তে রাখার দরকার নেই)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/*.iml
+android/.idea/
+android/captures/
+
+# Capacitor
+.DS_Store
+
+# Editor
+.vscode/

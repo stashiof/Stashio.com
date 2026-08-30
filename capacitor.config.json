@@ -1,0 +1,14 @@
+{
+  "appId": "com.poyshapos.app",
+  "appName": "Poysha POS",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#0B4A3E",
+  "android": {
+    "backgroundColor": "#0B4A3E",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
