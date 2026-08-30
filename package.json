@@ -4,12 +4,16 @@
   "description": "Poysha POS - Smart Shop Manager (Android APK wrapper via Capacitor)",
   "private": true,
   "scripts": {
+    "vendor:copy": "node scripts/copy-vendor-libs.js",
+    "postinstall": "node scripts/copy-vendor-libs.js",
     "cap:sync": "npx cap sync android",
     "cap:build-apk": "cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
-    "@capacitor/core": "^6.1.2"
+    "@capacitor/core": "^6.1.2",
+    "html2pdf.js": "0.10.1",
+    "html5-qrcode": "^2.3.8"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.1.2"
