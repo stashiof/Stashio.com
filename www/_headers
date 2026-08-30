@@ -1,0 +1,11 @@
+# Cloudflare Pages হেডার কনফিগ
+# Service worker যাতে সবসময় সর্বশেষ ভার্সন ফেচ করে, স্টেল ক্যাশ না ব্যবহার করে
+/sw.js
+  Cache-Control: no-cache
+
+# manifest.json ও আইকন কিছুক্ষণ ক্যাশ হতে পারে
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+/icon-*.png
+  Cache-Control: public, max-age=86400

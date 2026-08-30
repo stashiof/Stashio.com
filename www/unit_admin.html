@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Manage Units - Poysha POS</title>
+    
+    <meta name="theme-color" content="#0B4A3E">
+    <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --danger: #ef4444; --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-dark); }
+        
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); padding: 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 700; box-shadow: 0 4px 15px rgba(11, 74, 62, 0.3); }
+        .app-header a { color: white; text-decoration: none; }
+
+        .container { padding: 20px; }
+        
+        /* Input Box with Inside Button */
+        .add-box { position: relative; margin-bottom: 25px; width: 100%; }
+        .add-box input { 
+            width: 100%; 
+            padding: 18px 65px 18px 20px; /* Space for button on right */
+            border: 2px solid #e5e7eb; 
+            border-radius: 18px; 
+            outline: none; 
+            font-size: 15px; 
+            font-weight: 500;
+            background: var(--white);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: 0.3s;
+        }
+        .add-box input:focus { border-color: var(--primary); }
+        .add-box button { 
+            position: absolute; 
+            right: 8px; 
+            top: 50%; 
+            transform: translateY(-50%);
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 12px; 
+            font-size: 16px;
+            cursor: pointer; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .add-box button:active { transform: translateY(-50%) scale(0.9); }
+
+        .unit-list { display: flex; flex-direction: column; gap: 12px; }
+        .unit-item { background: var(--white); padding: 15px 20px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.02); font-weight: 600; font-size: 15px; border: 1px solid #f1f5f9; }
+        
+        .unit-actions { display: flex; gap: 8px; }
+        .btn-edit { background: #fef3c7; color: var(--warning); border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 14px; transition: 0.2s;}
+        .btn-delete { background: #fef2f2; color: var(--danger); border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 14px; transition: 0.2s;}
+        .btn-edit:active, .btn-delete:active { transform: scale(0.9); }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <a href="product_list.html"><i class="fas fa-arrow-left"></i></a>
+        <span>Manage Units (ইউনিট)</span>
+    </div>
+
+    <div class="container">
+        <div class="add-box">
+            <input type="text" id="unitName" placeholder="Enter unit name (e.g. kg, pcs, ডজন)">
+            <button id="actionBtn" onclick="addUnit()"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <div class="unit-list" id="unitList">
+            <div style="text-align: center; color: #9ca3af; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading units...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        // 'update' ইমপোর্ট করা হয়েছে এডিট করার জন্য
+        import { getDatabase, ref, push, remove, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBeAEsuacInlrQx05C1uDtqL0DeFzRojMY",
+            authDomain: "stashio-6b332.firebaseapp.com",
+            databaseURL: "https://stashio-6b332-default-rtdb.firebaseio.com",
+            projectId: "stashio-6b332",
+            storageBucket: "stashio-6b332.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let currentEditKey = null; // এডিট ট্র্যাক করার জন্য ভেরিয়েবল
+
+        // Load Units
+        onValue(ref(db, 'settings/units'), (snapshot) => {
+            const list = document.getElementById('unitList');
+            list.innerHTML = '';
+            if(snapshot.exists()) {
+                const units = snapshot.val();
+                Object.keys(units).forEach(key => {
+                    list.innerHTML += `
+                        <div class="unit-item">
+                            <span>${units[key].name}</span>
+                            <div class="unit-actions">
+                                <button class="btn-edit" onclick="editUnit('${key}', '${units[key].name}')"><i class="fas fa-edit"></i></button>
+                                <button class="btn-delete" onclick="deleteUnit('${key}')"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No units found!</div>';
+            }
+        });
+
+        // Edit Unit (Prepare form)
+        window.editUnit = (key, name) => {
+            currentEditKey = key;
+            document.getElementById('unitName').value = name;
+            document.getElementById('unitName').focus(); // অটোমেটিক কীবোর্ড ওপেন হবে
+            
+            // বাটন আইকন ও কালার চেঞ্জ
+            const btn = document.getElementById('actionBtn');
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.style.background = 'var(--warning)';
+        };
+
+        // Add or Update Unit
+        window.addUnit = async () => {
+            const name = document.getElementById('unitName').value.trim();
+            if(!name) return;
+            
+            const btn = document.getElementById('actionBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                if (currentEditKey) {
+                    // Update existing unit
+                    await update(ref(db, `settings/units/${currentEditKey}`), { name: name });
+                    currentEditKey = null; // এডিট শেষে রিসেট
+                    
+                    btn.innerHTML = '<i class="fas fa-plus"></i>';
+                    btn.style.background = 'var(--primary)';
+                } else {
+                    // Add new unit
+                    await push(ref(db, 'settings/units'), { name: name });
+                    btn.innerHTML = '<i class="fas fa-plus"></i>';
+                }
+                document.getElementById('unitName').value = '';
+            } catch(e) { 
+                alert("Error saving unit!"); 
+                btn.innerHTML = currentEditKey ? '<i class="fas fa-check"></i>' : '<i class="fas fa-plus"></i>';
+            }
+        };
+
+        // Delete Unit
+        window.deleteUnit = async (key) => {
+            if(confirm("Are you sure you want to delete this unit?")) {
+                await remove(ref(db, `settings/units/${key}`));
+            }
+        };
+    </script>
+</body>
+</html>

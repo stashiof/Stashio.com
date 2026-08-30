@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Estimate & Quotation - Poysha POS</title>
+    
+    <meta name="theme-color" content="#f59e0b">
+    <script>
+        const activeShopId = localStorage.getItem('activeShopId');
+        if (!activeShopId) window.location.replace("dashboard.html");
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root { --primary: #f59e0b; --secondary: #d97706; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #printableInvoiceHolder, #printableInvoiceHolder * { visibility: visible; }
+            #printableInvoiceHolder { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
+            .no-print { display: none !important; }
+        }
+
+        /* Header */
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2); display: flex; justify-content: space-between; align-items: center; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        .header-title a { color: white; text-decoration: none; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-header:active { transform: scale(0.95); }
+        
+        /* Search Box */
+        .search-container { margin: -15px 15px 15px 15px; display: flex; gap: 10px; position: relative; z-index: 60; }
+        .search-box { flex: 1; position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 14px 15px 14px 40px; border-radius: 14px; border: none; outline: none; box-shadow: var(--shadow); font-size: 13px; font-family: 'Poppins', sans-serif; }
+        .btn-scan { background: var(--text-dark); color: white; width: 50px; border-radius: 14px; border: none; box-shadow: var(--shadow); cursor: pointer; font-size: 20px; transition: 0.2s; }
+        .btn-scan:active { transform: scale(0.95); }
+
+        /* Product Grid */
+        .product-list { padding: 0 15px; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; border-bottom: 2px dashed #e5e7eb; padding-bottom: 15px; }
+        .product-card { background: var(--white); border-radius: 16px; padding: 12px; display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow); border: 2px solid transparent; transition: 0.2s; cursor: pointer; }
+        .product-card:active { transform: scale(0.98); }
+        .product-card.in-cart { border-color: var(--primary); background: #fef3c7; }
+        
+        .product-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: #f8fafc; border: 1px solid #f1f5f9; }
+        .product-info { flex: 1; }
+        .product-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .product-brand { font-size: 10px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 4px; }
+        .product-meta { display: flex; gap: 10px; font-size: 11px; }
+        .badge-stock { background: #f1f5f9; padding: 2px 8px; border-radius: 8px; color: var(--text-light); font-weight: 600; }
+        .badge-price { background: #ffedd5; padding: 2px 8px; border-radius: 8px; color: var(--secondary); font-weight: 700; }
+        
+        .cart-toggle-btn { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #9ca3af; font-size: 14px; transition: 0.2s; }
+        .product-card.in-cart .cart-toggle-btn { background: var(--primary); color: white; }
+
+        /* Estimate Cart Area */
+        .cart-container { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .cart-item { background: white; padding: 15px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
+        .item-header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; font-size: 14px; color: var(--text-dark); }
+        .item-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .input-box { display: flex; flex-direction: column; }
+        .input-box label { font-size: 10px; color: var(--text-light); font-weight: 700; margin-bottom: 2px; }
+        .input-box input { padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; font-weight: bold; width: 100%; text-align: center; outline: none;}
+        .input-box input:focus { border-color: var(--primary); }
+        .input-box input.buy { color: var(--danger); border-color: #fca5a5; background: #fef2f2; }
+        .input-box input.sell { color: var(--success); border-color: #86efac; background: #f0fdf4; }
+        
+        .summary-card { background: white; margin: 20px 15px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); border: 2px solid var(--primary); }
+        .summary-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+        .summary-row.profit { font-size: 18px; font-weight: 800; color: var(--success); border-top: 2px dashed #e5e7eb; padding-top: 10px; margin-top: 10px; }
+        
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 15px 30px 15px; }
+        .btn-action { padding: 15px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-action:active { transform: scale(0.98); }
+
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; }
+        
+        .saved-list { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .saved-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; background: #f8fafc; }
+        .sc-title { font-size: 14px; font-weight: 800; color: var(--text-dark); margin-bottom: 5px; }
+        .sc-date { font-size: 11px; color: var(--text-light); margin-bottom: 10px; }
+        .sc-actions { display: flex; gap: 10px; }
+        .sc-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+        #scannerModal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #reader { width: 100%; max-width: 350px; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); }
+        .btn-close-scanner { margin-top: 30px; background: white; color: var(--danger); border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header no-print">
+        <div class="header-title"><a href="home.html"><i class="fas fa-arrow-left"></i></a><span>Estimate & Quotation</span></div>
+        <button onclick="openSavedModal()" class="btn-header"><i class="fas fa-list-alt"></i> Saved List</button>
+    </div>
+
+    <div class="search-container no-print">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by name, brand or scan...">
+        </div>
+        <button onclick="startScanner()" class="btn-scan"><i class="fas fa-barcode"></i></button>
+    </div>
+
+    <div id="loading" class="no-print" style="text-align: center; padding: 20px; color: var(--text-light); font-size: 12px;">
+        <i class="fas fa-spinner fa-spin text-primary" style="font-size: 24px; margin-bottom: 10px;"></i><br>Loading Inventory...
+    </div>
+
+    <div class="product-list no-print" id="productGrid"></div>
+
+    <div style="padding: 0 15px; margin-bottom: 10px; font-weight: 800; color: var(--primary); font-size: 12px; display: flex; justify-content: space-between; align-items: center;" class="no-print">
+        <span><i class="fas fa-clipboard-list"></i> ITEMS IN QUOTATION:</span>
+        <span id="currentClientLabel" style="color: var(--text-dark); background: #fef3c7; padding: 2px 8px; border-radius: 5px; font-size: 10px; display: none;"></span>
+    </div>
+    
+    <div class="cart-container no-print" id="cartList">
+        <div style="text-align: center; color: #9ca3af; padding: 20px 0; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 12px;">
+            Tap on products above to add them here.
+        </div>
+    </div>
+
+    <div class="summary-card no-print">
+        <div class="summary-row"><span>Total Market Cost (Buy):</span> <span id="sumBuy" style="color: var(--danger);">৳0</span></div>
+        <div class="summary-row"><span>Total Client Bill (Sell):</span> <span id="sumSell" style="color: var(--text-dark);">৳0</span></div>
+        <div class="summary-row profit"><span>Estimated Profit:</span> <span id="sumProfit">৳0</span></div>
+    </div>
+
+    <div class="action-grid no-print">
+        <button class="btn-action" style="background: var(--success); color: white; grid-column: span 2;" onclick="saveQuotation()"><i class="fas fa-save"></i> Save / Update Quotation</button>
+        <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; grid-column: span 2;" onclick="openClientDetailsModal()"><i class="fas fa-file-invoice"></i> Generate Quotation PDF</button>
+        <button class="btn-action" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; grid-column: span 2;" onclick="convertToSale()"><i class="fas fa-cash-register"></i> Convert to Sale (এই দামে বিক্রি করুন)</button>
+        <button class="btn-action" style="background: #fee2e2; color: var(--danger); grid-column: span 2;" onclick="clearEstimate()"><i class="fas fa-times"></i> Clear All</button>
+    </div>
+
+    <div id="printableInvoiceHolder" style="display:none;"></div>
+
+    <!-- Client Details Modal — quotation সেভ বা PDF বানানোর আগে ক্লায়েন্টের তথ্য নেয় -->
+    <div class="modal-overlay no-print" id="clientDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 16px;" id="clientModalTitle">Quotation Details</h3>
+                <button onclick="closeClientDetailsModal()" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <div class="input-box" style="text-align:left;">
+                    <label style="text-align:left;">Client / Company Name *</label>
+                    <input type="text" id="qClientName" placeholder="e.g. ABC Traders" style="text-align:left; padding:12px;">
+                </div>
+                <div class="input-box" style="text-align:left;" id="qPhoneBox">
+                    <label style="text-align:left;">Client Phone (optional)</label>
+                    <input type="text" id="qClientPhone" placeholder="e.g. 01XXXXXXXXX" style="text-align:left; padding:12px;">
+                </div>
+                <div class="input-box" style="text-align:left;" id="qValidUntilBox">
+                    <label style="text-align:left;">Valid Until</label>
+                    <input type="date" id="qValidUntil" style="text-align:left; padding:12px;">
+                </div>
+                <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;" onclick="generateQuotationPdf()" id="clientModalActionBtn"><i class="fas fa-check"></i> Generate PDF Preview</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay no-print" id="savedModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 16px;">Saved Quotations</h3>
+                <button onclick="closeSavedModal()" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="saved-list" id="savedQuotesList">
+                <div style="text-align: center; padding: 20px; color: #9ca3af;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scannerModal">
+        <div id="reader"></div>
+        <button onclick="stopScanner()" class="btn-close-scanner">Close Camera</button>
+    </div>
+
+    <script type="module">
+        import { rtdb, ref as rtdbRef, get, onValue as rtdbOnValue, push, update, remove } from './firebase_config.js';
+        import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
+        const SHOP_ID = localStorage.getItem('activeShopId');
+        const SHOP_NAME = localStorage.getItem('activeShopName') || "Poysha POS Store";
+        
+        let allProducts = [];
+        let estimateCart = {};
+        let html5QrcodeScanner = null;
+
+        // State for saving/updating
+        let editingQuoteId = null;
+        let editingClientName = '';
+        let allSavedQuotes = [];
+
+        window.onload = () => {
+            // Load Inventory
+            const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(productsQuery, (snap) => {
+                document.getElementById('loading').style.display = 'none';
+                if(snap.exists()) {
+                    allProducts = Object.entries(snap.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(p => !p.is_deleted);
+                    applySearch(''); 
+                } else {
+                    document.getElementById('productGrid').innerHTML = '<div style="text-align:center; padding: 20px; color:#9ca3af;">No products found in inventory.</div>';
+                }
+            });
+
+            // Load Saved Quotations
+            const quotesQuery = query(rtdbRef(rtdb, 'quotations'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(quotesQuery, (snap) => {
+                if(snap.exists()) {
+                    allSavedQuotes = Object.entries(snap.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .reverse();
+                } else {
+                    allSavedQuotes = [];
+                }
+                renderSavedQuotesList();
+
+                // contacts.html-এর কাস্টমার প্রোফাইল থেকে "View/Edit in Estimate" চাপলে
+                // এখানে ?loadCustomer= প্যারামিটার দিয়ে আসে — সেই কাস্টমারের সবচেয়ে
+                // সাম্প্রতিক quotation স্বয়ংক্রিয়ভাবে লোড করে দেওয়া হয়।
+                const params = new URLSearchParams(window.location.search);
+                const loadCustomerName = params.get('loadCustomer');
+                if (loadCustomerName && !editingQuoteId) {
+                    const match = allSavedQuotes.find(q => q.client_name === loadCustomerName);
+                    if (match) {
+                        loadSavedQuotation(match.id);
+                    } else {
+                        // এই কাস্টমারের নামে কোনো quotation নেই — শুধু নামটা প্রি-ফিল করে রাখি
+                        editingClientName = loadCustomerName;
+                        document.getElementById('currentClientLabel').innerText = `New Quotation For: ${loadCustomerName}`;
+                        document.getElementById('currentClientLabel').style.display = 'inline-block';
+                    }
+                }
+            });
+        };
+
+        // Render Product Grid
+        function renderProductGrid(products) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            
+            if(products.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; padding: 20px; color:#9ca3af;">No matching products found.</div>';
+                return;
+            }
+
+            products.forEach(p => {
+                const img = p.image || 'https://via.placeholder.com/100?text=Item';
+                const isInCart = estimateCart[p.id] !== undefined;
+                
+                const html = `
+                <div class="product-card ${isInCart ? 'in-cart' : ''}" onclick="toggleEstimateItem('${p.id}')">
+                    <img src="${img}" class="product-img">
+                    <div class="product-info">
+                        <div class="product-name">${p.name}</div>
+                        ${p.brand ? `<span class="product-brand"><i class="fas fa-tag"></i> ${p.brand}</span>` : ''}
+                        <div class="product-meta">
+                            <span class="badge-stock">Stock: ${p.stock || 0}</span>
+                            <span class="badge-price">Avg Rate: ৳${p.sell_price || 0}</span>
+                        </div>
+                    </div>
+                    <div class="cart-toggle-btn">
+                        <i class="fas ${isInCart ? 'fa-check' : 'fa-plus'}"></i>
+                    </div>
+                </div>`;
+                grid.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        window.toggleEstimateItem = (id) => {
+            if(estimateCart[id]) {
+                delete estimateCart[id];
+            } else {
+                const p = allProducts.find(x => x.id === id);
+                estimateCart[id] = { ...p, estQty: 1, estBuy: p.buy_price || 0, estSell: p.sell_price || 0 };
+            }
+            
+            const term = document.getElementById('searchInput').value.toLowerCase().trim();
+            applySearch(term);
+            renderCart();
+        };
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            applySearch(e.target.value.toLowerCase().trim());
+        });
+
+        function applySearch(term) {
+            if(term === '') {
+                renderProductGrid(allProducts.slice(0, 30)); 
+            } else {
+                const filtered = allProducts.filter(p => 
+                    p.name.toLowerCase().includes(term) || 
+                    (p.brand && p.brand.toLowerCase().includes(term)) || 
+                    (p.barcode && p.barcode.toString().toLowerCase().includes(term))
+                );
+                renderProductGrid(filtered.slice(0, 30));
+            }
+        }
+
+        window.updateField = (id, field, value) => {
+            estimateCart[id][field] = Number(value) || 0;
+            calculateSummary();
+        };
+
+        window.removeItem = (id) => { 
+            delete estimateCart[id]; 
+            const term = document.getElementById('searchInput').value.toLowerCase().trim();
+            applySearch(term); 
+            renderCart(); 
+        };
+
+        function renderCart() {
+            const list = document.getElementById('cartList');
+            list.innerHTML = '';
+            
+            if(Object.keys(estimateCart).length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px 0; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 12px;">Tap on products above to add them here.</div>';
+                calculateSummary();
+                return;
+            }
+
+            Object.values(estimateCart).forEach(item => {
+                list.innerHTML += `
+                <div class="cart-item">
+                    <div class="item-header">
+                        <span>${item.name} ${item.brand ? `<small style="color:#6b7280; font-weight:normal;">(${item.brand})</small>` : ''}</span>
+                        <button onclick="removeItem('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="item-grid">
+                        <div class="input-box">
+                            <label>Required Qty</label>
+                            <input type="number" value="${item.estQty}" onchange="updateField('${item.id}', 'estQty', this.value)">
+                        </div>
+                        <div class="input-box">
+                            <label>Market Buy (৳)</label>
+                            <input type="number" class="buy" value="${item.estBuy}" onchange="updateField('${item.id}', 'estBuy', this.value)">
+                        </div>
+                        <div class="input-box">
+                            <label>Client Bill (৳)</label>
+                            <input type="number" class="sell" value="${item.estSell}" onchange="updateField('${item.id}', 'estSell', this.value)">
+                        </div>
+                    </div>
+                </div>`;
+            });
+            calculateSummary();
+        }
+
+        function calculateSummary() {
+            let totalBuy = 0, totalSell = 0;
+            Object.values(estimateCart).forEach(item => {
+                totalBuy += (item.estBuy * item.estQty);
+                totalSell += (item.estSell * item.estQty);
+            });
+            const profit = totalSell - totalBuy;
+
+            document.getElementById('sumBuy').innerText = `৳${totalBuy.toLocaleString()}`;
+            document.getElementById('sumSell').innerText = `৳${totalSell.toLocaleString()}`;
+            document.getElementById('sumProfit').innerText = `৳${profit.toLocaleString()}`;
+        }
+
+        // --- SAVE / UPDATE LOGIC ---
+        // Firebase RTDB key-তে '.', '#', '$', '[', ']', '/' অক্ষর নিষিদ্ধ — sell.html-এর
+        // sanitizeKey()-এর সাথে হুবহু মিলিয়ে রাখা হলো, নাহলে দুই ফাইল ভিন্ন path-এ লিখবে/পড়বে।
+        function safeKey(name) { return name.trim().replace(/[.#$\[\]\/]/g, '_'); }
+
+        window.saveQuotation = async () => {
+            if(Object.keys(estimateCart).length === 0) return alert("Cart is empty! Add items first.");
+
+            let clientName = editingClientName;
+            if(!clientName) {
+                // নতুন quotation-এর জন্য নাম জিজ্ঞেস করি — client details modal-ই ব্যবহার করছি,
+                // prompt() এর বদলে, যাতে সাথে সাথে ফোন নম্বরও নেওয়া যায়
+                pendingSaveAfterModal = true;
+                openClientDetailsModal(true);
+                return;
+            }
+            await performSaveQuotation(clientName);
+        };
+
+        let pendingSaveAfterModal = false;
+
+        async function performSaveQuotation(clientName, silent = false) {
+            let totalBuy = 0, totalSell = 0;
+            const itemsToSave = [];
+            const priceUpdates = {}; // customer_prices/{SHOP_ID}/{clientName}/{productId} — sell.html-এ auto-apply হওয়ার জন্য
+
+            Object.values(estimateCart).forEach(item => {
+                totalBuy += (item.estBuy * item.estQty);
+                totalSell += (item.estSell * item.estQty);
+                itemsToSave.push({ id: item.id, name: item.name, brand: item.brand||"", estQty: item.estQty, estBuy: item.estBuy, estSell: item.estSell, unit: item.unit||"Pcs" });
+                priceUpdates[`customer_prices/${SHOP_ID}/${safeKey(clientName)}/${item.id}`] = item.estSell;
+            });
+
+            const quoteData = {
+                shop_id: SHOP_ID,
+                client_name: clientName,
+                items: itemsToSave,
+                total_buy: totalBuy,
+                total_sell: totalSell,
+                profit: totalSell - totalBuy,
+                updated_at: Date.now()
+            };
+
+            try {
+                if(editingQuoteId) {
+                    await update(rtdbRef(rtdb, `quotations/${editingQuoteId}`), quoteData);
+                } else {
+                    quoteData.created_at = Date.now();
+                    const newRef = await push(rtdbRef(rtdb, 'quotations'), quoteData);
+                    editingQuoteId = newRef.key;
+                    editingClientName = clientName;
+                    document.getElementById('currentClientLabel').innerText = `Editing: ${clientName}`;
+                    document.getElementById('currentClientLabel').style.display = 'inline-block';
+                }
+
+                // কাস্টমার-নাম-ভিত্তিক quick-lookup কপি — contacts.html প্রোফাইল থেকে সরাসরি দেখানোর জন্য
+                await update(rtdbRef(rtdb), {
+                    [`customer_quotations/${SHOP_ID}/${safeKey(clientName)}`]: {
+                        quote_id: editingQuoteId, customer_name: clientName,
+                        items: itemsToSave, total: totalSell, date: Date.now()
+                    },
+                    ...priceUpdates
+                });
+
+                if (!silent) {
+                    alert(`Quotation ${editingQuoteId ? 'updated' : 'saved'} successfully! এই দামগুলো এখন "${clientName}" নামে সেল করলে স্বয়ংক্রিয়ভাবে বসে যাবে।`);
+                }
+            } catch(e) { alert("Error saving quotation: " + e.message); }
+        }
+
+        // --- SAVED MODAL LOGIC ---
+        window.openSavedModal = () => { document.getElementById('savedModal').style.display = 'flex'; };
+        window.closeSavedModal = () => { document.getElementById('savedModal').style.display = 'none'; };
+
+        function renderSavedQuotesList() {
+            const list = document.getElementById('savedQuotesList');
+            list.innerHTML = '';
+            
+            if(allSavedQuotes.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">No saved quotations found.</div>';
+                return;
+            }
+
+            allSavedQuotes.forEach(q => {
+                const dateStr = new Date(q.created_at).toLocaleDateString('en-GB') + " " + new Date(q.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                list.innerHTML += `
+                <div class="saved-card">
+                    <div class="sc-title">${q.client_name}</div>
+                    <div class="sc-date">Created: ${dateStr} • Bill: ৳${q.total_sell.toLocaleString()}</div>
+                    <div class="sc-actions">
+                        <button onclick="loadSavedQuotation('${q.id}')" class="sc-btn" style="background:#e0e7ff; color:var(--primary);"><i class="fas fa-folder-open"></i> Load / Edit</button>
+                        <button onclick="deleteQuotation('${q.id}')" class="sc-btn" style="background:#fee2e2; color:var(--danger); flex: 0.4;"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        window.loadSavedQuotation = (id) => {
+            const q = allSavedQuotes.find(x => x.id === id);
+            if(!q) return;
+
+            estimateCart = {};
+            q.items.forEach(item => {
+                estimateCart[item.id] = { ...item };
+            });
+
+            editingQuoteId = q.id;
+            editingClientName = q.client_name;
+            
+            document.getElementById('currentClientLabel').innerText = `Editing: ${editingClientName}`;
+            document.getElementById('currentClientLabel').style.display = 'inline-block';
+            
+            const term = document.getElementById('searchInput').value.toLowerCase().trim();
+            applySearch(term); // refresh checks
+            renderCart();
+            closeSavedModal();
+        };
+
+        window.deleteQuotation = async (id) => {
+            if(confirm("Are you sure you want to delete this saved quotation?")) {
+                try {
+                    await remove(rtdbRef(rtdb, `quotations/${id}`));
+                    if(editingQuoteId === id) window.clearEstimate();
+                } catch(e) { alert("Error deleting: " + e.message); }
+            }
+        };
+
+        window.clearEstimate = () => {
+            if(Object.keys(estimateCart).length > 0 && !confirm("Clear all items and start new?")) return;
+            estimateCart = {};
+            editingQuoteId = null;
+            editingClientName = '';
+            document.getElementById('currentClientLabel').style.display = 'none';
+            document.getElementById('searchInput').value = '';
+            applySearch('');
+            renderCart();
+        };
+
+        // --- CONVERT TO SALE ---
+        // Quotation-এর দাম customer_prices-এ সেভ করে sell.html-এ পাঠিয়ে দেয়, যেখানে
+        // কাস্টমার নাম অটো-ফিল থাকবে এবং sell.html-এর existing pricing mechanism
+        // (triggerSpecialPriceFetch) স্বয়ংক্রিয়ভাবে এই quotation-এর রেট বসিয়ে দেবে।
+        window.convertToSale = async () => {
+            if(Object.keys(estimateCart).length === 0) return alert("Cart is empty! Add items first.");
+
+            let clientName = editingClientName;
+            if(!clientName) {
+                clientName = prompt("এই quotation কোন কাস্টমারের নামে সেভ করে বিক্রি করতে চান?");
+                if(!clientName || !clientName.trim()) return;
+                clientName = clientName.trim();
+            }
+
+            await performSaveQuotation(clientName, true);
+            window.location.href = `sell.html?prefillCustomer=${encodeURIComponent(clientName)}`;
+        };
+
+        // --- QUOTATION PDF GENERATION (নতুন প্রিমিয়াম সিস্টেম) ---
+        let quoteSequence = 0; // simple session-level running number for the visible doc no.
+
+        window.openClientDetailsModal = (isSaveMode = false) => {
+            if(Object.keys(estimateCart).length === 0) return alert("Please add items to estimate first!");
+            document.getElementById('qClientName').value = editingClientName || '';
+            // ডিফল্টভাবে ৭ দিন পর মেয়াদ শেষ দেখানো হচ্ছে, ইউজার চাইলে বদলাতে পারবে
+            const defaultValid = new Date(); defaultValid.setDate(defaultValid.getDate() + 7);
+            document.getElementById('qValidUntil').value = defaultValid.toISOString().split('T')[0];
+
+            // Save mode-এ ফোন/মেয়াদ ফিল্ড লুকানো থাকে (সেভের জন্য শুধু নাম যথেষ্ট), PDF mode-এ দেখা যায়
+            document.getElementById('qPhoneBox').style.display = isSaveMode ? 'none' : 'block';
+            document.getElementById('qValidUntilBox').style.display = isSaveMode ? 'none' : 'block';
+            document.getElementById('clientModalTitle').innerText = isSaveMode ? 'Save Quotation As' : 'Quotation Details';
+            document.getElementById('clientModalActionBtn').innerHTML = isSaveMode
+                ? '<i class="fas fa-save"></i> Save Quotation'
+                : '<i class="fas fa-check"></i> Generate PDF Preview';
+
+            document.getElementById('clientDetailsModal').style.display = 'flex';
+        };
+        window.closeClientDetailsModal = () => { document.getElementById('clientDetailsModal').style.display = 'none'; };
+
+        window.generateQuotationPdf = async () => {
+            const clientName = document.getElementById('qClientName').value.trim();
+            const clientPhone = document.getElementById('qClientPhone').value.trim();
+            const validUntil = document.getElementById('qValidUntil').value;
+            if(!clientName) return alert("Client/Company name is required!");
+
+            editingClientName = clientName; // future save-এর জন্য মনে রাখা হচ্ছে
+            closeClientDetailsModal();
+
+            // যদি "Save" বাটন থেকে এই মোডাল খোলা হয়ে থাকে, PDF না বানিয়ে সরাসরি সেভ করি
+            if (pendingSaveAfterModal) {
+                pendingSaveAfterModal = false;
+                await performSaveQuotation(clientName);
+                return;
+            }
+
+            const shop = await getShopBranding(SHOP_ID);
+            quoteSequence += 1;
+            const docNo = "QUO-" + new Date().getFullYear() + "-" + String(quoteSequence).padStart(3, '0');
+
+            let finalTotal = 0;
+            const items = Object.values(estimateCart).map(item => {
+                const amount = item.estSell * item.estQty;
+                finalTotal += amount;
+                return { name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.estQty, rate: item.estSell, amount: amount };
+            });
+
+            const validNote = validUntil ? `Valid Until: ${new Date(validUntil).toLocaleDateString('en-GB')}` : '';
+
+            const html = renderPremiumDocument({
+                docType: 'QUOTATION',
+                docNo: docNo,
+                docDate: new Date().toLocaleDateString('en-GB'),
+                shop: shop,
+                partyLabel: 'Quotation For',
+                partyName: clientName,
+                partyPhone: clientPhone,
+                items: items,
+                subtotal: finalTotal,
+                discount: 0,
+                total: finalTotal,
+                paid: null, // quotation-এ paid/due দেখানো হবে না
+                due: null,
+                extraNote: validNote,
+                footerNote: 'This is an estimate only and subject to market availability & price changes.'
+            });
+
+            document.getElementById('printableInvoiceHolder').innerHTML = html;
+            showPdfPreview(html, `Quotation_${clientName.replace(/\s+/g, '_')}.pdf`);
+        };
+
+        // --- BARCODE SCANNER ---
+        window.startScanner = () => {
+            document.getElementById('scannerModal').style.display = 'flex';
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 15, qrbox: { width: 300, height: 150 }, disableFlip: false };
+            
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, (decodedText) => {
+                window.stopScanner();
+                const audio = new Audio('https://www.soundjay.com/button/beep-07.wav'); audio.play().catch(e=>{});
+                document.getElementById('searchInput').value = decodedText;
+                document.getElementById('searchInput').dispatchEvent(new Event('input'));
+            }).catch(err => { alert("Camera access denied or error"); window.stopScanner(); });
+        };
+        
+        window.stopScanner = () => {
+            if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { document.getElementById('scannerModal').style.display = 'none'; }); } 
+            else { document.getElementById('scannerModal').style.display = 'none'; }
+        };
+    </script>
+</body>
+</html>
