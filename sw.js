@@ -1,7 +1,7 @@
-const CACHE_NAME = 'stashio-ui-v2'; // ক্যাশের নাম আপডেট করা হয়েছে
-const DYNAMIC_CACHE = 'stashio-dynamic-v2';
+const CACHE_NAME = 'poysha-pos-ui-v3'; // ক্যাশের নাম আপডেট করা হয়েছে (নতুন ব্র্যান্ডিং + নতুন ফাইল যোগ)
+const DYNAMIC_CACHE = 'poysha-pos-dynamic-v3';
 
-// অ্যাপের মূল পেজগুলো (যাতে ইন্টারনেট ছাড়াও অ্যাপের ডিজাইন লোড হয়)
+// অ্যাপের মূল পেজগুলো (যাতে ইন্টারনেট ছাড়াও অ্যাপের ডিজাইন লোড হয়)
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -25,9 +25,18 @@ const ASSETS_TO_CACHE = [
     './header.html',
     './bottom_nav.html',
     './firebase_config.js',
+    './invoice_kit.js',
     './manifest.json',
     './icon-192x192.png',
-    './icon-512x512.png'
+    './icon-512x512.png',
+    './estimate.html',
+    './sales_book.html',
+    './purchase_book.html',
+    './stock_book.html',
+    './order_book.html',
+    './unit_admin.html',
+    './notes.html',
+    './expire_product.html'
 ];
 
 // ১. ইন্সটল ইভেন্ট - অ্যাপের ডিজাইন ফাইলগুলো ক্যাশ করবে
@@ -56,7 +65,7 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// ৩. ফেচ ইভেন্ট - ডাটা রিকোয়েস্ট ম্যানেজমেন্ট
+// ৩. ফেচ ইভেন্ট - ডাটা রিকোয়েস্ট ম্যানেজমেন্ট
 self.addEventListener('fetch', event => {
     const req = event.request;
 

@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Point of Sale (Sell) - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Point of Sale (Sell) - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
@@ -19,14 +20,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        :root { --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --border-radius: 20px; --shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        :root { --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --border-radius: 20px; --shadow: 0 10px 25px rgba(0,0,0,0.05); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; }
         ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .view-container { display: none; flex-direction: column; min-height: 100vh; background: var(--bg-color); animation: fadeIn 0.3s ease-out; }
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); }
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24); }
         .header-title { display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
         .search-container { margin: -15px 15px 15px 15px; display: flex; gap: 10px; position: relative; z-index: 60; }
@@ -51,7 +52,7 @@
         .bottom-checkout-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.08); border-top-left-radius: 25px; border-top-right-radius: 25px; z-index: 100; }
         .cart-summary p { margin: 0; font-size: 12px; color: var(--text-light); font-weight: 600; }
         .cart-summary h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--primary); }
-        .btn-proceed { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 12px 25px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(236, 72, 153, 0.3); transition: 0.2s; }
+        .btn-proceed { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 12px 25px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(212, 160, 23, 0.3); transition: 0.2s; }
         .btn-proceed:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
         .checkout-content { padding: 20px 15px 120px 15px; overflow-y: auto; flex: 1; }
         .form-card { background: var(--white); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid #f8fafc; }

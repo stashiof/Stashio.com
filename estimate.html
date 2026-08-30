@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estimate & Quotation - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Estimate & Quotation - Poysha POS</title>
     
     <meta name="theme-color" content="#f59e0b">
     <script>
@@ -191,7 +192,7 @@
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
         const SHOP_ID = localStorage.getItem('activeShopId');
-        const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
+        const SHOP_NAME = localStorage.getItem('activeShopName') || "Poysha POS Store";
         
         let allProducts = [];
         let estimateCart = {};

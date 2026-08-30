@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stashio - Smart Shop Manager</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Poysha POS - Smart Shop Manager</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
     <link rel="apple-touch-icon" href="icon-192x192.png">
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -17,9 +18,9 @@
 
     <style>
         :root {
-            --primary: #4F46E5; 
-            --secondary: #ec4899; 
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary: #0B4A3E; 
+            --secondary: #D4A017; 
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #12604F 100%);
             --glass: rgba(255, 255, 255, 0.95);
             --text-dark: #1f2937;
             --text-light: #6b7280;
@@ -104,13 +105,13 @@
             background: #f9fafb; border-radius: 16px; font-size: 16px; outline: none; transition: 0.3s; color: var(--text-dark);
         }
 
-        input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1); }
+        input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 4px 12px rgba(11, 74, 62, 0.1); }
         input:focus + i { color: var(--primary); }
 
         .btn-primary {
             width: 100%; padding: 16px; background: linear-gradient(90deg, var(--primary), var(--secondary));
             color: white; border: none; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer;
-            box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3); transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 10px 20px rgba(212, 160, 23, 0.3); transition: transform 0.2s, box-shadow 0.2s;
         }
         .btn-primary:active { transform: scale(0.98); }
         .btn-primary:disabled { background: #d1d5db; box-shadow: none; cursor: not-allowed; }
@@ -147,7 +148,14 @@
         
         <div id="view-login" class="view active">
             <div style="text-align: center;">
-                <i class="fas fa-cube brand-logo"></i>
+                <svg width="64" height="64" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 12px;" role="img" aria-label="Poysha POS logo">
+                    <rect x="10" y="10" width="180" height="180" rx="40" fill="#0B4A3E"/>
+                    <circle cx="152" cy="38" r="10" fill="#D4A017"/>
+                    <circle cx="100" cy="105" r="58" fill="#FBF7EF"/>
+                    <g transform="rotate(-20 100 105)">
+                        <rect x="55" y="96" width="90" height="18" rx="9" fill="#0B4A3E"/>
+                    </g>
+                </svg>
                 <h2>Welcome Back</h2>
                 <p>Login to manage your shop</p>
             </div>
@@ -174,7 +182,7 @@
 
         <div id="view-register" class="view">
             <h2>New Account</h2>
-            <p>Join Stashio today</p>
+            <p>Join Poysha POS today</p>
             
             <div class="input-group">
                 <input type="text" id="regName" placeholder="Full Name">

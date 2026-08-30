@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Due Book (Ledger) - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Due Book (Ledger) - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
@@ -24,7 +25,7 @@
 
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
             --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -39,10 +40,10 @@
         .app-header {
             position: relative; padding: 20px 20px 45px 20px; color: white; 
             border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
-            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            z-index: 50; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24);
             overflow: hidden;
         }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); z-index: 1; }
         #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
         
         .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -204,7 +205,7 @@
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
-        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
         let allDues = [];
         let allHistory = [];
@@ -544,7 +545,7 @@
                         <p style="font-size: 12px; font-weight: bold; margin-top: 5px;">Date: {{DATE_RANGE}} | ${searchTerm ? 'Filtered: '+searchTerm : 'All Active Dues'}</p>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                        <thead style="background-color: #4F46E5; color: white;">
+                        <thead style="background-color: #0B4A3E; color: white;">
                             <tr>
                                 <th style="padding: 10px; border: 1px solid #ddd;">Created Date</th>
                                 <th style="padding: 10px; border: 1px solid #ddd;">Name</th>

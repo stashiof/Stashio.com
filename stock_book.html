@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stock Book - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Stock Book - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
@@ -24,8 +25,8 @@
 
     <style>
         :root {
-            --primary: #4F46E5;
-            --secondary: #ec4899;
+            --primary: #0B4A3E;
+            --secondary: #D4A017;
             --bg-color: #f3f4f6;
             --white: #ffffff;
             --text-dark: #1f2937;
@@ -47,10 +48,10 @@
         .app-header {
             position: relative; padding: 20px 20px 45px 20px; color: white; 
             border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
-            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            z-index: 50; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24);
             overflow: hidden;
         }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); z-index: 1; }
         #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
         
         .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -202,7 +203,7 @@
         import { showPdfPreview } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
-        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
         let allProducts = [];
         let displayedProducts = [];

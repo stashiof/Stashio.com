@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sales Orders - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Sales Orders - Poysha POS</title>
     
     <meta name="theme-color" content="#14b8a6">
 
@@ -51,7 +52,7 @@
         .s-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
         .s-badge.del-yes { background: #dcfce3; color: var(--success); }
         .s-badge.del-no { background: #fef3c7; color: var(--warning); }
-        .s-badge.pay-yes { background: #e0e7ff; color: #4F46E5; }
+        .s-badge.pay-yes { background: #e0e7ff; color: #0B4A3E; }
         .s-badge.pay-no { background: #fee2e2; color: var(--danger); }
 
         .order-body { display: flex; justify-content: space-between; align-items: flex-end; }
@@ -74,7 +75,7 @@
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .action-btn { padding: 12px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
         .action-btn:active { transform: scale(0.96); }
-        .btn-edit { background: #e0e7ff; color: #4F46E5; grid-column: span 2; }
+        .btn-edit { background: #e0e7ff; color: #0B4A3E; grid-column: span 2; }
         .btn-pay { background: #fef3c7; color: #d97706; }
         .btn-deliver { background: #dcfce3; color: var(--success); }
         .btn-chalan { background: #f1f5f9; color: var(--text-dark); }
@@ -137,7 +138,7 @@
                     <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
                     <button class="action-btn btn-chalan" style="background:#ede9fe; color:#7c3aed;" onclick="downloadOrderPdf('chalan')"><i class="fas fa-file-pdf"></i> Chalan PDF</button>
                     <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
-                    <button class="action-btn btn-bill" style="background:#e0e7ff; color:#4F46E5;" onclick="downloadOrderPdf('bill')"><i class="fas fa-file-pdf"></i> Bill PDF</button>
+                    <button class="action-btn btn-bill" style="background:#e0e7ff; color:#0B4A3E;" onclick="downloadOrderPdf('bill')"><i class="fas fa-file-pdf"></i> Bill PDF</button>
                     
                     <button id="btnCancelOrder" class="action-btn btn-cancel" onclick="cancelOrder()"><i class="fas fa-times-circle"></i> Cancel Order</button>
                 </div>
@@ -174,7 +175,7 @@
         import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
-        const SHOP_NAME = localStorage.getItem('activeShopName') || "Stashio Store";
+        const SHOP_NAME = localStorage.getItem('activeShopName') || "Poysha POS Store";
         let allOrders = [];
         let currentOrder = null;
         let editingOrderData = null; // For edit mode

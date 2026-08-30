@@ -3,21 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Manage Units - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Manage Units - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
+    <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const activeShopId = localStorage.getItem('activeShopId');
+        if (!loggedInUser) {
+            window.location.replace("index.html");
+        } else if (!activeShopId) {
+            window.location.replace("dashboard.html");
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --danger: #ef4444; --warning: #f59e0b;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-dark); }
         
-        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); padding: 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 700; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); }
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); padding: 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 700; box-shadow: 0 4px 15px rgba(11, 74, 62, 0.3); }
         .app-header a { color: white; text-decoration: none; }
 
         .container { padding: 20px; }

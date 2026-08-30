@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Analytics & Insights - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Analytics & Insights - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
@@ -20,7 +21,7 @@
 
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
             --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
             --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --gold: #ffd700;
@@ -36,13 +37,15 @@
         .app-header {
             position: relative; padding: 30px 20px 50px 20px; color: white; 
             border-bottom-left-radius: 35px; border-bottom-right-radius: 35px; 
-            margin-bottom: -30px; overflow: hidden; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            margin-bottom: -30px; overflow: hidden; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24);
         }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); z-index: 1; }
         #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
         .header-content { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
         .header-content h1 { font-size: 22px; font-weight: 800; margin: 0; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; }
         .header-content p { font-size: 12px; font-weight: 500; opacity: 0.9; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); background: rgba(255, 255, 255, 0.15); padding: 3px 10px; border-radius: 10px; display: inline-block; }
+        .header-date-badge { position: relative; z-index: 10; text-align: right; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.92); background: rgba(255,255,255,0.14); backdrop-filter: blur(6px); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.18); line-height: 1.5; }
+        .header-date-badge .hd-day { font-size: 15px; font-weight: 800; }
 
         body.has-theme .app-header { box-shadow: none; border-bottom: 1px solid rgba(255,255,255,0.3); }
 
@@ -218,7 +221,7 @@
                 <div id="printableCertificate">
                     <div class="cert-border"></div>
                     <i class="fas fa-crown cert-icon"></i>
-                    <div class="cert-title">Stashio Excellence</div>
+                    <div class="cert-title">Poysha POS Excellence</div>
                     <div class="cert-award">Premium Partner Award</div>
                     <div class="cert-ribbon"></div>
                     <div class="cert-presented">PROUDLY PRESENTED TO</div>
@@ -255,7 +258,7 @@
         import { showPdfPreview } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
-        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
         // Header & Footer Load Function
         async function loadComponents() {
@@ -269,6 +272,12 @@
                     document.getElementById('shopTitle').innerHTML = `<i class="fas fa-brain" style="color: #fef08a;"></i> AI Insights`;
                     const subText = document.querySelector('.header-content p');
                     if(subText) subText.innerText = "Tap any card for detailed list";
+
+                    const dateBadge = document.getElementById('headerDateBadge');
+                    if (dateBadge) {
+                        const now = new Date();
+                        dateBadge.innerHTML = `<div class="hd-day">${now.getDate()} ${now.toLocaleDateString('en-GB', { month: 'short' })}</div><div>${now.toLocaleDateString('en-GB', { weekday: 'short' })}</div>`;
+                    }
                     
                     // Header Theme Sync
                     rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
@@ -394,7 +403,7 @@
             const btn = document.getElementById('btnDownloadCert'); const originalHTML = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
             const element = document.getElementById('printableCertificate'); const custName = document.getElementById('certCustName').innerText;
-            showPdfPreview(element, `Stashio_Award_${custName}.pdf`, {
+            showPdfPreview(element, `Poysha_Award_${custName}.pdf`, {
                 margin: 0, image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 3, useCORS: true, backgroundColor: '#0a0a0a' },
                 jsPDF: { unit: 'mm', format: [120, 160], orientation: 'portrait' }

@@ -1,10 +1,10 @@
 {
-  "name": "Stashio - Smart Shop Manager",
-  "short_name": "Stashio",
+  "name": "Poysha POS - Smart Shop Manager",
+  "short_name": "Poysha POS",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4F46E5",
+  "theme_color": "#0B4A3E",
   "description": "Smart Shop Manager for Offline Design and Live Data Sync",
   "orientation": "portrait",
   "icons": [

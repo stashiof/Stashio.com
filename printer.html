@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Printer Settings - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Printer Settings - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
-        const loggedInUser = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
         if (!loggedInUser) window.location.replace("index.html");
         else if (!activeShopId) window.location.replace("dashboard.html");
@@ -19,7 +20,7 @@
 
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
             --success: #10b981; --warning: #f59e0b;
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -34,9 +35,9 @@
         .app-header {
             position: relative; padding: 20px 20px 40px 20px; color: white; 
             border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
-            z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); overflow: hidden;
+            z-index: 50; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24); overflow: hidden;
         }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); z-index: 1; }
         #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
         
         .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
@@ -77,7 +78,7 @@
         .paper-opt .title { font-weight: 700; font-size: 13px; }
         .paper-opt .desc { font-size: 10px; color: var(--text-light); }
 
-        .btn-save { width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 15px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3); transition: 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-save { width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 15px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(11, 74, 62, 0.3); transition: 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-save:active { transform: scale(0.98); }
         .btn-test { background: var(--text-dark); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 
@@ -208,7 +209,7 @@
         import { rtdb, ref as rtdbRef, update, onValue as rtdbOnValue } from './firebase_config.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
-        let shopName = localStorage.getItem('activeShopName') || 'Stashio Store';
+        let shopName = localStorage.getItem('activeShopName') || 'Poysha POS Store';
         let shopAddress = 'Dhaka, Bangladesh';
         let shopLogoUrl = '';
 
@@ -364,7 +365,7 @@
                 
                 <div class="receipt-footer">
                     <p style="margin:0; font-weight:bold;">${fText}</p>
-                    <div class="watermark">Software by Stashio</div>
+                    <div class="watermark">Software by Poysha POS</div>
                 </div>
             `;
 

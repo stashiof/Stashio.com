@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stashio - Select Shop Dashboard</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Poysha POS - Select Shop Dashboard</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
     <link rel="apple-touch-icon" href="icon-192x192.png">
 
             <script>
@@ -32,10 +33,10 @@
 
     <style>
         :root {
-            --primary: #4F46E5;         /* Indigo 600 */
+            --primary: #0B4A3E;         /* Indigo 600 */
             --primary-hover: #4338ca;   /* Indigo 700 */
-            --secondary: #ec4899;       /* Pink 500 */
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary: #D4A017;       /* Pink 500 */
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #12604F 100%);
             --glass-bg: rgba(255, 255, 255, 0.95);
             --text-dark: #1f2937;       /* Gray 800 */
             --text-light: #6b7280;      /* Gray 500 */
@@ -147,9 +148,9 @@
         .btn-enter { 
             width: 100%; padding: 10px 15px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
             color: white; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.2); transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; gap: 8px;
+            box-shadow: 0 4px 10px rgba(212, 160, 23, 0.2); transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; gap: 8px;
         }
-        .btn-enter:hover { box-shadow: 0 6px 15px rgba(236, 72, 153, 0.3); }
+        .btn-enter:hover { box-shadow: 0 6px 15px rgba(212, 160, 23, 0.3); }
         .btn-enter:active { transform: scale(0.97); }
         
         .settings-icon { color: #cbd5e1; cursor: pointer; font-size: 18px; transition: 0.2s; padding: 5px; }
@@ -169,12 +170,12 @@
         .input-group { margin-bottom: 18px; position: relative; }
         .input-group label { font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; display: block; }
         .input-group input, .input-group textarea { width: 100%; padding: 14px 16px; border: 2px solid #e5e7eb; background: #f9fafb; border-radius: 14px; font-size: 14px; outline: none; transition: all 0.3s ease; color: var(--text-dark); font-family: 'Poppins', sans-serif; }
-        .input-group input:focus, .input-group textarea:focus { border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+        .input-group input:focus, .input-group textarea:focus { border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 4px rgba(11, 74, 62, 0.1); }
         
         .image-upload-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; margin-bottom: 20px; background: #f8fafc; cursor: pointer; transition: 0.3s; }
         .image-upload-wrapper:hover { border-color: var(--primary); }
         
-        .modal-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
+        .modal-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 4px 12px rgba(11, 74, 62, 0.24); }
         .modal-btn:active { transform: scale(0.98); }
         .modal-btn:disabled { opacity: 0.7; cursor: not-allowed; }
         
@@ -307,7 +308,7 @@
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432"; 
         const scriptURL = "https://script.google.com/macros/s/AKfycbwoC5HV-g8E5W3LY4tw4I63OUtIIK5e7kEDMW5Dk8XTn9BmBFyLR6sOGCd1JHo9HdLx/exec";
 
-        const activeUserPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
+        const activeUserPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone');
 
         const activeUserName = localStorage.getItem('tempUserName') || sessionStorage.getItem('tempUserName') || localStorage.getItem('userName') || "User";
         

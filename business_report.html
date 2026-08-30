@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Business Report - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Business Report - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
-        const loggedInUser = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
         if (!loggedInUser) window.location.replace("index.html");
         else if (!activeShopId) window.location.replace("dashboard.html");
@@ -23,7 +24,7 @@
 
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
             --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -32,7 +33,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 90px; }
         
-        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: relative; z-index: 50; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); }
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: relative; z-index: 50; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24); }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
@@ -184,7 +185,7 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const SHOP_ID = localStorage.getItem('activeShopId');
-        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
         let salesData = [], purchaseData = [], expenseData = [], dueData = [];
 
@@ -297,7 +298,7 @@
                 <h4 style="margin-bottom:10px; color:#1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom:5px;">Inventory & Due Status (স্টক ও বাকি)</h4>
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
                     <tbody>
-                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:#4F46E5;">Total Purchase (নতুন মাল কেনা)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-weight:bold; color:#4F46E5;">${document.getElementById('valPurchase').innerText}</td></tr>
+                        <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:#0B4A3E;">Total Purchase (নতুন মাল কেনা)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-weight:bold; color:#0B4A3E;">${document.getElementById('valPurchase').innerText}</td></tr>
                         <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:#10b981;">Receivable Due (কাস্টমারের কাছে পাব)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:#10b981;">${document.getElementById('valDueRecv').innerText}</td></tr>
                         <tr><td style="padding: 10px; border: 1px solid #ddd; font-weight:bold; color:#ef4444;">Payable Due (সাপ্লায়ারকে দিব)</td><td style="padding: 10px; border: 1px solid #ddd; text-align:right; color:#ef4444;">${document.getElementById('valDuePay').innerText}</td></tr>
                     </tbody>

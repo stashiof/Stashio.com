@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Product List - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Product List - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
@@ -25,7 +26,7 @@
 
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f3f4f6;
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
             --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -40,7 +41,7 @@
 
         /* Header Area */
         .app-header {
-            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%);
             padding: 20px 20px 35px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
             position: sticky; top: 0; z-index: 50;
         }
@@ -137,7 +138,7 @@
         .setting-content { display: none; margin-top: 10px; }
         .setting-content.active { display: block; animation: fadeIn 0.3s; }
 
-        .btn-submit { width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(236, 72, 153, 0.3); transition: 0.2s; margin-top: 10px; }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 15px rgba(212, 160, 23, 0.3); transition: 0.2s; margin-top: 10px; }
         .btn-submit:active { transform: scale(0.98); }
 
         /* Scanner Modal */
@@ -332,7 +333,7 @@
 
         const IMGBB_API_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
         const SHOP_ID = localStorage.getItem('activeShopId');
-        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Stashio Store';
+        const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
         let allProducts = [];
         let displayedProducts = [];
@@ -770,7 +771,7 @@
                 <h2 style="text-align:center; font-size: 24px; margin-bottom: 5px;">${SHOP_NAME}</h2>
                 <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #666;">Inventory Report | Date: ${new Date().toLocaleDateString()}</p>
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                    <thead style="background-color: #4F46E5; color: white;">
+                    <thead style="background-color: #0B4A3E; color: white;">
                         <tr>
                             <th style="padding: 10px; border: 1px solid #ddd;">#</th>
                             <th style="padding: 10px; border: 1px solid #ddd;">Product / পণ্য</th>

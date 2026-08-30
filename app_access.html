@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Team & Access - Stashio</title>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <title>Team & Access - Poysha POS</title>
     
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#0B4A3E">
 
     <script>
-        const loggedInUser = localStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
         if (!loggedInUser) window.location.replace("index.html");
         else if (!activeShopId) window.location.replace("dashboard.html");
@@ -23,7 +24,7 @@
 
     <style>
         :root {
-            --primary: #4F46E5; --secondary: #ec4899; --bg-color: #f2f2f7;
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f2f2f7;
             --white: rgba(255, 255, 255, 0.85); --text-dark: #1c1c1e; --text-light: #8e8e93;
             --danger: #ff3b30; --success: #34c759; --warning: #ff9500; --blue: #007aff;
             --purple: #af52de;
@@ -38,10 +39,10 @@
         .app-header {
             position: relative; padding: 30px 20px 50px 20px; color: white; 
             border-bottom-left-radius: 35px; border-bottom-right-radius: 35px; 
-            margin-bottom: -20px; z-index: 10; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            margin-bottom: -20px; z-index: 10; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24);
             overflow: hidden;
         }
-        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); z-index: 1; }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); z-index: 1; }
         #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
         .header-content { position: relative; z-index: 10; display: flex; align-items: center; gap: 15px; }
         .header-content a { color: white; font-size: 20px; text-decoration: none; }
@@ -73,7 +74,7 @@
         .details-row { font-size: 11px; color: var(--text-light); margin-top: 6px; display: flex; gap: 10px; font-weight: 600; }
 
         /* Floating Action Button */
-        .fab { position: fixed; bottom: 30px; right: 20px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); cursor: pointer; z-index: 95; transition: 0.3s; }
+        .fab { position: fixed; bottom: 30px; right: 20px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 25px rgba(11, 74, 62, 0.4); cursor: pointer; z-index: 95; transition: 0.3s; }
         .fab:active { transform: scale(0.9); }
 
         /* Modal Settings */
@@ -93,7 +94,7 @@
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 5px; text-transform: uppercase; }
         .input-field { width: 100%; padding: 14px 15px; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; font-size: 13px; font-family: inherit; font-weight: 500; outline: none; background: white; transition: 0.3s; color: var(--text-dark); }
-        .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(11, 74, 62, 0.1); }
         .input-field:disabled { background: #e5e5ea; color: #8e8e93; }
 
         .perm-title { font-size: 13px; font-weight: 800; color: var(--text-dark); margin: 25px 0 10px 0; display: flex; align-items: center; gap: 6px; }
@@ -103,7 +104,7 @@
         .perm-check.disabled { opacity: 0.5; pointer-events: none; }
         .perm-check input { width: 18px; height: 18px; margin: 0; pointer-events: none; }
 
-        .btn-save { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 16px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3); margin-top: 25px; transition: 0.2s; }
+        .btn-save { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 16px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(11, 74, 62, 0.3); margin-top: 25px; transition: 0.2s; }
         .btn-save:active { transform: scale(0.98); }
         .btn-save:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
         .btn-delete { background: white; color: var(--danger); border: 2px solid #fee2e2; box-shadow: none; margin-top: 10px; }
@@ -205,7 +206,7 @@
 
     const IMGBB_KEY = "0987dd0d8cae9aa6bbe0b075b4464432";
     const shopId = localStorage.getItem('activeShopId');
-    const myPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone');
+    const myPhone = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone');
     let currentShopData = {};
 
     const ALL_PAGES = [
@@ -468,7 +469,7 @@
             const userDocRef = dbFirestore.collection("users").doc(phone);
             const userDoc = await userDocRef.get();
             if (!userDoc.exists) {
-                const proceed = confirm(`⚠️ Warning\n\nLogin ID: ${phone} is not registered in Stashio yet.\n\nThey must create an account using this exact ID to access your shop.\n\nProceed anyway?`);
+                const proceed = confirm(`⚠️ Warning\n\nLogin ID: ${phone} is not registered in Poysha POS yet.\n\nThey must create an account using this exact ID to access your shop.\n\nProceed anyway?`);
                 if (!proceed) { btn.disabled = false; btn.innerHTML = "Save Member"; return; }
             }
 
