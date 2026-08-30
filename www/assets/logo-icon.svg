@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Poysha POS icon mark</title>
+<desc>Standalone app icon for Poysha POS: a deep forest green rounded-square with an ivory coin bearing a diagonal slot and a small gold accent dot, suitable for app icons and favicons.</desc>
+<rect x="10" y="10" width="180" height="180" rx="40" fill="#0B4A3E"/>
+<circle cx="152" cy="38" r="10" fill="#D4A017"/>
+<circle cx="100" cy="105" r="58" fill="#FBF7EF"/>
+<g transform="rotate(-20 100 105)">
+<rect x="55" y="96" width="90" height="18" rx="9" fill="#0B4A3E"/>
+</g>
+</svg>
