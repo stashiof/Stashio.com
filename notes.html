@@ -59,16 +59,34 @@
         .load-error { display: none; margin: 15px; padding: 14px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; color: #b91c1c; font-size: 12.5px; line-height: 1.6; }
         .load-error code { background: #fee2e2; padding: 1px 6px; border-radius: 5px; font-size: 11px; }
 
+        /* ---------- FOLDER BAR ---------- */
+        .folder-bar-wrap { padding: 0 15px; margin-bottom: 14px; position: relative; }
+        .folder-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; -ms-overflow-style: none; }
+        .folder-bar::-webkit-scrollbar { display: none; }
+        .folder-chip { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 22px; background: var(--card); border: 1.5px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; user-select: none; }
+        .folder-chip i { font-size: 11px; }
+        .folder-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3); }
+        .fc-count { background: rgba(0,0,0,0.08); border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: 700; }
+        .folder-chip.active .fc-count { background: rgba(255,255,255,0.25); }
+        .fc-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .fc-menu { background: none; border: none; color: inherit; cursor: pointer; font-size: 12px; padding: 0 0 0 2px; opacity: 0.7; }
+        .add-chip { border-style: dashed; color: var(--primary); border-color: var(--primary); background: transparent; }
+        .add-chip:active { background: rgba(59,130,246,0.08); }
+
         /* ---------- INPUT CARD ---------- */
-        .note-input-container { background: var(--card); margin: -18px 15px 18px 15px; padding: 16px; border-radius: 18px; box-shadow: var(--shadow); position: relative; z-index: 60; border: 1px solid var(--border); }
-        textarea { width: 100%; min-height: 96px; max-height: 260px; padding: 14px; border-radius: 14px; border: 1.5px solid var(--border); outline: none; font-size: 14px; font-family: inherit; resize: none; margin-bottom: 12px; background: var(--input-bg); color: var(--text); line-height: 1.55; transition: border-color 0.15s, background 0.3s; overflow-y: auto; }
+        .note-input-container { background: var(--card); margin: 0 15px 16px 15px; padding: 16px; border-radius: 18px; box-shadow: var(--shadow); position: relative; z-index: 60; border: 1px solid var(--border); }
+        textarea { width: 100%; min-height: 90px; max-height: 260px; padding: 14px; border-radius: 14px; border: 1.5px solid var(--border); outline: none; font-size: 14px; font-family: inherit; resize: none; margin-bottom: 12px; background: var(--input-bg); color: var(--text); line-height: 1.55; transition: border-color 0.15s, background 0.3s; overflow-y: auto; }
         textarea:focus { border-color: var(--primary); }
         textarea::placeholder { color: var(--muted); opacity: 0.7; }
 
-        .color-picker { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+        .composer-options { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .color-picker { display: flex; gap: 9px; align-items: center; }
         .color-label { font-size: 11px; color: var(--muted); font-weight: 600; }
-        .color-dot { width: 27px; height: 27px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; transition: transform 0.15s, border-color 0.15s; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
-        .color-dot.selected { border-color: var(--text); transform: scale(1.18); box-shadow: 0 3px 8px rgba(0,0,0,0.18); }
+        .color-dot { width: 25px; height: 25px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; transition: transform 0.15s, border-color 0.15s; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; }
+        .color-dot.selected { border-color: var(--text); transform: scale(1.15); box-shadow: 0 3px 8px rgba(0,0,0,0.18); }
+        .folder-target { display: flex; align-items: center; gap: 6px; background: var(--input-bg); border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 11px; font-weight: 600; color: var(--text); cursor: pointer; max-width: 100%; }
+        .folder-target span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .folder-target i { font-size: 10px; color: var(--primary); }
 
         .input-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .editing-badge { font-size: 11px; color: var(--primary); font-weight: 600; display: none; align-items: center; gap: 5px; }
@@ -94,7 +112,7 @@
         /* ---------- FILTERS ---------- */
         .filter-row { display: flex; align-items: center; gap: 8px; padding: 0 15px; margin-bottom: 14px; flex-wrap: wrap; }
         .chip { padding: 7px 14px; border-radius: 20px; background: var(--card); border: 1.5px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
-        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3); }
+        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .notes-count { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 600; }
         .tool-btn { background: var(--card); border: 1.5px solid var(--border); border-radius: 11px; padding: 7px 11px; font-size: 11px; font-weight: 600; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
         .tool-btn:active { background: var(--input-bg); }
@@ -104,19 +122,21 @@
         .notes-list.grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); align-items: start; }
         mark { background: var(--mark-bg); color: var(--mark-text); padding: 0 1px; border-radius: 3px; }
 
-        .note-card { background: var(--card); padding: 15px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); border-left: 4px solid var(--primary); position: relative; animation: cardIn 0.25s ease both; transition: transform 0.15s; }
-        .note-card:active { transform: scale(0.995); }
+        .note-card { background: var(--card); padding: 15px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); border-left: 4px solid var(--primary); position: relative; animation: cardIn 0.25s ease both; }
         @keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .pin-tag { display: none; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 700; color: var(--pin); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .note-card.pinned .pin-tag { display: flex; }
+        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .folder-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 700; padding: 3px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .pin-tag { display: none; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 700; color: var(--pin); }
+        .note-card.pinned .pin-tag { display: inline-flex; }
         .note-text { font-size: 14px; color: var(--text); white-space: pre-wrap; word-break: break-word; margin-bottom: 10px; line-height: 1.55; }
         .read-more-btn { background: none; border: none; color: var(--primary); font-weight: 700; font-size: 11.5px; cursor: pointer; padding: 0; margin-bottom: 8px; }
         .note-footer { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 9px; gap: 8px; }
         .note-time { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
-        .note-actions { display: flex; gap: 13px; align-items: center; }
+        .note-actions { display: flex; gap: 12px; align-items: center; }
         .note-actions button { background: none; border: none; cursor: pointer; font-size: 14px; padding: 0; transition: transform 0.1s; }
         .note-actions button:active { transform: scale(0.85); }
         .btn-pin { color: var(--pin); }
+        .btn-move { color: #14b8a6; }
         .btn-copy { color: #10b981; }
         .btn-share { color: #8b5cf6; }
         .btn-edit { color: var(--primary); }
@@ -127,8 +147,32 @@
         .no-results .nr-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
         .no-results .nr-sub { font-size: 12px; }
 
+        /* ---------- MODAL ---------- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-overlay.show { display: flex; }
+        .modal { background: var(--card); width: 100%; max-width: 480px; border-radius: 22px 22px 0 0; padding: 22px 20px 28px 20px; animation: slideUp 0.25s ease; max-height: 85vh; overflow-y: auto; }
+        @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 9px; }
+        .modal-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 16px; }
+        .modal-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); outline: none; font-size: 14px; background: var(--input-bg); color: var(--text); margin-bottom: 14px; font-family: inherit; }
+        .modal-input:focus { border-color: var(--primary); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+        .m-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; }
+        .m-btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; }
+        .m-btn-ghost { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); }
+        .m-btn-danger { background: #ef4444; color: #fff; }
+        .folder-option { display: flex; align-items: center; gap: 11px; padding: 13px 14px; border-radius: 13px; border: 1.5px solid var(--border); margin-bottom: 9px; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: all 0.12s; }
+        .folder-option:active { background: var(--input-bg); }
+        .folder-option.current { border-color: var(--primary); background: rgba(59,130,246,0.06); }
+        .folder-option .fo-count { margin-left: auto; font-size: 10.5px; color: var(--muted); font-weight: 700; background: var(--input-bg); padding: 2px 9px; border-radius: 10px; }
+        .mini-colors { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 14px 6px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item i { width: 20px; text-align: center; font-size: 14px; }
+        .menu-item.danger { color: #ef4444; }
+
         /* ---------- TOAST ---------- */
-        .toast { position: fixed; bottom: 22px; left: 15px; right: 15px; background: var(--toast-bg); color: #fff; padding: 14px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 100; transform: translateY(100px); opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease; gap: 10px; }
+        .toast { position: fixed; bottom: 22px; left: 15px; right: 15px; background: var(--toast-bg); color: #fff; padding: 14px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 300; transform: translateY(100px); opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease; gap: 10px; }
         .toast.show { transform: translateY(0); opacity: 1; }
         .toast .t-msg { display: flex; align-items: center; gap: 9px; }
         .toast button { background: none; border: none; color: #60a5fa; font-weight: 700; cursor: pointer; font-size: 13px; flex-shrink: 0; }
@@ -157,9 +201,22 @@
         Could not load <code>firebase_config.js</code>. Make sure the file exists in the same folder and check Console (F12) for details.
     </div>
 
+    <!-- FOLDER BAR -->
+    <div class="folder-bar-wrap">
+        <div class="folder-bar" id="folderBar">
+            <div class="folder-chip"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>
+    </div>
+
     <div class="note-input-container">
         <textarea id="noteText" placeholder="Write something you want to remember..." maxlength="1000" oninput="onNoteInput()"></textarea>
-        <div class="color-picker" id="colorPicker"></div>
+        <div class="composer-options">
+            <div class="color-picker" id="colorPicker"></div>
+            <div class="folder-target" id="folderTarget" onclick="openMoveModal('composer')">
+                <i class="fas fa-folder"></i><span id="folderTargetName">No folder</span>
+                <i class="fas fa-chevron-down" style="color:var(--muted)"></i>
+            </div>
+        </div>
         <div class="input-meta">
             <span class="editing-badge" id="editingBadge"><i class="fas fa-pen"></i> Editing note</span>
             <span class="char-count" id="charCount">0 / 1000</span>
@@ -194,24 +251,27 @@
         <button id="toastUndoBtn" onclick="undoDelete()">UNDO</button>
     </div>
 
-    <!-- Watchdog: if module fails to load, show visible error instead of silent death -->
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+        <div class="modal" id="modalBox"></div>
+    </div>
+
     <script>
         window.__notesReady = false;
         setTimeout(() => {
             if (!window.__notesReady) {
                 document.getElementById('loadError').style.display = 'block';
-                const list = document.getElementById('notesList');
-                if (list) list.innerHTML = '';
+                document.getElementById('folderBar').innerHTML = '';
+                document.getElementById('notesList').innerHTML = '';
             }
         }, 4000);
     </script>
 
     <script type="module">
-        // NOTE: 'set' is not exported from firebase_config.js, so we import it from CDN directly.
         import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, remove } from './firebase_config.js';
-        import { set } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { set, get } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-        window.__notesReady = true; // module loaded successfully
+        window.__notesReady = true;
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const DRAFT_KEY = `noteDraft_${SHOP_ID}`;
@@ -228,12 +288,16 @@
         };
 
         let allNotes = [];
+        let allFolders = [];
+        let notesLoaded = false, foldersLoaded = false;
+        let currentFolder = 'all';          // 'all' | 'unfiled' | folderId
         let editingId = null;
         let lastDeleted = null;
         let toastTimer = null;
         let filterMode = 'all';
         let sortMode = 'newest';
         let selectedColor = '';
+        let composerFolder = '';            // folder id assigned to note being composed
         const expandedIds = new Set();
 
         // ---------- THEME ----------
@@ -244,33 +308,46 @@
             localStorage.setItem('appTheme', next);
             document.getElementById('themeIcon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             document.querySelector('meta[name="theme-color"]').setAttribute('content', next === 'dark' ? '#0b1220' : '#3b82f6');
-            renderColorPicker();
-            renderNotes();
+            renderColorPicker(); renderFolderBar(); renderNotes();
         };
         (function initTheme() {
             const saved = localStorage.getItem('appTheme') || 'light';
             document.documentElement.setAttribute('data-theme', saved);
-            const icon = document.getElementById('themeIcon');
-            if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('themeIcon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
         })();
+
+        // ---------- DATA LISTENERS ----------
+        rtdbOnValue(rtdbRef(rtdb, `notes/${SHOP_ID}`), (snap) => {
+            allNotes = snap.exists() ? Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })) : [];
+            notesLoaded = true;
+            renderFolderBar(); renderNotes();
+        }, (err) => { document.getElementById('syncText').textContent = 'Sync error: ' + err.code; });
+
+        rtdbOnValue(rtdbRef(rtdb, `noteFolders/${SHOP_ID}`), (snap) => {
+            allFolders = snap.exists() ? Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })) : [];
+            foldersLoaded = true;
+            if (currentFolder !== 'all' && currentFolder !== 'unfiled' && !allFolders.find(f => f.id === currentFolder)) {
+                currentFolder = 'all';
+            }
+            renderFolderBar(); renderNotes();
+        });
 
         // ---------- INIT ----------
         window.onload = () => {
-            rtdbOnValue(rtdbRef(rtdb, `notes/${SHOP_ID}`), (snap) => {
-                allNotes = snap.exists() ? Object.entries(snap.val()).map(([id, val]) => ({ id, ...val })) : [];
-                renderNotes();
-            }, (err) => {
-                document.getElementById('syncText').textContent = 'Sync error: ' + err.code;
-            });
-
-            const draft = localStorage.getItem(DRAFT_KEY);
-            if (draft && draft.trim()) {
-                document.getElementById('noteText').value = draft;
-                showToast('Draft restored', 'fa-clock-rotate-left', false);
+            const draftRaw = localStorage.getItem(DRAFT_KEY);
+            if (draftRaw) {
+                try {
+                    const d = JSON.parse(draftRaw);
+                    if (d && typeof d.text === 'string') {
+                        document.getElementById('noteText').value = d.text;
+                        composerFolder = d.folder || '';
+                        showToast('Draft restored', 'fa-clock-rotate-left', false);
+                    } else {
+                        document.getElementById('noteText').value = draftRaw; // legacy plain-text draft
+                    }
+                } catch { document.getElementById('noteText').value = draftRaw; }
             }
-            renderColorPicker();
-            updateCharCount();
-            autoGrow();
+            renderColorPicker(); updateCharCount(); autoGrow(); renderFolderTarget();
         };
 
         // ---------- HELPERS ----------
@@ -280,13 +357,11 @@
             return d.innerHTML;
         }
 
-        // Safe highlight: split raw text, escape each part, wrap matches in <mark>
         function highlightAndEscape(text, query) {
             if (!query) return escapeHtml(text);
-            const lower = text.toLowerCase();
-            const q = query.toLowerCase();
+            const lower = (text || '').toLowerCase(), q = query.toLowerCase();
             let result = '', i = 0;
-            while (i < text.length) {
+            while (i < (text || '').length) {
                 const idx = lower.indexOf(q, i);
                 if (idx === -1) { result += escapeHtml(text.slice(i)); break; }
                 result += escapeHtml(text.slice(i, idx));
@@ -306,9 +381,7 @@
             return `${d.toLocaleDateString('en-GB')} at ${time}`;
         }
 
-        function isDark() {
-            return document.documentElement.getAttribute('data-theme') === 'dark';
-        }
+        function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
 
         function autoGrow() {
             const ta = document.getElementById('noteText');
@@ -316,19 +389,217 @@
             ta.style.height = Math.min(ta.scrollHeight, 260) + 'px';
         }
 
+        function getFolderById(id) { return allFolders.find(f => f.id === id); }
+        function countNotesIn(fid) { return allNotes.filter(n => (n.folder || '') === fid).length; }
+        function folderDisplayName(fid) {
+            if (fid === 'all') return 'All Notes';
+            if (fid === 'unfiled' || !fid) return 'No folder';
+            const f = getFolderById(fid);
+            return f ? f.name : 'No folder';
+        }
+
+        // ---------- FOLDER BAR ----------
+        window.selectFolder = (fid) => {
+            currentFolder = fid;
+            if (!editingId) composerFolder = (fid === 'all') ? '' : (fid === 'unfiled' ? '' : fid);
+            renderFolderBar(); renderFolderTarget(); renderNotes();
+        };
+
+        function renderFolderBar() {
+            if (!foldersLoaded) return;
+            const bar = document.getElementById('folderBar');
+            const chips = [
+                { id: 'all', name: 'All Notes', icon: 'fa-layer-group', count: allNotes.length, color: null, custom: false },
+                { id: 'unfiled', name: 'Unfiled', icon: 'fa-inbox', count: countNotesIn(''), color: null, custom: false },
+                ...allFolders.sort((a, b) => (a.created_at || 0) - (b.created_at || 0)).map(f => ({
+                    id: f.id, name: f.name, icon: 'fa-folder', count: countNotesIn(f.id), color: f.color || 'blue', custom: true
+                }))
+            ];
+            bar.innerHTML = chips.map(c => `
+                <div class="folder-chip ${currentFolder === c.id ? 'active' : ''}" onclick="selectFolder('${c.id}')">
+                    ${c.color ? `<span class="fc-dot" style="background:${COLOR_MAP[c.color] ? COLOR_MAP[c.color].border : '#3b82f6'}"></span>` : `<i class="fas ${c.icon}"></i>`}
+                    <span>${escapeHtml(c.name)}</span>
+                    <span class="fc-count">${c.count}</span>
+                    ${c.custom ? `<button class="fc-menu" onclick="event.stopPropagation(); openFolderMenu('${c.id}')"><i class="fas fa-ellipsis-vertical"></i></button>` : ''}
+                </div>`).join('') + `
+                <div class="folder-chip add-chip" onclick="openFolderModal()"><i class="fas fa-plus"></i><span>New Folder</span></div>`;
+        }
+
+        function renderFolderTarget() {
+            const nameEl = document.getElementById('folderTargetName');
+            const f = getFolderById(composerFolder);
+            nameEl.textContent = f ? f.name : 'No folder';
+        }
+
+        // ---------- MODALS ----------
+        function openModal(html) {
+            document.getElementById('modalBox').innerHTML = html;
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+        window.closeModal = () => document.getElementById('modalOverlay').classList.remove('show');
+
+        let modalFolderColor = 'blue';
+        let modalFolderId = null;
+
+        window.openFolderModal = (folderId = null) => {
+            modalFolderId = folderId;
+            const f = folderId ? getFolderById(folderId) : null;
+            modalFolderColor = f ? (f.color || 'blue') : 'blue';
+            openModal(`
+                <div class="modal-title"><i class="fas ${folderId ? 'fa-folder-open' : 'fa-folder-plus'}" style="color:var(--primary)"></i> ${folderId ? 'Rename Folder' : 'New Folder'}</div>
+                <div class="modal-sub">${folderId ? 'Change the name or color of this folder.' : 'Group related notes together for easy access.'}</div>
+                <input type="text" class="modal-input" id="folderNameInput" placeholder="Folder name (e.g. Business Ideas)" maxlength="30" value="${f ? escapeHtml(f.name) : ''}">
+                <div class="mini-colors" id="modalColors"></div>
+                <div class="modal-actions">
+                    <button class="m-btn m-btn-ghost" onclick="closeModal()">Cancel</button>
+                    <button class="m-btn m-btn-primary" onclick="saveFolderModal()"><i class="fas fa-check"></i> ${folderId ? 'Rename' : 'Create'}</button>
+                </div>
+            `);
+            renderModalColors();
+            setTimeout(() => document.getElementById('folderNameInput').focus(), 100);
+        };
+
+        function renderModalColors() {
+            document.getElementById('modalColors').innerHTML = Object.entries(COLOR_MAP).map(([k, v]) => `
+                <div class="color-dot ${modalFolderColor === k ? 'selected' : ''}" style="background:${v.border}"
+                    onclick="pickModalColor('${k}')">${modalFolderColor === k ? '<i class="fas fa-check"></i>' : ''}</div>`).join('');
+        }
+        window.pickModalColor = (k) => { modalFolderColor = k; renderModalColors(); };
+
+        window.saveFolderModal = async () => {
+            const name = document.getElementById('folderNameInput').value.trim();
+            if (!name) { showToast('Enter a folder name', 'fa-triangle-exclamation', false); return; }
+            try {
+                if (modalFolderId) {
+                    await update(rtdbRef(rtdb, `noteFolders/${SHOP_ID}/${modalFolderId}`), { name, color: modalFolderColor });
+                    showToast('Folder renamed', 'fa-check', false);
+                } else {
+                    const newRef = await push(rtdbRef(rtdb, `noteFolders/${SHOP_ID}`), { name, color: modalFolderColor, created_at: Date.now() });
+                    currentFolder = newRef.key;
+                    composerFolder = newRef.key;
+                    renderFolderTarget();
+                    showToast('Folder created', 'fa-check', false);
+                }
+                closeModal();
+            } catch (e) { showToast('Error: ' + e.message, 'fa-triangle-exclamation', false); }
+        };
+
+        window.openFolderMenu = (folderId) => {
+            const f = getFolderById(folderId);
+            if (!f) return;
+            openModal(`
+                <div class="modal-title"><span class="fc-dot" style="background:${COLOR_MAP[f.color] ? COLOR_MAP[f.color].border : '#3b82f6'}; width:14px; height:14px;"></i></span> ${escapeHtml(f.name)}</div>
+                <div class="modal-sub">${countNotesIn(folderId)} note(s) inside this folder</div>
+                <div class="menu-item" onclick="closeModal(); openFolderModal('${folderId}')"><i class="fas fa-pen" style="color:var(--primary)"></i> Rename / Change color</div>
+                <div class="menu-item" onclick="closeModal(); openMoveAllModal('${folderId}')"><i class="fas fa-right-left" style="color:#14b8a6"></i> Move all notes elsewhere</div>
+                <div class="menu-item danger" onclick="confirmDeleteFolder('${folderId}')"><i class="fas fa-trash"></i> Delete folder</div>
+                <div class="modal-actions" style="margin-top:14px"><button class="m-btn m-btn-ghost" onclick="closeModal()">Close</button></div>
+            `);
+        };
+
+        window.confirmDeleteFolder = async (folderId) => {
+            const f = getFolderById(folderId);
+            if (!f) return;
+            const count = countNotesIn(folderId);
+            openModal(`
+                <div class="modal-title" style="color:#ef4444"><i class="fas fa-triangle-exclamation"></i> Delete "${escapeHtml(f.name)}"?</div>
+                <div class="modal-sub">The folder will be removed${count ? `, and its <b>${count}</b> note(s) will move to <b>Unfiled</b>` : ''}. Your notes will NOT be deleted.</div>
+                <div class="modal-actions">
+                    <button class="m-btn m-btn-ghost" onclick="closeModal()">Cancel</button>
+                    <button class="m-btn m-btn-danger" onclick="deleteFolder('${folderId}')"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            `);
+        };
+
+        window.deleteFolder = async (folderId) => {
+            try {
+                const notesInFolder = allNotes.filter(n => (n.folder || '') === folderId);
+                const updates = {};
+                notesInFolder.forEach(n => { updates[`notes/${SHOP_ID}/${n.id}/folder`] = ''; });
+                updates[`noteFolders/${SHOP_ID}/${folderId}`] = null;
+                await update(rtdbRef(rtdb, `/`), updates);
+                if (currentFolder === folderId) currentFolder = 'all';
+                if (composerFolder === folderId) { composerFolder = ''; renderFolderTarget(); }
+                closeModal();
+                showToast('Folder deleted' + (notesInFolder.length ? ` • ${notesInFolder.length} note(s) → Unfiled` : ''), 'fa-trash', false);
+            } catch (e) { showToast('Error: ' + e.message, 'fa-triangle-exclamation', false); }
+        };
+
+        window.openMoveAllModal = (fromFolderId) => {
+            const targets = [{ id: '', name: 'Unfiled', color: null }, ...allFolders.filter(f => f.id !== fromFolderId)];
+            if (!targets.length) { showToast('No other folder to move to', 'fa-triangle-exclamation', false); return; }
+            openModal(`
+                <div class="modal-title"><i class="fas fa-right-left" style="color:#14b8a6"></i> Move all notes</div>
+                <div class="modal-sub">Move all notes from this folder to:</div>
+                ${targets.map(t => `
+                    <div class="folder-option" onclick="moveAllNotes('${fromFolderId}', '${t.id}')">
+                        ${t.color ? `<span class="fc-dot" style="background:${COLOR_MAP[t.color].border}"></span>` : '<i class="fas fa-inbox" style="color:var(--muted)"></i>'}
+                        ${escapeHtml(t.name)}
+                        <span class="fo-count">${countNotesIn(t.id)}</span>
+                    </div>`).join('')}
+                <div class="modal-actions"><button class="m-btn m-btn-ghost" onclick="closeModal()">Cancel</button></div>
+            `);
+        };
+
+        window.moveAllNotes = async (fromFolderId, toFolderId) => {
+            try {
+                const notesInFolder = allNotes.filter(n => (n.folder || '') === fromFolderId);
+                const updates = {};
+                notesInFolder.forEach(n => { updates[`notes/${SHOP_ID}/${n.id}/folder`] = toFolderId; });
+                await update(rtdbRef(rtdb, `/`), updates);
+                closeModal();
+                showToast(`${notesInFolder.length} note(s) moved to ${folderDisplayName(toFolderId)}`, 'fa-right-left', false);
+            } catch (e) { showToast('Error: ' + e.message, 'fa-triangle-exclamation', false); }
+        };
+
+        // ---------- MOVE SINGLE NOTE ----------
+        window.openMoveModal = (noteId) => {
+            const options = [{ id: '', name: 'Unfiled', color: null }, ...allFolders];
+            const currentFid = noteId === 'composer' ? composerFolder : ((allNotes.find(n => n.id === noteId) || {}).folder || '');
+            openModal(`
+                <div class="modal-title"><i class="fas fa-folder-tree" style="color:var(--primary)"></i> ${noteId === 'composer' ? 'Save note to...' : 'Move note to...'}</div>
+                <div class="modal-sub">Pick a folder for this note.</div>
+                ${options.map(t => `
+                    <div class="folder-option ${t.id === (currentFid || '') ? 'current' : ''}" onclick="pickMoveTarget('${noteId}', '${t.id}')">
+                        ${t.color ? `<span class="fc-dot" style="background:${COLOR_MAP[t.color].border}"></span>` : '<i class="fas fa-inbox" style="color:var(--muted)"></i>'}
+                        ${escapeHtml(t.name)}
+                        ${t.id !== '' ? `<span class="fo-count">${countNotesIn(t.id)}</span>` : ''}
+                        ${t.id === (currentFid || '') ? '<i class="fas fa-check" style="margin-left:auto;color:var(--primary)"></i>' : ''}
+                    </div>`).join('')}
+                <div class="folder-option" onclick="closeModal(); openFolderModal()" style="border-style:dashed; color:var(--primary); justify-content:center;">
+                    <i class="fas fa-plus"></i> Create new folder
+                </div>
+                <div class="modal-actions"><button class="m-btn m-btn-ghost" onclick="closeModal()">Cancel</button></div>
+            `);
+        };
+
+        window.pickMoveTarget = async (noteId, folderId) => {
+            if (noteId === 'composer') {
+                composerFolder = folderId;
+                renderFolderTarget();
+                closeModal();
+                showToast('Will save to: ' + folderDisplayName(folderId), 'fa-folder', false);
+                return;
+            }
+            try {
+                await update(rtdbRef(rtdb, `notes/${SHOP_ID}/${noteId}`), { folder: folderId });
+                closeModal();
+                showToast('Moved to ' + folderDisplayName(folderId), 'fa-right-left', false);
+            } catch (e) { showToast('Error: ' + e.message, 'fa-triangle-exclamation', false); }
+        };
+
         // ---------- INPUT ----------
         window.onNoteInput = () => {
-            updateCharCount();
-            autoGrow();
-            if (!editingId) localStorage.setItem(DRAFT_KEY, document.getElementById('noteText').value);
+            updateCharCount(); autoGrow();
+            if (!editingId) {
+                localStorage.setItem(DRAFT_KEY, JSON.stringify({ text: document.getElementById('noteText').value, folder: composerFolder }));
+            }
         };
 
         window.onSearchInput = () => {
-            const v = document.getElementById('searchInput').value;
-            document.getElementById('clearSearch').classList.toggle('show', v.length > 0);
+            document.getElementById('clearSearch').classList.toggle('show', document.getElementById('searchInput').value.length > 0);
             renderNotes();
         };
-
         window.clearSearch = () => {
             document.getElementById('searchInput').value = '';
             document.getElementById('clearSearch').classList.remove('show');
@@ -342,24 +613,20 @@
             el.classList.toggle('limit', len >= MAX_LEN);
         };
 
-        // ---------- COLOR PICKER ----------
-        window.selectColor = (key) => {
-            selectedColor = key;
-            renderColorPicker();
-        };
-
+        // ---------- COLOR PICKER (note) ----------
+        window.selectColor = (key) => { selectedColor = key; renderColorPicker(); };
         function renderColorPicker() {
             const picker = document.getElementById('colorPicker');
-            const colors = [{ key: '', bg: isDark() ? 'var(--input-bg)' : '#ffffff', check: selectedColor === '' },
-                ...Object.entries(COLOR_MAP).map(([k, v]) => ({ key: k, bg: isDark() ? v.dark : v.light, check: selectedColor === k }))];
-            picker.innerHTML = '<span class="color-label"><i class="fas fa-palette"></i> Color:</span>' +
-                colors.map(c => `<div class="color-dot ${c.check ? 'selected' : ''}" style="background:${c.bg}"
-                    title="${c.key || 'Default'}" onclick="selectColor('${c.key}')">
-                    ${c.check ? '<i class="fas fa-check"></i>' : ''}</div>`).join('');
+            const colors = [{ key: '', bg: isDark() ? 'var(--input-bg)' : '#ffffff' },
+                ...Object.entries(COLOR_MAP).map(([k, v]) => ({ key: k, bg: isDark() ? v.dark : v.light }))];
+            picker.innerHTML = '<span class="color-label"><i class="fas fa-palette"></i></span>' +
+                colors.map(c => `<div class="color-dot ${selectedColor === c.key ? 'selected' : ''}" style="background:${c.bg}"
+                    title="${c.key || 'Default'}" onclick="selectColor('${c.key}')">${selectedColor === c.key ? '<i class="fas fa-check"></i>' : ''}</div>`).join('');
         }
 
-        // ---------- RENDER ----------
+        // ---------- RENDER NOTES ----------
         window.renderNotes = () => {
+            if (!notesLoaded) return;
             const list = document.getElementById('notesList');
             const query = document.getElementById('searchInput').value.trim().toLowerCase();
 
@@ -367,6 +634,8 @@
             document.getElementById('chipPinned').textContent = `Pinned (${allNotes.filter(n => !!n.pinned).length})`;
 
             let notes = [...allNotes];
+            if (currentFolder === 'unfiled') notes = notes.filter(n => !n.folder);
+            else if (currentFolder !== 'all') notes = notes.filter(n => n.folder === currentFolder);
             if (filterMode === 'pinned') notes = notes.filter(n => !!n.pinned);
             if (query) notes = notes.filter(n => (n.text || '').toLowerCase().includes(query));
 
@@ -378,41 +647,47 @@
             });
 
             if (notes.length === 0) {
+                const folderEmpty = currentFolder !== 'all' && currentFolder !== 'unfiled';
                 list.innerHTML = query
                     ? `<div class="no-results"><i class="fas fa-magnifying-glass"></i><div class="nr-title">No matches</div><div class="nr-sub">No notes match "${escapeHtml(query)}"</div></div>`
                     : filterMode === 'pinned'
                         ? '<div class="no-results"><i class="fas fa-thumbtack"></i><div class="nr-title">No pinned notes</div><div class="nr-sub">Pin important notes to find them fast</div></div>'
-                        : '<div class="no-results"><i class="fas fa-clipboard"></i><div class="nr-title">No notes yet</div><div class="nr-sub">Write your first note above ☝️</div></div>';
+                        : `<div class="no-results"><i class="fas ${folderEmpty ? 'fa-folder-open' : 'fa-clipboard'}"></i><div class="nr-title">${folderEmpty ? escapeHtml(folderDisplayName(currentFolder)) + ' is empty' : 'No notes yet'}</div><div class="nr-sub">Write your first note above ☝️</div></div>`;
                 return;
             }
 
             const dark = isDark();
+            const showFolderBadge = currentFolder === 'all';
             list.innerHTML = notes.map(note => {
                 const cm = note.color && COLOR_MAP[note.color] ? COLOR_MAP[note.color] : null;
                 const borderColor = cm ? cm.border : (note.pinned ? 'var(--pin)' : 'var(--primary)');
                 const bg = cm ? (dark ? cm.dark : cm.light) : 'var(--card)';
+
+                const noteFolder = getFolderById(note.folder);
+                const folderBadge = showFolderBadge
+                    ? (noteFolder
+                        ? `<span class="folder-badge" style="color:${COLOR_MAP[noteFolder.color] ? COLOR_MAP[noteFolder.color].border : 'var(--primary)'}; background:${dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'};"><i class="fas fa-folder" style="font-size:8px"></i> ${escapeHtml(noteFolder.name)}</span>`
+                        : `<span class="folder-badge" style="color:var(--muted); background:${dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'};"><i class="fas fa-inbox" style="font-size:8px"></i> Unfiled</span>`)
+                    : '';
 
                 const isLong = (note.text || '').length > READ_MORE_LEN;
                 const expanded = expandedIds.has(note.id);
                 let displayText = note.text || '';
                 if (isLong && !expanded) displayText = displayText.slice(0, READ_MORE_LEN) + '…';
 
-                const highlighted = highlightAndEscape(displayText, query);
-                const createdStr = formatDate(note.created_at);
-                const editedStr = note.updated_at ? `<span>Edited ${formatDate(note.updated_at)}</span>` : '';
-
                 return `
                 <div class="note-card ${note.pinned ? 'pinned' : ''}" style="border-left-color:${borderColor}; background:${bg};">
-                    <div class="pin-tag"><i class="fas fa-thumbtack"></i> Pinned</div>
-                    <div class="note-text">${highlighted}</div>
+                    <div class="card-tags">${folderBadge}<span class="pin-tag"><i class="fas fa-thumbtack"></i> Pinned</span></div>
+                    <div class="note-text">${highlightAndEscape(displayText, query)}</div>
                     ${isLong ? `<button class="read-more-btn" onclick="toggleExpand('${note.id}')">${expanded ? 'Show less' : 'Read more'}</button>` : ''}
                     <div class="note-footer">
                         <div class="note-time">
-                            <span>${createdStr}</span>
-                            ${editedStr}
+                            <span>${formatDate(note.created_at)}</span>
+                            ${note.updated_at ? `<span>Edited ${formatDate(note.updated_at)}</span>` : ''}
                         </div>
                         <div class="note-actions">
                             <button onclick="togglePin('${note.id}', ${!!note.pinned})" class="btn-pin" title="Pin"><i class="fas fa-thumbtack"></i></button>
+                            <button onclick="openMoveModal('${note.id}')" class="btn-move" title="Move to folder"><i class="fas fa-folder-open"></i></button>
                             <button onclick="copyNote('${note.id}')" class="btn-copy" title="Copy"><i class="far fa-copy"></i></button>
                             <button onclick="shareNote('${note.id}')" class="btn-share" title="Share"><i class="fas fa-share-alt"></i></button>
                             <button onclick="editNote('${note.id}')" class="btn-edit" title="Edit"><i class="fas fa-pen"></i></button>
@@ -444,14 +719,13 @@
                         showToast('Note updated', 'fa-check', false);
                     }
                 } else {
-                    await push(rtdbRef(rtdb, `notes/${SHOP_ID}`), { text, color: selectedColor, created_at: Date.now(), pinned: false });
+                    await push(rtdbRef(rtdb, `notes/${SHOP_ID}`), { text, color: selectedColor, folder: composerFolder, created_at: Date.now(), pinned: false });
                     textEl.value = '';
                     selectedColor = '';
                     renderColorPicker();
                     localStorage.removeItem(DRAFT_KEY);
-                    updateCharCount();
-                    autoGrow();
-                    showToast('Note saved', 'fa-check', false);
+                    updateCharCount(); autoGrow();
+                    showToast('Note saved' + (composerFolder ? ' to ' + folderDisplayName(composerFolder) : ''), 'fa-check', false);
                 }
             } catch (e) {
                 showToast('Error: ' + e.message, 'fa-triangle-exclamation', false);
@@ -466,10 +740,10 @@
             if (!note) return;
             editingId = id;
             selectedColor = note.color || '';
-            renderColorPicker();
+            composerFolder = note.folder || '';
+            renderColorPicker(); renderFolderTarget();
             document.getElementById('noteText').value = note.text;
-            updateCharCount();
-            autoGrow();
+            updateCharCount(); autoGrow();
             document.getElementById('saveBtn').innerHTML = '<i class="fas fa-check"></i> Update Note';
             document.getElementById('cancelBtn').classList.add('show');
             document.getElementById('editingBadge').classList.add('show');
@@ -480,11 +754,11 @@
         window.cancelEdit = () => {
             editingId = null;
             selectedColor = '';
-            renderColorPicker();
+            composerFolder = (currentFolder === 'all' || currentFolder === 'unfiled') ? '' : currentFolder;
+            renderColorPicker(); renderFolderTarget();
             document.getElementById('noteText').value = '';
             localStorage.removeItem(DRAFT_KEY);
-            updateCharCount();
-            autoGrow();
+            updateCharCount(); autoGrow();
             document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Save Note';
             document.getElementById('cancelBtn').classList.remove('show');
             document.getElementById('editingBadge').classList.remove('show');
@@ -515,13 +789,11 @@
         window.copyNote = async (id) => {
             const note = allNotes.find(n => n.id === id);
             if (!note) return;
-            try {
-                await navigator.clipboard.writeText(note.text);
-            } catch {
+            try { await navigator.clipboard.writeText(note.text); }
+            catch {
                 const ta = document.createElement('textarea');
                 ta.value = note.text;
-                document.body.appendChild(ta);
-                ta.select();
+                document.body.appendChild(ta); ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
             }
@@ -533,9 +805,7 @@
             if (!note) return;
             if (navigator.share) {
                 try { await navigator.share({ title: 'My Note - Poysha POS', text: note.text }); } catch {}
-            } else {
-                window.copyNote(id);
-            }
+            } else window.copyNote(id);
         };
 
         window.toggleExpand = (id) => {
@@ -559,21 +829,26 @@
         };
 
         window.toggleView = () => {
-            const list = document.getElementById('notesList');
-            const isGrid = list.classList.toggle('grid-view');
-            document.getElementById('viewBtn').innerHTML = isGrid
-                ? '<i class="fas fa-list"></i>'
-                : '<i class="fas fa-table-cells-large"></i>';
+            const isGrid = document.getElementById('notesList').classList.toggle('grid-view');
+            document.getElementById('viewBtn').innerHTML = isGrid ? '<i class="fas fa-list"></i>' : '<i class="fas fa-table-cells-large"></i>';
         };
 
         window.exportNotes = () => {
             if (allNotes.length === 0) { showToast('No notes to export', 'fa-file-export', false); return; }
-            let content = `MY NOTES - Poysha POS\nExported: ${new Date().toLocaleString()}\nTotal: ${allNotes.length} notes\n${'='.repeat(40)}\n\n`;
-            [...allNotes]
-                .sort((a, b) => (!!b.pinned - !!a.pinned) || (b.created_at - a.created_at))
-                .forEach((n, i) => {
+            let content = `MY NOTES - Poysha POS\nExported: ${new Date().toLocaleString()}\nTotal: ${allNotes.length} notes | ${allFolders.length} folders\n${'='.repeat(40)}\n\n`;
+
+            const groups = [{ id: '__unfiled__', name: 'UNFILED' }, ...allFolders];
+            groups.forEach(g => {
+                const gid = g.id === '__unfiled__' ? '' : g.id;
+                const inFolder = allNotes.filter(n => (n.folder || '') === gid)
+                    .sort((a, b) => (!!b.pinned - !!a.pinned) || (b.created_at - a.created_at));
+                if (!inFolder.length) return;
+                content += `\n${'#'.repeat(4)} FOLDER: ${g.name} (${inFolder.length}) ${'#'.repeat(4)}\n\n`;
+                inFolder.forEach((n, i) => {
                     content += `[${i + 1}] ${n.pinned ? '[PINNED] ' : ''}${formatDate(n.created_at)}\n${n.text}\n\n${'-'.repeat(40)}\n\n`;
                 });
+            });
+
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -594,19 +869,12 @@
             clearTimeout(toastTimer);
             toastTimer = setTimeout(hideToast, 5000);
         }
-        function hideToast() {
-            document.getElementById('toast').classList.remove('show');
-        }
+        function hideToast() { document.getElementById('toast').classList.remove('show'); }
 
         // ---------- KEYBOARD ----------
         document.getElementById('noteText').addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                window.saveNote();
-            }
-            if (e.key === 'Escape' && editingId) {
-                window.cancelEdit();
-            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); window.saveNote(); }
+            if (e.key === 'Escape' && editingId) window.cancelEdit();
         });
     </script>
 </body>
