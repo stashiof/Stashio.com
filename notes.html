@@ -100,7 +100,7 @@
     </div>
 
     <script type="module">
-        import { rtdb, ref as rtdbRef, push, set, update, onValue as rtdbOnValue, remove } from './firebase_config.js';
+        import { rtdb, ref as rtdbRef, push, update, onValue as rtdbOnValue, remove } from './firebase_config.js';
         const SHOP_ID = localStorage.getItem('activeShopId');
 
         let allNotes = [];
@@ -243,7 +243,7 @@
         window.undoDelete = async () => {
             if (!lastDeleted) return;
             const { id, ...data } = lastDeleted;
-            await set(rtdbRef(rtdb, `notes/${SHOP_ID}/${id}`), data);
+            await update(rtdbRef(rtdb, `notes/${SHOP_ID}/${id}`), data);
             lastDeleted = null;
             hideToast();
         };
