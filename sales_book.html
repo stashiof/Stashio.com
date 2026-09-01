@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -17,32 +17,18 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
             --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
-            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6;
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
-
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        /* --- PRINT STYLES (Matching your Excel screenshot) --- */
-        @media print {
-            body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 10mm; display: block !important; font-family: sans-serif; }
-            .no-print { display: none !important; }
-            body { background: white; }
-            table { border-collapse: collapse !important; width: 100% !important; border: 2px solid #000 !important; }
-            th, td { border: 1px solid #000 !important; padding: 6px !important; font-size: 12px !important; }
-            th { background-color: #fde047 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold; } /* Yellow header */
-        }
 
         /* Header */
         .app-header {
@@ -56,21 +42,34 @@
         .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
-        .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        
+        .header-actions { display: flex; gap: 8px; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-header:active { transform: scale(0.95); }
 
         /* Filter */
-        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: flex-end; border: 1px solid #f8fafc; }
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; border: 1px solid #f8fafc; }
+        .filter-row { display: flex; gap: 10px; align-items: flex-end; }
         .date-input { flex: 1; }
         .date-input label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
         .date-input input { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; outline: none; background: #f8fafc; color: var(--text-dark); font-family: inherit;}
+        .date-input input:focus { border-color: var(--primary); background: white; }
         .btn-filter { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; width: 40px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(11, 74, 62, 0.24); }
 
+        .search-box { position: relative; margin-top: 10px; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; outline: none; background: #f8fafc; font-family: inherit; }
+        .search-box input:focus { border-color: var(--primary); background: white; }
+
+        .quick-presets { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; }
+        .preset-chip { padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: var(--text-dark); border: none; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .preset-chip.active { background: var(--primary); color: white; }
+
         /* Summary */
-        .summary-bar { display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 15px; }
-        .sum-box { flex: 1; background: var(--white); padding: 12px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
-        .sum-box:first-child { margin-right: 10px; }
-        .sum-title { font-size: 10px; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
-        .sum-val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+        .summary-bar { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 15px; margin-bottom: 15px; gap: 8px; }
+        .sum-box { background: var(--white); padding: 12px 6px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
+        .sum-title { font-size: 9.5px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+        .sum-val { font-size: 14px; font-weight: 800; margin-top: 2px; }
 
         /* List */
         .history-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
@@ -132,13 +131,27 @@
         .rate-input { width: 100%; border: none; background: transparent; font-weight: 700; font-size: 13px; outline: none; padding: 6px 0; color: var(--primary); }
 
         .btn-remove-item { background: #fee2e2; border: none; color: var(--danger); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        
         .btn-save-changes { width: 100%; background: var(--success); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
 
         /* Product Search Dropdown */
         .e-search-results { position: absolute; left: 0; top: 100%; width: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1000; margin-top: 5px; display: none; }
         .e-search-item { padding: 10px 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; }
         .e-search-item:hover { background: #f0f5ff; }
+
+        /* Print Specific CSS */
+        @media print {
+            @page { size: A4 portrait; margin: 8mm; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            #printAreaHolder { display: block !important; }
+            #printAreaHolder table { width: 100% !important; border-collapse: collapse !important; }
+            #printAreaHolder thead { display: table-header-group !important; }
+            #printAreaHolder tfoot { display: table-row-group !important; }
+            #printAreaHolder tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #printAreaHolder th, #printAreaHolder td { border: 1px solid #000000 !important; padding: 6px 8px !important; font-size: 10.5px !important; color: black !important; }
+            #printAreaHolder th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-signatures { page-break-inside: avoid !important; margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
@@ -151,20 +164,37 @@
                 <a href="home.html"><i class="fas fa-arrow-left"></i></a>
                 <span>Sales Book</span>
             </div>
-            <button onclick="downloadPDF()" class="btn-pdf"><i class="fas fa-file-pdf"></i> PDF Report</button>
+            <div class="header-actions">
+                <button onclick="exportToExcel()" class="btn-header" style="background:#16a34a;"><i class="fas fa-file-excel"></i> Excel</button>
+                <button onclick="printSalesReport()" class="btn-header"><i class="fas fa-print"></i> Print / PDF</button>
+            </div>
         </div>
     </div>
 
     <div class="filter-card no-print">
-        <div class="date-input">
-            <label>From Date</label>
-            <input type="date" id="dateFrom">
+        <div class="filter-row">
+            <div class="date-input">
+                <label>From Date</label>
+                <input type="date" id="dateFrom">
+            </div>
+            <div class="date-input">
+                <label>To Date</label>
+                <input type="date" id="dateTo">
+            </div>
+            <button onclick="loadHistory()" class="btn-filter"><i class="fas fa-search"></i></button>
         </div>
-        <div class="date-input">
-            <label>To Date</label>
-            <input type="date" id="dateTo">
+
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search customer or invoice no..." oninput="renderList()">
         </div>
-        <button onclick="loadHistory()" class="btn-filter"><i class="fas fa-search"></i></button>
+
+        <div class="quick-presets">
+            <button class="preset-chip active" onclick="setPreset('this_month', this)">চলতি মাস</button>
+            <button class="preset-chip" onclick="setPreset('last_month', this)">গত মাস</button>
+            <button class="preset-chip" onclick="setPreset('today', this)">আজকের দিন</button>
+            <button class="preset-chip" onclick="setPreset('all_time', this)">সব সময় (All)</button>
+        </div>
     </div>
 
     <div class="summary-bar no-print">
@@ -176,6 +206,10 @@
             <div class="sum-title text-danger">Total Due</div>
             <div class="sum-val text-danger" id="sumDue">৳0</div>
         </div>
+        <div class="sum-box">
+            <div class="sum-title" style="color:var(--purple);">Est. Profit</div>
+            <div class="sum-val" style="color:var(--purple);" id="sumProfit">৳0</div>
+        </div>
     </div>
 
     <div id="loading" class="no-print" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
@@ -184,6 +218,7 @@
 
     <div class="history-list no-print" id="historyList"></div>
 
+    <!-- Manage Sale Modal -->
     <div class="modal-overlay no-print" id="manageModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -208,20 +243,16 @@
 
                 <div class="action-grid">
                     <button class="action-btn btn-edit" onclick="openEditModal()"><i class="fas fa-edit"></i> Edit Sale (পরিবর্তন করুন)</button>
-                    
-                    <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
-                    <button class="action-btn btn-chalan" style="background:#ede9fe; color:#7c3aed;" onclick="downloadDocumentPdf('chalan')"><i class="fas fa-file-pdf"></i> Chalan PDF</button>
-                    <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
-                    <button class="action-btn btn-bill" style="background:#e0e7ff; color:#0B4A3E;" onclick="downloadDocumentPdf('bill')"><i class="fas fa-file-pdf"></i> Bill PDF</button>
-                    <button class="action-btn btn-quo" onclick="printDocument('quotation')"><i class="fas fa-file-contract"></i> Print Quotation</button>
-                    <button class="action-btn btn-quo" style="background:#cffafe; color:#0891b2;" onclick="downloadDocumentPdf('quotation')"><i class="fas fa-file-pdf"></i> Quotation PDF</button>
-
+                    <button class="action-btn btn-chalan" onclick="printDirectDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
+                    <button class="action-btn btn-bill" onclick="printDirectDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
+                    <button class="action-btn btn-quo" onclick="printDirectDocument('quotation')"><i class="fas fa-file-contract"></i> Print Quotation</button>
                     <button class="action-btn btn-delete" onclick="deleteFullSale()"><i class="fas fa-trash-alt"></i> Delete Full Sale</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Edit Sale Modal -->
     <div class="modal-overlay no-print" id="editModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -229,7 +260,6 @@
                 <button onclick="closeModal('editModal')" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" style="background: #f3f4f6;">
-                
                 <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: var(--shadow);">
                     <div class="grid-2">
                         <div class="input-group custom-dropdown-container" style="margin-bottom: 0;">
@@ -263,7 +293,6 @@
                     <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px; border-top: 1px dashed #e5e7eb; padding-top: 10px;">
                         <span>New Bill Total:</span> <span id="eTotal" style="color: var(--primary);"></span>
                     </div>
-                    
                     <div style="font-size: 11px; text-align: center; border-top: 1px dotted #cbd5e1; padding-top: 10px; margin-top: 10px;" id="eMessage"></div>
                 </div>
                 
@@ -272,12 +301,13 @@
         </div>
     </div>
 
-    <div id="printArea" style="display: none;"></div>
+    <!-- Container for Browser Printing -->
+    <div id="printAreaHolder" style="display:none;"></div>
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get, update, push, remove } from './firebase_config.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
+        import { getShopBranding, renderPremiumDocument } from './invoice_kit.js';
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
@@ -286,33 +316,11 @@
         let filteredRecords = [];
         let currentSale = null;
         let editingSaleData = null; 
-        
         let allProducts = []; 
         let allCustomers = []; 
-        let globalPdfTemplateCode = ""; 
-        let shopLogoImgUrl = ""; 
-
-        // Number to Words
-        function numberToWords(num) {
-            const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
-            const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
-            if ((num = num.toString()).length > 9) return 'overflow';
-            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-            if (!n) return; let str = '';
-            str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
-            str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
-            str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
-            str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
-            str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'Only' : 'Only';
-            return str;
-        }
 
         window.onload = () => {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('dateFrom').value = today;
-            document.getElementById('dateTo').value = today;
-
-            // Load Settings
+            // Theme Sync
             rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                 const themeCode = snap.exists() ? snap.val().code : null;
                 if (themeCode && themeCode.trim() !== "") {
@@ -324,10 +332,6 @@
                 }
             });
 
-            rtdbOnValue(rtdbRef(rtdb, `global_settings/pdf_sales_template`), (snap) => {
-                if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
-            });
-
             // Load Customers
             const customersQuery = query(rtdbRef(rtdb, 'contacts/customers'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(customersQuery, (snap) => {
@@ -337,7 +341,7 @@
                 }
             });
 
-            // Load All Products
+            // Load Products
             const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(productsQuery, (snap) => {
                 if(snap.exists()) {
@@ -347,7 +351,9 @@
                 }
             });
 
-            // Load Sales
+            setPreset('this_month');
+
+            // Load Sales History
             const salesQuery = query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(salesQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
@@ -358,6 +364,35 @@
                 } else { allRecords = []; }
                 loadHistory(); 
             });
+        };
+
+        window.setPreset = (type, btn = null) => {
+            if (btn) {
+                document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+            }
+
+            const now = new Date();
+            let start, end;
+
+            if (type === 'today') {
+                start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            } else if (type === 'last_month') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (type === 'all_time') {
+                start = new Date(2020, 0, 1);
+                end = new Date(now.getFullYear() + 2, 11, 31, 23, 59, 59);
+            } else { // this_month
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            }
+
+            document.getElementById('dateFrom').value = start.toISOString().split('T')[0];
+            document.getElementById('dateTo').value = end.toISOString().split('T')[0];
+
+            if (allRecords.length > 0) loadHistory();
         };
 
         window.loadHistory = () => {
@@ -375,18 +410,35 @@
             renderList();
         };
 
-        function renderList() {
+        window.renderList = () => {
             const listEl = document.getElementById('historyList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             listEl.innerHTML = '';
-            let totalSales = 0, totalDue = 0;
+            
+            let recordsToDisplay = filteredRecords;
+            if(searchTerm) {
+                recordsToDisplay = filteredRecords.filter(r => 
+                    (r.customer_name && r.customer_name.toLowerCase().includes(searchTerm)) ||
+                    (r.customer && r.customer.toLowerCase().includes(searchTerm)) ||
+                    (r.invoice_no && r.invoice_no.toLowerCase().includes(searchTerm))
+                );
+            }
 
-            if (filteredRecords.length === 0) {
-                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-box-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No sales records found for this date.</div>`;
+            let totalSales = 0, totalDue = 0, totalProfit = 0;
+
+            if (recordsToDisplay.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-box-open" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No sales records found.</div>`;
             } else {
-                filteredRecords.forEach(r => {
-                    totalSales += Number(r.total_amount || 0);
-                    totalDue += Number(r.due_amount || 0);
-                    const hasDue = Number(r.due_amount) > 0;
+                recordsToDisplay.forEach(r => {
+                    const tot = Number(r.total_amount || 0);
+                    const due = Number(r.due_amount || 0);
+                    const prof = Number(r.total_profit || 0);
+
+                    totalSales += tot;
+                    totalDue += due;
+                    totalProfit += prof;
+
+                    const hasDue = due > 0;
                     const d = new Date(r.created_at || r.date);
                     
                     const html = `
@@ -401,9 +453,9 @@
                         <div class="hc-body">
                             <div class="hc-items"><i class="fas fa-box" style="color: #cbd5e1;"></i> ${r.items ? r.items.length : 0} Items</div>
                             <div class="hc-amt-box">
-                                <div class="hc-total">৳${Number(r.total_amount).toLocaleString()}</div>
+                                <div class="hc-total">৳${tot.toLocaleString()}</div>
                                 <div class="hc-paid">Received: ৳${Number(r.paid_amount || 0).toLocaleString()}</div>
-                                ${hasDue ? `<div class="hc-due">Due: ৳${Number(r.due_amount).toLocaleString()}</div>` : ''}
+                                ${hasDue ? `<div class="hc-due">Due: ৳${due.toLocaleString()}</div>` : ''}
                             </div>
                         </div>
                         <button onclick="openManageModal('${r.id}')" class="btn-view">Manage Sale</button>
@@ -411,28 +463,68 @@
                     listEl.insertAdjacentHTML('beforeend', html);
                 });
             }
+
             document.getElementById('sumTotal').innerText = `৳${totalSales.toLocaleString()}`;
             document.getElementById('sumDue').innerText = `৳${totalDue.toLocaleString()}`;
-        }
+            document.getElementById('sumProfit').innerText = `৳${totalProfit.toLocaleString()}`;
+        };
 
         window.openManageModal = (id) => {
-            currentSale = filteredRecords.find(x => x.id === id);
+            currentSale = allRecords.find(x => x.id === id);
             if(!currentSale) return;
 
             document.getElementById('mCustomer').innerText = currentSale.customer_name || currentSale.customer || 'Walk-in';
             document.getElementById('mInvoice').innerText = currentSale.invoice_no;
             document.getElementById('mDate').innerText = new Date(currentSale.created_at || currentSale.date).toLocaleString('en-GB');
-            document.getElementById('mTotal').innerText = `৳${currentSale.total_amount}`;
-            document.getElementById('mPaid').innerText = `৳${currentSale.paid_amount}`;
-            document.getElementById('mDue').innerText = `৳${currentSale.due_amount > 0 ? currentSale.due_amount : 0}`;
-            
-            // Show Profit
-            document.getElementById('mProfit').innerText = `৳${currentSale.total_profit || 0}`;
+            document.getElementById('mTotal').innerText = `৳${Number(currentSale.total_amount || 0).toLocaleString()}`;
+            document.getElementById('mPaid').innerText = `৳${Number(currentSale.paid_amount || 0).toLocaleString()}`;
+            document.getElementById('mDue').innerText = `৳${Number(currentSale.due_amount > 0 ? currentSale.due_amount : 0).toLocaleString()}`;
+            document.getElementById('mProfit').innerText = `৳${Number(currentSale.total_profit || 0).toLocaleString()}`;
 
             document.getElementById('manageModal').style.display = 'flex';
         };
 
         window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
+
+        // --- DIRECT PRINT FOR CHALAN / BILL / QUOTATION ---
+        window.printDirectDocument = async (type) => {
+            if(!currentSale) return;
+            const shop = await getShopBranding(SHOP_ID);
+            const custName = currentSale.customer_name || currentSale.customer || 'Walk-in';
+            const invNo = currentSale.invoice_no || 'N/A';
+            const dDate = new Date(currentSale.created_at || currentSale.date).toLocaleDateString('en-GB');
+
+            let html = '';
+            if (type === 'chalan') {
+                const items = (currentSale.items || []).map(item => ({
+                    name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: 0, amount: 0
+                }));
+                html = renderPremiumDocument({
+                    docType: 'INVOICE', docNo: `CHALLAN-${invNo.replace('INV-', '')}`, docDate: dDate,
+                    shop: shop, partyLabel: 'Delivered To', partyName: custName, items: items,
+                    subtotal: 0, discount: 0, total: 0, paid: null, due: null,
+                    extraNote: 'Delivery Challan — prices not shown', footerNote: 'Please verify items upon receipt.'
+                }).replace(/৳0/g, '—');
+            } else {
+                const items = (currentSale.items || []).map(item => {
+                    const rate = item.sellRate || item.rate || 0;
+                    return { name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: rate, amount: rate * item.qty };
+                });
+                const isQuo = type === 'quotation';
+                html = renderPremiumDocument({
+                    docType: isQuo ? 'QUOTATION' : 'INVOICE',
+                    docNo: isQuo ? `QUO-${invNo.replace('INV-', '')}` : invNo, docDate: dDate, shop: shop,
+                    partyLabel: isQuo ? 'Quotation For' : 'Bill To', partyName: custName, items: items,
+                    subtotal: currentSale.subtotal || currentSale.total_amount, discount: currentSale.discount || 0,
+                    total: currentSale.total_amount, paid: isQuo ? null : currentSale.paid_amount, due: isQuo ? null : currentSale.due_amount,
+                    footerNote: isQuo ? 'This is an estimate only.' : 'Thank you for your business!'
+                });
+            }
+
+            const printHolder = document.getElementById('printAreaHolder');
+            printHolder.innerHTML = html;
+            window.print();
+        };
 
         // --- FULL EDIT LOGIC ---
         window.openEditModal = () => {
@@ -444,8 +536,7 @@
             
             let dString = "";
             if (editingSaleData.date) {
-                if (editingSaleData.date.includes('-')) dString = editingSaleData.date; 
-                else dString = new Date(editingSaleData.date).toISOString().split('T')[0];
+                dString = editingSaleData.date.includes('-') ? editingSaleData.date : new Date(editingSaleData.date).toISOString().split('T')[0];
             } else if (editingSaleData.created_at) {
                 dString = new Date(editingSaleData.created_at).toISOString().split('T')[0];
             }
@@ -459,7 +550,6 @@
             document.getElementById('editModal').style.display = 'flex';
         };
 
-        // --- CUSTOMER DROPDOWN LOGIC ---
         const eCustInput = document.getElementById('eCustomer');
         const eCustDropdown = document.getElementById('eCustomerDropdown');
 
@@ -476,7 +566,7 @@
                 filtered.forEach(c => {
                     const div = document.createElement('div');
                     div.className = 'dropdown-item-cust';
-                    div.innerHTML = `<span>${c.name}</span> <span class="cust-phone">${c.phone || ''}</span>`;
+                    div.innerHTML = `<span>${c.name}</span> <span style="font-size:10px; color:#6b7280;">${c.phone || ''}</span>`;
                     div.onclick = () => {
                         eCustInput.value = c.name;
                         eCustDropdown.style.display = 'none';
@@ -496,7 +586,6 @@
             }
         });
 
-        // --- SEARCH & ADD NEW PRODUCT ---
         document.getElementById('eProductSearch').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase().trim();
             const resBox = document.getElementById('eSearchResults');
@@ -531,14 +620,9 @@
                     editingSaleData.items[existingIndex].qty += 1;
                 } else {
                     editingSaleData.items.unshift({ 
-                        id: product.id,
-                        name: product.name,
-                        brand: product.brand || '',
-                        qty: 1,
-                        sellRate: product.sell_price || 0,
-                        rate: product.sell_price || 0,
-                        buyRate: product.buy_price || 0,
-                        unit: product.unit || 'Pcs'
+                        id: product.id, name: product.name, brand: product.brand || '',
+                        qty: 1, sellRate: product.sell_price || 0, rate: product.sell_price || 0,
+                        buyRate: product.buy_price || 0, unit: product.unit || 'Pcs'
                     });
                 }
                 renderEditItems();
@@ -609,8 +693,8 @@
             editingSaleData.discount = discount;
             editingSaleData.total_amount = total;
 
-            document.getElementById('eSubtotal').innerText = `৳${subtotal}`;
-            document.getElementById('eTotal').innerText = `৳${total}`;
+            document.getElementById('eSubtotal').innerText = `৳${subtotal.toLocaleString()}`;
+            document.getElementById('eTotal').innerText = `৳${total.toLocaleString()}`;
 
             const oldPaid = Number(currentSale.paid_amount || 0);
             let newDue = total - oldPaid;
@@ -627,17 +711,13 @@
         };
 
         window.saveEditedSale = async () => {
-            if(editingSaleData.items.length === 0) {
-                alert("All items removed. Please use 'Delete Full Sale' instead."); return;
-            }
+            if(editingSaleData.items.length === 0) return alert("All items removed. Please use 'Delete Full Sale' instead.");
 
             const btn = document.getElementById('btnSaveChanges');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving & Syncing...'; btn.disabled = true;
 
             try {
                 const newCustName = document.getElementById('eCustomer').value.trim() || 'Local (Walk-in)';
-                
-                // --- DATE LOGIC FIX ---
                 const newDateStr = document.getElementById('eDate').value;
                 const actionDate = new Date(newDateStr);
                 const now = new Date();
@@ -645,7 +725,6 @@
                 const finalTimestamp = actionDate.getTime();
                 
                 const oldCustName = currentSale.customer_name || currentSale.customer || '';
-                
                 const oldPaid = Number(currentSale.paid_amount || 0);
                 const newTotal = editingSaleData.total_amount;
                 let newPaid = oldPaid;
@@ -668,8 +747,8 @@
 
                 editingSaleData.customer = newCustName;
                 editingSaleData.customer_name = newCustName;
-                editingSaleData.date = newDateStr;           // Date String
-                editingSaleData.created_at = finalTimestamp; // Fixed Timestamp for Filtering
+                editingSaleData.date = newDateStr;
+                editingSaleData.created_at = finalTimestamp;
                 editingSaleData.paid_amount = newPaid;
                 editingSaleData.due_amount = newDue;
                 editingSaleData.total_profit = newProfit;
@@ -693,7 +772,6 @@
 
                 // Adjust Due Book
                 const oldDue = Number(currentSale.due_amount || 0);
-                
                 if(oldDue > 0 && oldCustName && oldCustName !== "Local (Walk-in)") {
                     const dueSnap = await get(query(rtdbRef(rtdb, 'due_book'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                     let oldDueKey = null;
@@ -778,149 +856,176 @@
             } catch(e) { alert("Error deleting sale: " + e.message); }
         };
 
-        // --- EXCEL DESIGN PRINT (CHALAN / BILL / QUOTATION) ---
-        // চালান/বিল/কোটেশন — তিনটাই প্রিমিয়াম টেমপ্লেট ব্যবহার করে, শুধু কনটেন্ট ভিন্ন
-        async function buildDocumentHtml(type) {
+        // --- DIRECT CLEAN PRINT (SALES REPORT) ---
+        window.printSalesReport = async () => {
+            if(filteredRecords.length === 0) return alert("প্রিন্ট করার জন্য কোনো তথ্য পাওয়া যায়নি!");
             const shop = await getShopBranding(SHOP_ID);
-            const custName = currentSale.customer_name || currentSale.customer || 'Walk-in';
-            const invNo = currentSale.invoice_no || 'N/A';
-            const dDate = new Date(currentSale.created_at || currentSale.date).toLocaleDateString('en-GB');
-
-            if (type === 'chalan') {
-                // চালানে দাম দেখানো হয় না, শুধু আইটেম ও পরিমাণ — ডেলিভারি প্রমাণ হিসেবে
-                const items = (currentSale.items || []).map(item => ({
-                    name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: 0, amount: 0
-                }));
-                return renderPremiumDocument({
-                    docType: 'INVOICE', docNo: `CHALLAN-${invNo.replace('INV-', '')}`, docDate: dDate,
-                    shop: shop, partyLabel: 'Delivered To', partyName: custName, items: items,
-                    subtotal: 0, discount: 0, total: 0, paid: null, due: null,
-                    extraNote: 'Delivery Challan — prices not shown',
-                    footerNote: 'Please verify items upon receipt.'
-                }).replace(/৳0/g, '—'); // চালানে ৳0 না দেখিয়ে ড্যাশ দেখানো হচ্ছে যেহেতু দাম প্রযোজ্য নয়
-            }
-
-            const items = (currentSale.items || []).map(item => {
-                const rate = item.sellRate || item.rate || 0;
-                return { name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: rate, amount: rate * item.qty };
-            });
-            const isQuotation = type === 'quotation';
-
-            return renderPremiumDocument({
-                docType: isQuotation ? 'QUOTATION' : 'INVOICE',
-                docNo: isQuotation ? `QUO-${invNo.replace('INV-', '')}` : invNo,
-                docDate: dDate, shop: shop,
-                partyLabel: isQuotation ? 'Quotation For' : 'Bill To', partyName: custName,
-                items: items, subtotal: currentSale.subtotal || currentSale.total_amount, discount: currentSale.discount || 0,
-                total: currentSale.total_amount,
-                paid: isQuotation ? null : currentSale.paid_amount,
-                due: isQuotation ? null : currentSale.due_amount,
-                footerNote: isQuotation ? 'This is an estimate only and subject to change.' : 'Thank you for your business!'
-            });
-        }
-
-        window.printDocument = async (type) => {
-            if(!currentSale) return;
-            const html = await buildDocumentHtml(type);
-            document.getElementById('printArea').innerHTML = html;
-            window.print();
-        };
-
-        window.downloadDocumentPdf = async (type) => {
-            if(!currentSale) return;
-            const html = await buildDocumentHtml(type);
-            document.getElementById('printArea').innerHTML = html;
-            const invNo = currentSale.invoice_no || 'N/A';
-            const nameMap = { chalan: 'Challan', bill: 'Bill', quotation: 'Quotation' };
-            showPdfPreview(html, `${nameMap[type] || 'Document'}_${invNo}.pdf`);
-        };
-
-        // --- BULK PDF EXPORT ---
-        window.downloadPDF = async () => {
-            if(filteredRecords.length === 0) { alert("No records to generate PDF!"); return; }
-            const btn = document.querySelector('.btn-pdf');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
-            const shop = await getShopBranding(SHOP_ID);
-            shopLogoImgUrl = shop.logo || "";
-
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
+            const printArea = document.getElementById('printAreaHolder');
 
-            let rowsHtml = ''; let sumT = 0, sumP = 0, sumD = 0;
+            let rowsHtml = '';
+            let sumT = 0, sumP = 0, sumD = 0;
 
-            filteredRecords.forEach(r => {
-                sumT += Number(r.total_amount || 0); sumP += Number(r.paid_amount || 0); sumD += Number(r.due_amount || 0);
+            filteredRecords.forEach((r, idx) => {
+                const tot = Number(r.total_amount || 0);
+                const paid = Number(r.paid_amount || 0);
+                const due = Number(r.due_amount || 0);
+                sumT += tot; sumP += paid; sumD += due;
+                
                 const dDate = new Date(r.created_at || r.date).toLocaleDateString('en-GB');
                 
                 let itemsStr = "";
                 if(r.items && r.items.length > 0) {
-                    r.items.forEach(i => { itemsStr += `• ${i.name} (${i.qty} ${i.unit || 'pcs'} @ ৳${i.rate || i.sellRate})<br>`; });
+                    r.items.forEach(i => {
+                        itemsStr += `• ${i.name} (${i.qty} ${i.unit || 'pcs'} @ ৳${i.rate || i.sellRate})<br>`;
+                    });
                 }
 
                 rowsHtml += `
                     <tr>
-                        <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top;">
-                            <strong>${dDate}</strong><br><span style="color:#6b7280">${r.customer_name || r.customer || 'Walk-in'}</span><br>
-                            <span style="font-size:10px; color:#9ca3af;">INV: ${r.invoice_no || 'N/A'}</span>
+                        <td style="text-align:center;">${idx + 1}</td>
+                        <td>
+                            <b>${r.customer_name || r.customer || 'Walk-in'}</b><br>
+                            <span style="font-size:10px; color:#555;">INV: ${r.invoice_no || 'N/A'}</span>
                         </td>
-                        <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top; line-height:1.5;">${itemsStr}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right; vertical-align: top; font-weight:bold;">${r.total_amount}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right; vertical-align: top;">
-                            <span style="color:green;">Recv: ${r.paid_amount || 0}</span><br>
-                            ${r.due_amount > 0 ? `<span style="color:red; font-weight:bold;">Due: ${r.due_amount}</span>` : ''}
-                        </td>
+                        <td style="text-align:center;">${dDate}</td>
+                        <td style="line-height:1.4;">${itemsStr}</td>
+                        <td style="text-align:right; font-weight:bold;">৳${tot.toLocaleString()}</td>
+                        <td style="text-align:right; color:#16a34a;">৳${paid.toLocaleString()}</td>
+                        <td style="text-align:right; color:#dc2626; font-weight:bold;">৳${due.toLocaleString()}</td>
                     </tr>
                 `;
             });
 
-            const defaultTemplate = `
-                <div style="font-family: 'Hind Siliguri', sans-serif; padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        {{SHOP_LOGO_IMG}}
-                        <h2 style="font-size: 24px; margin-bottom: 5px; color: #1f2937;">{{SHOP_NAME}}</h2>
-                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Detailed Sales Report</p>
-                        <p style="font-size: 12px; font-weight: bold; margin-top: 5px;">Date: {{DATE_RANGE}}</p>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                        <thead style="background-color: #10b981; color: white;">
-                            <tr>
-                                <th style="padding: 10px; border: 1px solid #ddd;">Date & Customer</th>
-                                <th style="padding: 10px; border: 1px solid #ddd;">Items Sold (Qty x Rate)</th>
-                                <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Total (৳)</th>
-                                <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>{{TABLE_ROWS}}</tbody>
-                        <tfoot>
-                            <tr style="background-color: #f3f4f6; font-size: 14px;">
-                                <td colspan="2" style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight:bold;">Grand Total:</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-weight:bold; color:#10b981;">৳ {{GRAND_TOTAL}}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-weight:bold; color:red;">Due: ৳ {{TOTAL_DUE}}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+            printArea.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px; font-family:'Hind Siliguri',sans-serif;">
+                    ${shop.logo ? `<img src="${shop.logo}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; margin-bottom:5px;">` : ''}
+                    <h2 style="font-size: 20px; margin: 0; color:#0f172a;">${shop.name}</h2>
+                    <p style="font-size: 11px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
+                    <div style="display:inline-block; background:#0B4A3E; color:white; font-size:12px; font-weight:700; padding:2px 12px; border-radius:12px; margin-top:4px;">বিক্রয় খাতা রিপোর্ট (Sales Report)</div>
+                    <p style="font-size: 11px; color: #334155; margin-top: 4px; font-weight:600;">তারিখ: <b>${dateFrom}</b> থেকে <b>${dateTo}</b></p>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:30px;">#</th>
+                            <th>কাস্টমার ও ইনভয়েস</th>
+                            <th style="width:80px; text-align:center;">তারিখ</th>
+                            <th>বিক্রিত পণ্যের বিবরণী</th>
+                            <th style="text-align:right; width:80px;">মোট বিল</th>
+                            <th style="text-align:right; width:80px;">আদায়</th>
+                            <th style="text-align:right; width:80px;">বকেয়া</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" style="text-align:right; font-weight:bold;">সর্বমোট (Total):</td>
+                            <td style="text-align:right; font-weight:bold; color:#0B4A3E;">৳${sumT.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold; color:#16a34a;">৳${sumP.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold; color:#dc2626;">৳${sumD.toLocaleString()}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="print-signatures">
+                    <div>প্রস্তুতকারী স্বাক্ষর: ____________________</div>
+                    <div>হিসাবরক্ষক স্বাক্ষর: ____________________</div>
+                    <div>কর্তৃপক্ষের স্বাক্ষর: ____________________</div>
                 </div>
             `;
 
-            let finalTemplate = globalPdfTemplateCode ? globalPdfTemplateCode : defaultTemplate;
-            let logoHtml = shopLogoImgUrl ? `<img src="${shopLogoImgUrl}" style="width:70px; height:70px; object-fit:cover; border-radius:50%; margin-bottom:10px;">` : "";
-            
-            finalTemplate = finalTemplate.replace(/{{SHOP_NAME}}/g, SHOP_NAME)
-                                         .replace(/{{SHOP_LOGO_IMG}}/g, logoHtml)
-                                         .replace(/{{DATE_RANGE}}/g, `${dateFrom} to ${dateTo}`)
-                                         .replace(/{{TABLE_ROWS}}/g, rowsHtml)
-                                         .replace(/{{GRAND_TOTAL}}/g, sumT.toLocaleString())
-                                         .replace(/{{TOTAL_PAID}}/g, sumP.toLocaleString())
-                                         .replace(/{{TOTAL_DUE}}/g, sumD.toLocaleString());
+            window.print();
+        };
 
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = finalTemplate;
+        // --- EXPORT TO EXCEL ---
+        window.exportToExcel = () => {
+            if(filteredRecords.length === 0) return alert("এক্সেলে ডাউনলোড করার মতো কোনো তথ্য নেই!");
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const filename = `Sales_Book_${dateFrom}_to_${dateTo}.xls`;
 
-            showPdfPreview(tempDiv, `Sales_Report_${dateFrom}.pdf`).finally(() => {
-                btn.innerHTML = originalText;
+            let rowsHtml = '';
+            let sumT = 0, sumP = 0, sumD = 0, sumProfit = 0;
+
+            filteredRecords.forEach((r, idx) => {
+                const tot = Number(r.total_amount || 0);
+                const paid = Number(r.paid_amount || 0);
+                const due = Number(r.due_amount || 0);
+                const prof = Number(r.total_profit || 0);
+                sumT += tot; sumP += paid; sumD += due; sumProfit += prof;
+                
+                const dDate = new Date(r.created_at || r.date).toLocaleDateString('en-GB');
+                
+                let itemsStr = "";
+                if(r.items && r.items.length > 0) {
+                    r.items.forEach(i => {
+                        itemsStr += `${i.name} (${i.qty} ${i.unit || 'pcs'} @ ${i.rate || i.sellRate}); `;
+                    });
+                }
+
+                rowsHtml += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${r.customer_name || r.customer || 'Walk-in'}</td>
+                        <td>${r.invoice_no || 'N/A'}</td>
+                        <td>${dDate}</td>
+                        <td>${itemsStr}</td>
+                        <td>${tot}</td>
+                        <td>${paid}</td>
+                        <td>${due}</td>
+                        <td>${prof}</td>
+                        <td>${r.payment_method || 'Cash'}</td>
+                    </tr>
+                `;
             });
+
+            const excelTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body>
+                    <h2 style="text-align:center;">${SHOP_NAME}</h2>
+                    <p style="text-align:center;">বিক্রয় খাতা রিপোর্ট (${dateFrom} থেকে ${dateTo})</p>
+                    <table border="1">
+                        <thead>
+                            <tr style="background:#dcfce7; font-weight:bold;">
+                                <th>SL</th>
+                                <th>Customer Name</th>
+                                <th>Invoice No</th>
+                                <th>Date</th>
+                                <th>Items Sold</th>
+                                <th>Total Bill (Tk)</th>
+                                <th>Received Amount (Tk)</th>
+                                <th>Due Amount (Tk)</th>
+                                <th>Profit (Tk)</th>
+                                <th>Payment Method</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr style="font-weight:bold; background:#f1f5f9;">
+                                <td colspan="5" align="right">Total:</td>
+                                <td>${sumT}</td>
+                                <td>${sumP}</td>
+                                <td>${sumD}</td>
+                                <td>${sumProfit}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff' + excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
     </script>
 </body>
