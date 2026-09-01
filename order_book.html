@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,66 +14,85 @@
         if (!loggedInUser) window.location.replace("index.html");
         else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        :root { --primary: #14b8a6; --secondary: #0d9488; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
-        
-        /* --- PRINT STYLES (A4 Size matches your uploaded images) --- */
-        @media print {
-            body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
-            .no-print { display: none !important; }
-            body { background: white; }
-            /* Force table borders to print */
-            table { border-collapse: collapse !important; width: 100% !important; }
-            th, td { border: 1px solid #000 !important; padding: 8px !important; }
+        :root { 
+            --primary: #14b8a6; --secondary: #0d9488; --bg-color: #f3f4f6; 
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; 
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6;
+            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05); 
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; position: relative; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(20, 184, 166, 0.2); }
+        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 45px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(20, 184, 166, 0.2); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
-        .search-container { margin: -15px 15px 15px 15px; position: relative; z-index: 60; }
-        .search-box { position: relative; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .search-box input { width: 100%; padding: 14px 15px 14px 40px; border-radius: 14px; border: none; outline: none; box-shadow: var(--shadow); font-size: 13px; font-family: inherit; }
         
+        .header-actions { display: flex; gap: 8px; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-header:active { transform: scale(0.95); }
+
+        /* Filter Section */
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; border: 1px solid #f8fafc; }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
+        .filter-group input, .filter-group select { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
+        .filter-group input:focus, .filter-group select:focus { border-color: var(--primary); background: white; }
+
+        .search-box { position: relative; margin-top: 10px; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 10px 12px 10px 35px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; outline: none; background: #f8fafc; font-family: inherit; }
+        .search-box input:focus { border-color: var(--primary); background: white; }
+
+        .quick-presets { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; }
+        .preset-chip { padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: var(--text-dark); border: none; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .preset-chip.active { background: var(--primary); color: white; }
+
+        /* Summary Bar */
+        .summary-bar { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 15px; margin-bottom: 15px; gap: 8px; }
+        .sum-box { background: var(--white); padding: 12px 6px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
+        .sum-title { font-size: 9.5px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+        .sum-val { font-size: 14px; font-weight: 800; margin-top: 2px; }
+
+        /* Orders List */
         .order-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
         .order-card { background: var(--white); border-radius: 14px; padding: 15px; box-shadow: var(--shadow); border: 1px solid #f8fafc; position: relative; }
         .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; }
         .order-no { font-size: 14px; font-weight: 800; color: var(--text-dark); }
         
-        .status-badges { display: flex; gap: 5px; }
-        .s-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+        .status-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+        .s-badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
         .s-badge.del-yes { background: #dcfce3; color: var(--success); }
         .s-badge.del-no { background: #fef3c7; color: var(--warning); }
         .s-badge.pay-yes { background: #e0e7ff; color: #0B4A3E; }
         .s-badge.pay-no { background: #fee2e2; color: var(--danger); }
 
         .order-body { display: flex; justify-content: space-between; align-items: flex-end; }
-        .order-info p { margin: 0 0 5px 0; font-size: 12px; color: var(--text-light); font-weight: 500; }
+        .order-info p { margin: 0 0 4px 0; font-size: 12px; color: var(--text-light); font-weight: 500; }
         .order-info strong { color: var(--text-dark); }
         .order-amount { text-align: right; }
-        .order-amount h3 { margin: 0; font-size: 18px; color: var(--primary); font-weight: 800; }
+        .order-amount h3 { margin: 0; font-size: 16px; color: var(--primary); font-weight: 800; }
         
-        .btn-view-full { width: 100%; padding: 10px; border-radius: 10px; background: #f1f5f9; color: var(--text-dark); border: none; font-size: 13px; font-weight: 700; margin-top: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-view-full { width: 100%; padding: 10px; border-radius: 10px; background: #f1f5f9; color: var(--text-dark); border: none; font-size: 12px; font-weight: 700; margin-top: 12px; cursor: pointer; transition: 0.2s; }
         .btn-view-full:active { background: #e2e8f0; }
 
         /* Modal Styles */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
         .modal-content { background: white; width: 100%; max-width: 450px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .modal-header h3 { margin: 0; font-size: 16px; }
+        .modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; }
         .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; }
         .modal-body { padding: 20px; overflow-y: auto; }
         
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .action-btn { padding: 12px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
+        .action-btn { padding: 11px; border-radius: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
         .action-btn:active { transform: scale(0.96); }
         .btn-edit { background: #e0e7ff; color: #0B4A3E; grid-column: span 2; }
         .btn-pay { background: #fef3c7; color: #d97706; }
@@ -90,16 +109,96 @@
         .qty-input { width: 35px; text-align: center; border: 1px solid #e5e7eb; background: transparent; font-weight: 700; font-size: 13px; border-radius: 5px; }
         .btn-remove-item { background: none; border: none; color: var(--danger); font-size: 14px; cursor: pointer; padding: 5px; }
         .btn-save-changes { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 15px; }
+
+        /* Print Specific CSS (Landscape A4 multi-page fix) */
+        @media print {
+            @page { size: A4 landscape; margin: 8mm; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            #printAreaHolder { display: block !important; }
+            #printAreaHolder table { width: 100% !important; border-collapse: collapse !important; }
+            #printAreaHolder thead { display: table-header-group !important; }
+            #printAreaHolder tfoot { display: table-row-group !important; }
+            #printAreaHolder tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #printAreaHolder th, #printAreaHolder td { border: 1px solid #000000 !important; padding: 6px 8px !important; font-size: 10.5px !important; color: black !important; }
+            #printAreaHolder th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-signatures { page-break-inside: avoid !important; margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
 
     <div class="app-header no-print">
-        <div class="header-title"><a href="home.html"><i class="fas fa-arrow-left"></i></a><span>Sales Orders & Delivery</span></div>
+        <div class="header-top">
+            <div class="header-title">
+                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Sales Orders Hub</span>
+            </div>
+            <div class="header-actions">
+                <button onclick="exportToExcel()" class="btn-header" style="background:#16a34a;"><i class="fas fa-file-excel"></i> Excel</button>
+                <button onclick="printOrdersReport()" class="btn-header"><i class="fas fa-print"></i> Print / PDF</button>
+            </div>
+        </div>
     </div>
 
-    <div class="search-container no-print">
-        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search Order No or Customer..."></div>
+    <!-- Filter Card -->
+    <div class="filter-card no-print">
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label>From Date</label>
+                <input type="date" id="dateFrom" onchange="loadOrders()">
+            </div>
+            <div class="filter-group">
+                <label>To Date</label>
+                <input type="date" id="dateTo" onchange="loadOrders()">
+            </div>
+        </div>
+        <div class="filter-grid" style="margin-bottom:0;">
+            <div class="filter-group">
+                <label>Delivery Status</label>
+                <select id="filterDelivery" onchange="renderOrders()">
+                    <option value="all">All Delivery (সব অর্ডার)</option>
+                    <option value="pending">Pending Delivery (ডেলিভারি বাকি)</option>
+                    <option value="delivered">Delivered (ডেলিভারি সম্পন্ন)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Payment Status</label>
+                <select id="filterPayment" onchange="renderOrders()">
+                    <option value="all">All Payment (সব পেমেন্ট)</option>
+                    <option value="due">Due Payment (টাকা বাকি আছে)</option>
+                    <option value="paid">Fully Paid (পরিশোধিত)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search Order No or Customer..." oninput="renderOrders()">
+        </div>
+
+        <div class="quick-presets">
+            <button class="preset-chip active" onclick="setPreset('this_month', this)">চলতি মাস</button>
+            <button class="preset-chip" onclick="setPreset('last_month', this)">গত মাস</button>
+            <button class="preset-chip" onclick="setPreset('today', this)">আজকের দিন</button>
+            <button class="preset-chip" onclick="setPreset('all_time', this)">সব সময় (All)</button>
+        </div>
+    </div>
+
+    <!-- Summary Bar -->
+    <div class="summary-bar no-print">
+        <div class="sum-box">
+            <div class="sum-title">Total Orders Bill</div>
+            <div class="sum-val" style="color:var(--primary);" id="sumTotal">৳0</div>
+        </div>
+        <div class="sum-box">
+            <div class="sum-title" style="color:var(--success);">Advance / Paid</div>
+            <div class="sum-val" style="color:var(--success);" id="sumPaid">৳0</div>
+        </div>
+        <div class="sum-box">
+            <div class="sum-title text-danger">Total Due</div>
+            <div class="sum-val text-danger" id="sumDue">৳0</div>
+        </div>
     </div>
 
     <div id="loading" class="no-print" style="text-align: center; padding: 40px; color: var(--text-light); font-size: 13px;">
@@ -108,6 +207,7 @@
 
     <div class="order-list no-print" id="orderList"></div>
 
+    <!-- Manage Order Modal -->
     <div class="modal-overlay no-print" id="orderModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -123,7 +223,7 @@
                     <div style="text-align: right;" id="mStatusBadges"></div>
                 </div>
                 
-                <div style="margin-top: 15px; border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px;">
+                <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px;">
                     <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;"><span>Bill Total:</span> <strong id="mTotal" style="font-size: 14px;"></strong></div>
                     <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--success);"><span>Paid Amount:</span> <strong id="mPaid"></strong></div>
                     <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: var(--danger); border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 8px;"><span>Due Amount:</span> <span id="mDue"></span></div>
@@ -131,21 +231,17 @@
 
                 <div class="action-grid">
                     <button id="btnEditOrder" class="action-btn btn-edit" onclick="openEditModal()"><i class="fas fa-edit"></i> Edit Items (কম/বেশি করুন)</button>
-                    
                     <button id="btnGiveDelivery" class="action-btn btn-deliver" onclick="giveDelivery()"><i class="fas fa-truck"></i> Deliver Goods</button>
                     <button id="btnReceivePay" class="action-btn btn-pay" onclick="receivePayment()"><i class="fas fa-hand-holding-dollar"></i> Receive Due</button>
-                    
-                    <button class="action-btn btn-chalan" onclick="printDocument('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
-                    <button class="action-btn btn-chalan" style="background:#ede9fe; color:#7c3aed;" onclick="downloadOrderPdf('chalan')"><i class="fas fa-file-pdf"></i> Chalan PDF</button>
-                    <button class="action-btn btn-bill" onclick="printDocument('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
-                    <button class="action-btn btn-bill" style="background:#e0e7ff; color:#0B4A3E;" onclick="downloadOrderPdf('bill')"><i class="fas fa-file-pdf"></i> Bill PDF</button>
-                    
+                    <button class="action-btn btn-chalan" onclick="printSingleOrderDoc('chalan')"><i class="fas fa-file-alt"></i> Print Chalan</button>
+                    <button class="action-btn btn-bill" onclick="printSingleOrderDoc('bill')"><i class="fas fa-file-invoice-dollar"></i> Print Bill</button>
                     <button id="btnCancelOrder" class="action-btn btn-cancel" onclick="cancelOrder()"><i class="fas fa-times-circle"></i> Cancel Order</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Edit Order Modal -->
     <div class="modal-overlay no-print" id="editModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -167,112 +263,182 @@
         </div>
     </div>
 
-    <div id="printArea" style="display: none;"></div>
+    <!-- Container for Browser Direct Print -->
+    <div id="printAreaHolder" style="display: none;"></div>
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, update, push } from './firebase_config.js';
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
+        import { getShopBranding, renderPremiumDocument } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || "Poysha POS Store";
         let allOrders = [];
+        let filteredOrders = [];
         let currentOrder = null;
-        let editingOrderData = null; // For edit mode
-
-        // --- NUMBER TO WORDS (For Bill Print) ---
-        function numberToWords(num) {
-            const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
-            const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
-            if ((num = num.toString()).length > 9) return 'overflow';
-            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-            if (!n) return; let str = '';
-            str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
-            str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
-            str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
-            str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
-            str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'Only' : 'Only';
-            return str;
-        }
+        let editingOrderData = null;
 
         window.onload = () => {
+            setPreset('this_month');
+
             const ordersQuery = query(rtdbRef(rtdb, 'sales_orders'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(ordersQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
                 if (snapshot.exists()) {
-                    allOrders = Object.entries(snapshot.val()).map(([id, val]) => ({ id, ...val })).filter(o => o.status !== 'Cancelled').reverse();
-                    renderOrders(allOrders);
+                    allOrders = Object.entries(snapshot.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(o => o.status !== 'Cancelled')
+                        .reverse();
                 } else {
-                    allOrders = []; document.getElementById('orderList').innerHTML = '<div style="text-align:center; padding: 40px; color:#9ca3af;">No active orders found.</div>';
+                    allOrders = [];
                 }
+                loadOrders();
             });
         };
 
-        function renderOrders(orders) {
-            const listEl = document.getElementById('orderList'); listEl.innerHTML = '';
-            if(orders.length === 0) { listEl.innerHTML = '<div style="text-align:center; padding: 40px; color:#9ca3af;">No matching orders.</div>'; return; }
+        window.setPreset = (type, btn = null) => {
+            if (btn) {
+                document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+            }
 
-            orders.forEach(order => {
-                const isDelivered = order.is_delivered === true;
-                const total = order.total_amount || 0;
-                const paid = order.advance_paid || 0;
-                const due = total - paid;
-                const isPaid = due <= 0;
+            const now = new Date();
+            let start, end;
 
-                const delBadge = isDelivered ? `<span class="s-badge del-yes"><i class="fas fa-check-circle"></i> Delivered</span>` : `<span class="s-badge del-no"><i class="fas fa-clock"></i> Not Delivered</span>`;
-                const payBadge = isPaid ? `<span class="s-badge pay-yes"><i class="fas fa-check-double"></i> Paid</span>` : `<span class="s-badge pay-no"><i class="fas fa-exclamation-circle"></i> Due: ৳${due}</span>`;
+            if (type === 'today') {
+                start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            } else if (type === 'last_month') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (type === 'all_time') {
+                start = new Date(2020, 0, 1);
+                end = new Date(now.getFullYear() + 2, 11, 31, 23, 59, 59);
+            } else { // this_month
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            }
 
-                const html = `
-                <div class="order-card">
-                    <div class="order-header">
-                        <span class="order-no">${order.order_no}</span>
-                        <div class="status-badges">${delBadge} ${payBadge}</div>
-                    </div>
-                    <div class="order-body">
-                        <div class="order-info">
-                            <p>Customer: <strong>${order.customer}</strong></p>
-                            <p>Date: <strong>${new Date(order.created_at).toLocaleDateString()}</strong></p>
-                        </div>
-                        <div class="order-amount">
-                            <p style="margin:0; font-size:10px; color:var(--text-light);">Bill Total</p>
-                            <h3>৳${total}</h3>
-                        </div>
-                    </div>
-                    <button onclick="openManageModal('${order.id}')" class="btn-view-full">Manage Order</button>
-                </div>`;
-                listEl.insertAdjacentHTML('beforeend', html);
+            document.getElementById('dateFrom').value = start.toISOString().split('T')[0];
+            document.getElementById('dateTo').value = end.toISOString().split('T')[0];
+
+            if (allOrders.length > 0) loadOrders();
+        };
+
+        window.loadOrders = () => {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if(!dateFrom || !dateTo) return;
+
+            const startStr = new Date(dateFrom).setHours(0,0,0,0);
+            const endStr = new Date(dateTo).setHours(23,59,59,999);
+
+            filteredOrders = allOrders.filter(o => {
+                const oDate = o.created_at || (o.date ? new Date(o.date).getTime() : 0);
+                return oDate >= startStr && oDate <= endStr;
             });
-        }
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase().trim();
-            const filtered = allOrders.filter(o => o.order_no.toLowerCase().includes(term) || o.customer.toLowerCase().includes(term));
-            renderOrders(filtered);
-        });
+            renderOrders();
+        };
 
-        // --- MANAGE ORDER MODAL ---
+        window.renderOrders = () => {
+            const listEl = document.getElementById('orderList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filterDel = document.getElementById('filterDelivery').value;
+            const filterPay = document.getElementById('filterPayment').value;
+            listEl.innerHTML = '';
+
+            let recordsToDisplay = filteredOrders;
+
+            // Search filter
+            if (searchTerm) {
+                recordsToDisplay = recordsToDisplay.filter(o => 
+                    (o.order_no && o.order_no.toLowerCase().includes(searchTerm)) || 
+                    (o.customer && o.customer.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            // Delivery filter
+            if (filterDel === 'pending') {
+                recordsToDisplay = recordsToDisplay.filter(o => o.is_delivered !== true);
+            } else if (filterDel === 'delivered') {
+                recordsToDisplay = recordsToDisplay.filter(o => o.is_delivered === true);
+            }
+
+            // Payment filter
+            if (filterPay === 'due') {
+                recordsToDisplay = recordsToDisplay.filter(o => (Number(o.total_amount || 0) - Number(o.advance_paid || 0)) > 0);
+            } else if (filterPay === 'paid') {
+                recordsToDisplay = recordsToDisplay.filter(o => (Number(o.total_amount || 0) - Number(o.advance_paid || 0)) <= 0);
+            }
+
+            let sumTotal = 0, sumPaid = 0, sumDue = 0;
+
+            if (recordsToDisplay.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; padding: 40px; color:#9ca3af;"><i class="fas fa-box-open" style="font-size:35px; margin-bottom:10px; opacity:0.5;"></i><br>No matching orders found.</div>';
+            } else {
+                recordsToDisplay.forEach(order => {
+                    const isDelivered = order.is_delivered === true;
+                    const total = Number(order.total_amount || 0);
+                    const paid = Number(order.advance_paid || 0);
+                    const due = total - paid;
+                    const isPaid = due <= 0;
+
+                    sumTotal += total;
+                    sumPaid += paid;
+                    sumDue += (due > 0 ? due : 0);
+
+                    const delBadge = isDelivered ? `<span class="s-badge del-yes"><i class="fas fa-check-circle"></i> Delivered</span>` : `<span class="s-badge del-no"><i class="fas fa-clock"></i> Not Delivered</span>`;
+                    const payBadge = isPaid ? `<span class="s-badge pay-yes"><i class="fas fa-check-double"></i> Paid</span>` : `<span class="s-badge pay-no"><i class="fas fa-exclamation-circle"></i> Due: ৳${due.toLocaleString()}</span>`;
+
+                    const html = `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <span class="order-no">${order.order_no}</span>
+                            <div class="status-badges">${delBadge} ${payBadge}</div>
+                        </div>
+                        <div class="order-body">
+                            <div class="order-info">
+                                <p>Customer: <strong>${order.customer}</strong></p>
+                                <p>Date: <strong>${new Date(order.created_at || order.date).toLocaleDateString('en-GB')}</strong></p>
+                            </div>
+                            <div class="order-amount">
+                                <p style="margin:0; font-size:10px; color:var(--text-light);">Bill Total</p>
+                                <h3>৳${total.toLocaleString()}</h3>
+                            </div>
+                        </div>
+                        <button onclick="openManageModal('${order.id}')" class="btn-view-full">Manage Order</button>
+                    </div>`;
+                    listEl.insertAdjacentHTML('beforeend', html);
+                });
+            }
+
+            document.getElementById('sumTotal').innerText = `৳${sumTotal.toLocaleString()}`;
+            document.getElementById('sumPaid').innerText = `৳${sumPaid.toLocaleString()}`;
+            document.getElementById('sumDue').innerText = `৳${sumDue.toLocaleString()}`;
+        };
+
         window.openManageModal = (id) => {
             currentOrder = allOrders.find(o => o.id === id);
             if(!currentOrder) return;
 
-            const total = currentOrder.total_amount || 0;
-            const paid = currentOrder.advance_paid || 0;
+            const total = Number(currentOrder.total_amount || 0);
+            const paid = Number(currentOrder.advance_paid || 0);
             const due = total - paid;
             const isDelivered = currentOrder.is_delivered === true;
 
             document.getElementById('mOrderNo').innerText = currentOrder.order_no;
             document.getElementById('mCustomer').innerText = currentOrder.customer;
-            document.getElementById('mDate').innerText = currentOrder.date;
+            document.getElementById('mDate').innerText = new Date(currentOrder.created_at || currentOrder.date).toLocaleDateString('en-GB');
             
-            document.getElementById('mTotal').innerText = `৳${total}`;
-            document.getElementById('mPaid').innerText = `৳${paid}`;
-            document.getElementById('mDue').innerText = `৳${due > 0 ? due : 0}`;
+            document.getElementById('mTotal').innerText = `৳${total.toLocaleString()}`;
+            document.getElementById('mPaid').innerText = `৳${paid.toLocaleString()}`;
+            document.getElementById('mDue').innerText = `৳${(due > 0 ? due : 0).toLocaleString()}`;
 
             const delBadge = isDelivered ? `<span class="s-badge del-yes" style="margin-bottom:5px;"><i class="fas fa-check-circle"></i> Delivered</span>` : `<span class="s-badge del-no" style="margin-bottom:5px;"><i class="fas fa-clock"></i> Not Delivered</span>`;
             const payBadge = due <= 0 ? `<span class="s-badge pay-yes"><i class="fas fa-check-double"></i> Fully Paid</span>` : `<span class="s-badge pay-no"><i class="fas fa-exclamation-circle"></i> Payment Due</span>`;
             document.getElementById('mStatusBadges').innerHTML = delBadge + payBadge;
 
-            // Handle Buttons state
             const btnPay = document.getElementById('btnReceivePay');
             const btnDel = document.getElementById('btnGiveDelivery');
             const btnEdit = document.getElementById('btnEditOrder');
@@ -285,11 +451,9 @@
 
             if(isDelivered) {
                 btnDel.style.opacity = '0.5'; btnDel.style.pointerEvents = 'none'; btnDel.innerHTML = '<i class="fas fa-check-circle"></i> Delivered';
-                // Cannot edit if delivered
                 btnEdit.style.opacity = '0.5'; btnEdit.style.pointerEvents = 'none';
             } else {
                 btnDel.style.opacity = '1'; btnDel.style.pointerEvents = 'auto'; btnDel.innerHTML = '<i class="fas fa-truck"></i> Deliver Goods';
-                // Can edit if not delivered
                 btnEdit.style.opacity = '1'; btnEdit.style.pointerEvents = 'auto';
             }
 
@@ -298,10 +462,47 @@
 
         window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
 
+        // --- DIRECT PRINT FOR CHALAN OR BILL ---
+        window.printSingleOrderDoc = async (type) => {
+            if(!currentOrder) return;
+            const shop = await getShopBranding(SHOP_ID);
+            const orderNoShort = (currentOrder.order_no || 'N/A').replace('ORD-', '');
+            const dDate = new Date(currentOrder.created_at || currentOrder.date).toLocaleDateString('en-GB');
+
+            let html = '';
+            if (type === 'chalan') {
+                const items = (currentOrder.items || []).map(item => ({
+                    name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: 0, amount: 0
+                }));
+                html = renderPremiumDocument({
+                    docType: 'INVOICE', docNo: `CHALLAN-${orderNoShort}`, docDate: dDate,
+                    shop: shop, partyLabel: 'Deliver To', partyName: currentOrder.customer, items: items,
+                    subtotal: 0, discount: 0, total: 0, paid: null, due: null,
+                    extraNote: 'Delivery Challan — prices not shown', footerNote: 'Please verify items upon receipt.'
+                }).replace(/৳0/g, '—');
+            } else {
+                const items = (currentOrder.items || []).map(item => ({
+                    name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty,
+                    rate: item.sellRate, amount: item.sellRate * item.qty
+                }));
+                html = renderPremiumDocument({
+                    docType: 'INVOICE', docNo: `BILL-${orderNoShort}`, docDate: dDate,
+                    shop: shop, partyLabel: 'Bill To', partyName: currentOrder.customer, items: items,
+                    subtotal: currentOrder.total_amount, discount: 0, total: currentOrder.total_amount,
+                    paid: currentOrder.advance_paid || 0, due: (currentOrder.total_amount - (currentOrder.advance_paid || 0)),
+                    footerNote: 'Thank you for your order!'
+                });
+            }
+
+            const printArea = document.getElementById('printAreaHolder');
+            printArea.innerHTML = html;
+            window.print();
+        };
+
         // --- EDIT ORDER LOGIC ---
         window.openEditModal = () => {
             if(!currentOrder) return;
-            editingOrderData = JSON.parse(JSON.stringify(currentOrder)); // Deep copy
+            editingOrderData = JSON.parse(JSON.stringify(currentOrder));
             renderEditItems();
             document.getElementById('editModal').style.display = 'flex';
         };
@@ -344,24 +545,21 @@
                 estProfit += (item.sellRate - (item.buy_price || 0)) * item.qty;
             });
             
-            const total = subtotal - editingOrderData.discount;
+            const total = subtotal - (editingOrderData.discount || 0);
             editingOrderData.subtotal = subtotal;
             editingOrderData.total_amount = total;
-            editingOrderData.estimated_profit = estProfit - editingOrderData.discount;
+            editingOrderData.estimated_profit = estProfit - (editingOrderData.discount || 0);
 
-            document.getElementById('eSubtotal').innerText = `৳${subtotal}`;
-            document.getElementById('eDiscount').innerText = `৳${editingOrderData.discount}`;
-            document.getElementById('eTotal').innerText = `৳${total}`;
-            document.getElementById('eAdvance').innerText = `৳${editingOrderData.advance_paid || 0}`;
+            document.getElementById('eSubtotal').innerText = `৳${subtotal.toLocaleString()}`;
+            document.getElementById('eDiscount').innerText = `৳${(editingOrderData.discount || 0).toLocaleString()}`;
+            document.getElementById('eTotal').innerText = `৳${total.toLocaleString()}`;
+            document.getElementById('eAdvance').innerText = `৳${(editingOrderData.advance_paid || 0).toLocaleString()}`;
         }
 
         window.saveEditedOrder = async () => {
-            if(editingOrderData.items.length === 0) {
-                alert("Order cannot be empty. To delete the full order, please use Cancel Order."); return;
-            }
+            if(editingOrderData.items.length === 0) return alert("Order cannot be empty.");
             if(editingOrderData.total_amount < (editingOrderData.advance_paid || 0)) {
-                alert(`Error: The new bill total (৳${editingOrderData.total_amount}) is less than the advance paid (৳${editingOrderData.advance_paid}). Please process a refund manually or cancel the order.`);
-                return;
+                return alert(`New total (৳${editingOrderData.total_amount}) is less than advance paid (৳${editingOrderData.advance_paid}).`);
             }
 
             const btn = document.getElementById('btnSaveChanges');
@@ -376,27 +574,24 @@
                 });
                 alert("Order items updated successfully!");
                 closeModal('editModal');
-                closeModal('orderModal'); // close parent to force refresh click
+                closeModal('orderModal');
             } catch(e) { alert("Error saving edits: " + e.message); }
             finally { btn.innerHTML = 'Save Updates'; btn.disabled = false; }
         };
 
-
-        // --- RECEIVE PAYMENT ---
         window.receivePayment = async () => {
             if(!currentOrder) return;
-            const total = currentOrder.total_amount;
-            const currentPaid = currentOrder.advance_paid || 0;
+            const total = Number(currentOrder.total_amount || 0);
+            const currentPaid = Number(currentOrder.advance_paid || 0);
             const maxDue = total - currentPaid;
             
             if(maxDue <= 0) return alert("This order is already fully paid!");
 
-            const input = prompt(`Amount Due: ৳${maxDue}\n\nEnter the amount you are receiving now:`);
+            const input = prompt(`Amount Due: ৳${maxDue}\n\nEnter received amount:`);
             if(!input) return;
             const receiveAmount = Number(input);
 
-            if(isNaN(receiveAmount) || receiveAmount <= 0) return alert("Invalid amount.");
-            if(receiveAmount > maxDue) return alert(`You cannot receive more than the due amount (৳${maxDue}).`);
+            if(isNaN(receiveAmount) || receiveAmount <= 0 || receiveAmount > maxDue) return alert("Invalid amount.");
 
             const newPaidTotal = currentPaid + receiveAmount;
 
@@ -405,117 +600,220 @@
                 await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) + receiveAmount);
                 await push(rtdbRef(rtdb, 'cash_transactions'), {
                     shop_id: SHOP_ID, type: 'cash_in', source: 'order_payment',
-                    amount: receiveAmount, note: `Payment received for Order: ${currentOrder.order_no}`, created_at: Date.now()
+                    amount: receiveAmount, note: `Payment for Order: ${currentOrder.order_no}`, created_at: Date.now()
                 });
 
                 alert(`Payment of ৳${receiveAmount} received successfully!`);
                 closeModal('orderModal');
-            } catch(e) { alert("Error updating payment: " + e.message); }
+            } catch(e) { alert("Error: " + e.message); }
         };
 
-        // --- GIVE DELIVERY ---
         window.giveDelivery = async () => {
             if(!currentOrder) return;
             if(currentOrder.is_delivered) return alert("Goods already delivered!");
-
-            if(!confirm("Are you sure you want to deliver these goods? This will instantly deduct the items from your stock.")) return;
+            if(!confirm("Are you sure you want to deliver goods? Stock will be deducted instantly.")) return;
 
             try {
                 for (let item of currentOrder.items) {
-                    await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => {
-                        return (Number(currentStock) || 0) - item.qty;
-                    });
+                    await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => (Number(currentStock) || 0) - item.qty);
                 }
                 await update(rtdbRef(rtdb, `sales_orders/${currentOrder.id}`), { is_delivered: true });
                 
-                // Add to sales_history automatically
                 const finalInvoiceNo = currentOrder.order_no.replace('ORD', 'INV');
                 const sellData = {
                     shop_id: SHOP_ID, invoice_no: finalInvoiceNo, customer: currentOrder.customer,
                     date: currentOrder.date, items: currentOrder.items, subtotal: currentOrder.subtotal, discount: currentOrder.discount,
-                    total_amount: currentOrder.total_amount, paid_amount: currentOrder.total_amount, due_amount: 0,
+                    total_amount: currentOrder.total_amount, paid_amount: currentOrder.advance_paid || 0, 
+                    due_amount: (currentOrder.total_amount - (currentOrder.advance_paid || 0)),
                     total_profit: currentOrder.estimated_profit, payment_method: 'Cash', created_at: Date.now()
                 };
                 await push(rtdbRef(rtdb, 'sales_history'), sellData);
 
-                alert("Delivery successful! Items deducted from stock.");
+                alert("Delivery successful! Items deducted from stock and added to Sales Book.");
                 closeModal('orderModal');
-            } catch(e) { alert("Error processing delivery: " + e.message); }
+            } catch(e) { alert("Error: " + e.message); }
         };
 
-        // --- CANCEL ORDER ---
         window.cancelOrder = async () => {
             if(!currentOrder) return;
             if(!confirm("Are you sure you want to cancel this order?")) return;
 
             try {
                 if(currentOrder.is_delivered) {
-                    if(confirm("Goods were already delivered. Do you want to return these items back to stock?")) {
+                    if(confirm("Goods were delivered. Return items back to stock?")) {
                         for (let item of currentOrder.items) {
-                            await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => {
-                                return (Number(currentStock) || 0) + item.qty; 
-                            });
+                            await runTransaction(rtdbRef(rtdb, `product_list/${item.id}/stock`), (currentStock) => (Number(currentStock) || 0) + item.qty);
                         }
                     }
                 }
 
                 if (currentOrder.advance_paid > 0) {
-                    if (confirm(`Customer paid ৳${currentOrder.advance_paid}. Do you want to refund this amount from your cashbox?`)) {
+                    if (confirm(`Refund ৳${currentOrder.advance_paid} from cashbox?`)) {
                         await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - currentOrder.advance_paid);
                         await push(rtdbRef(rtdb, 'cash_transactions'), { shop_id: SHOP_ID, type: 'cash_out', source: 'order_refund', amount: currentOrder.advance_paid, note: `Refund for Cancelled Order: ${currentOrder.order_no}`, created_at: Date.now() });
-                        alert("Order cancelled, items restocked (if chosen), and money refunded.");
-                    } else { alert("Order cancelled. Money was NOT refunded."); }
-                } else { alert("Order cancelled."); }
+                    }
+                }
 
                 await update(rtdbRef(rtdb, `sales_orders/${currentOrder.id}`), { status: 'Cancelled' });
+                alert("Order cancelled successfully.");
                 closeModal('orderModal');
-            } catch(e) { alert("Error cancelling order: " + e.message); }
+            } catch(e) { alert("Error: " + e.message); }
         };
 
-        // --- PRINT CHALAN OR BILL (MATCHING YOUR DESIGN) ---
-        async function buildOrderDocumentHtml(type) {
+        // --- DIRECT PRINT (FULL ORDERS REPORT) ---
+        window.printOrdersReport = async () => {
+            if(filteredOrders.length === 0) return alert("প্রিন্ট করার জন্য কোনো অর্ডার নেই!");
             const shop = await getShopBranding(SHOP_ID);
-            const orderNoShort = (currentOrder.order_no || 'N/A').replace('ORD-', '');
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const printArea = document.getElementById('printAreaHolder');
 
-            if (type === 'chalan') {
-                const items = (currentOrder.items || []).map(item => ({
-                    name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty, rate: 0, amount: 0
-                }));
-                return renderPremiumDocument({
-                    docType: 'INVOICE', docNo: `CHALLAN-${orderNoShort}`, docDate: new Date().toLocaleDateString('en-GB'),
-                    shop: shop, partyLabel: 'Deliver To', partyName: currentOrder.customer, items: items,
-                    subtotal: 0, discount: 0, total: 0, paid: null, due: null,
-                    extraNote: 'Delivery Challan — prices not shown',
-                    footerNote: 'Please verify items upon receipt.'
-                }).replace(/৳0/g, '—');
-            }
+            let rowsHtml = '';
+            let sumT = 0, sumP = 0, sumD = 0;
 
-            const items = (currentOrder.items || []).map(item => ({
-                name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.qty,
-                rate: item.sellRate, amount: item.sellRate * item.qty
-            }));
-            return renderPremiumDocument({
-                docType: 'INVOICE', docNo: `BILL-${orderNoShort}`, docDate: new Date().toLocaleDateString('en-GB'),
-                shop: shop, partyLabel: 'Bill To', partyName: currentOrder.customer, items: items,
-                subtotal: currentOrder.total_amount, discount: 0, total: currentOrder.total_amount,
-                paid: currentOrder.advance_paid || 0, due: (currentOrder.total_amount - (currentOrder.advance_paid || 0)),
-                footerNote: 'Thank you for your order!'
+            filteredOrders.forEach((o, idx) => {
+                const tot = Number(o.total_amount || 0);
+                const paid = Number(o.advance_paid || 0);
+                const due = tot - paid;
+                sumT += tot; sumP += paid; sumD += (due > 0 ? due : 0);
+                
+                const dDate = new Date(o.created_at || o.date).toLocaleDateString('en-GB');
+                let itemsStr = (o.items || []).map(i => `${i.name} (${i.qty}x${i.sellRate})`).join(', ');
+
+                rowsHtml += `
+                    <tr>
+                        <td style="text-align:center;">${idx + 1}</td>
+                        <td><b>${o.order_no}</b></td>
+                        <td>${o.customer || 'Walk-in'}</td>
+                        <td style="text-align:center;">${dDate}</td>
+                        <td style="line-height:1.3;">${itemsStr}</td>
+                        <td style="text-align:center;">${o.is_delivered ? 'Delivered' : 'Pending'}</td>
+                        <td style="text-align:right; font-weight:bold;">৳${tot.toLocaleString()}</td>
+                        <td style="text-align:right; color:#16a34a;">৳${paid.toLocaleString()}</td>
+                        <td style="text-align:right; color:#dc2626; font-weight:bold;">৳${(due > 0 ? due : 0).toLocaleString()}</td>
+                    </tr>
+                `;
             });
-        }
 
-        window.printDocument = async (type) => {
-            if(!currentOrder) return;
-            const html = await buildOrderDocumentHtml(type);
-            document.getElementById('printArea').innerHTML = html;
+            printArea.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px; font-family:'Hind Siliguri',sans-serif;">
+                    ${shop.logo ? `<img src="${shop.logo}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; margin-bottom:5px;">` : ''}
+                    <h2 style="font-size: 20px; margin: 0; color:#0f172a;">${shop.name}</h2>
+                    <p style="font-size: 11px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
+                    <div style="display:inline-block; background:#14b8a6; color:white; font-size:12px; font-weight:700; padding:2px 12px; border-radius:12px; margin-top:4px;">অর্ডার তালিকা রিপোর্ট (Sales Orders Report)</div>
+                    <p style="font-size: 11px; color: #334155; margin-top: 4px; font-weight:600;">তারিখ: <b>${dateFrom}</b> থেকে <b>${dateTo}</b></p>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:30px;">#</th>
+                            <th>অর্ডার নং</th>
+                            <th>কাস্টমার নাম</th>
+                            <th style="width:75px; text-align:center;">তারিখ</th>
+                            <th>আইটেম তালিকা</th>
+                            <th style="width:70px; text-align:center;">ডেলিভারি</th>
+                            <th style="text-align:right; width:80px;">মোট বিল</th>
+                            <th style="text-align:right; width:80px;">জমা / অগ্রিম</th>
+                            <th style="text-align:right; width:80px;">বকেয়া</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" style="text-align:right; font-weight:bold;">সর্বমোট (Total):</td>
+                            <td style="text-align:right; font-weight:bold; color:#14b8a6;">৳${sumT.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold; color:#16a34a;">৳${sumP.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold; color:#dc2626;">৳${sumD.toLocaleString()}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="print-signatures">
+                    <div>প্রস্তুতকারী স্বাক্ষর: ____________________</div>
+                    <div>হিসাবরক্ষক স্বাক্ষর: ____________________</div>
+                    <div>কর্তৃপক্ষের স্বাক্ষর: ____________________</div>
+                </div>
+            `;
+
             window.print();
         };
 
-        window.downloadOrderPdf = async (type) => {
-            if(!currentOrder) return;
-            const html = await buildOrderDocumentHtml(type);
-            document.getElementById('printArea').innerHTML = html;
-            const orderNoShort = (currentOrder.order_no || 'N/A').replace('ORD-', '');
-            showPdfPreview(html, `${type === 'chalan' ? 'Challan' : 'Bill'}_${orderNoShort}.pdf`);
+        // --- EXPORT TO EXCEL ---
+        window.exportToExcel = () => {
+            if(filteredOrders.length === 0) return alert("এক্সেলে ডাউনলোড করার মতো কোনো তথ্য নেই!");
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const filename = `Sales_Orders_${dateFrom}_to_${dateTo}.xls`;
+
+            let rowsHtml = '';
+            let sumT = 0, sumP = 0, sumD = 0;
+
+            filteredOrders.forEach((o, idx) => {
+                const tot = Number(o.total_amount || 0);
+                const paid = Number(o.advance_paid || 0);
+                const due = tot - paid;
+                sumT += tot; sumP += paid; sumD += (due > 0 ? due : 0);
+                
+                const dDate = new Date(o.created_at || o.date).toLocaleDateString('en-GB');
+                let itemsStr = (o.items || []).map(i => `${i.name} (${i.qty}x${i.sellRate})`).join('; ');
+
+                rowsHtml += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${o.order_no}</td>
+                        <td>${o.customer || 'Walk-in'}</td>
+                        <td>${dDate}</td>
+                        <td>${itemsStr}</td>
+                        <td>${o.is_delivered ? 'Delivered' : 'Pending'}</td>
+                        <td>${tot}</td>
+                        <td>${paid}</td>
+                        <td>${due > 0 ? due : 0}</td>
+                    </tr>
+                `;
+            });
+
+            const excelTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body>
+                    <h2 style="text-align:center;">${SHOP_NAME}</h2>
+                    <p style="text-align:center;">বিক্রয় অর্ডার বিবরণী (${dateFrom} থেকে ${dateTo})</p>
+                    <table border="1">
+                        <thead>
+                            <tr style="background:#ccfbf1; font-weight:bold;">
+                                <th>SL</th>
+                                <th>Order No</th>
+                                <th>Customer Name</th>
+                                <th>Date</th>
+                                <th>Items Details</th>
+                                <th>Delivery Status</th>
+                                <th>Total Bill (Tk)</th>
+                                <th>Advance Paid (Tk)</th>
+                                <th>Due Amount (Tk)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr style="font-weight:bold; background:#f1f5f9;">
+                                <td colspan="6" align="right">Total:</td>
+                                <td>${sumT}</td>
+                                <td>${sumP}</td>
+                                <td>${sumD}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff' + excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
     </script>
 </body>
