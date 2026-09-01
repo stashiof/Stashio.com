@@ -1,12 +1,13 @@
-const CACHE_NAME = 'poysha-pos-ui-v3'; // ক্যাশের নাম আপডেট করা হয়েছে (নতুন ব্র্যান্ডিং + নতুন ফাইল যোগ)
-const DYNAMIC_CACHE = 'poysha-pos-dynamic-v3';
+const CACHE_NAME = 'poysha-pos-ui-v4';
+const DYNAMIC_CACHE = 'poysha-pos-dynamic-v4';
 
-// অ্যাপের মূল পেজগুলো (যাতে ইন্টারনেট ছাড়াও অ্যাপের ডিজাইন লোড হয়)
+// অ্যাপের মূল পেজগুলো (যাতে ইন্টারনেট ছাড়াও অফলাইনে ডিজাইন লোড হয়)
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './dashboard.html',
     './home.html',
+    './monthly_report.html',
     './settings.html',
     './reports.html',
     './product_list.html',
@@ -39,7 +40,6 @@ const ASSETS_TO_CACHE = [
     './expire_product.html'
 ];
 
-// ১. ইন্সটল ইভেন্ট - অ্যাপের ডিজাইন ফাইলগুলো ক্যাশ করবে
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
@@ -50,7 +50,6 @@ self.addEventListener('install', event => {
     self.skipWaiting();
 });
 
-// ২. অ্যাক্টিভেট ইভেন্ট - পুরোনো কোনো ক্যাশ থাকলে তা মুছে ফেলবে
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => {
@@ -65,21 +64,17 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// ৩. ফেচ ইভেন্ট - ডাটা রিকোয়েস্ট ম্যানেজমেন্ট
 self.addEventListener('fetch', event => {
     const req = event.request;
 
-    // 🔥 রুল ১: ফায়ারবেস বা যেকোনো এপিআই ডাটা কখনোই ক্যাশ করবে না (Always Network)
     if (req.url.includes('firestore.googleapis.com') || 
         req.url.includes('firebaseio.com') || 
         req.url.includes('google.com') ||
         req.url.includes('imgbb.com')) {
-        return; // ব্রাউজারকে সরাসরি ইন্টারনেট থেকে আনতে বলবে
+        return;
     }
 
-    // 🔥 রুল ২: HTML ফাইলগুলোর জন্য "Network First, Fallback to Cache"
-    // (মানে আগে ইন্টারনেট থেকে নতুন ডিজাইন খুঁজবে, না পেলে তখন অফলাইনেরটা দেখাবে)
-    if (req.headers.get('accept').includes('text/html')) {
+    if (req.headers.get('accept') && req.headers.get('accept').includes('text/html')) {
         event.respondWith(
             fetch(req)
                 .then(networkRes => {
@@ -87,12 +82,11 @@ self.addEventListener('fetch', event => {
                     caches.open(DYNAMIC_CACHE).then(cache => cache.put(req, resClone));
                     return networkRes;
                 })
-                .catch(() => caches.match(req)) // ইন্টারনেট না থাকলে ক্যাশ থেকে
+                .catch(() => caches.match(req))
         );
         return;
     }
 
-    // 🔥 রুল ৩: ছবি, CSS, ফন্ট ইত্যাদির জন্য "Cache First"
     event.respondWith(
         caches.match(req).then(cachedRes => {
             return cachedRes || fetch(req).then(networkRes => {
