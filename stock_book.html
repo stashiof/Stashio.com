@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,45 +11,30 @@
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        
-        if (!loggedInUser) {
-            window.location.replace("index.html");
-        } else if (!activeShopId) {
-            window.location.replace("dashboard.html");
-        }
+        if (!loggedInUser) window.location.replace("index.html");
+        else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
-            --primary: #0B4A3E;
-            --secondary: #D4A017;
-            --bg-color: #f3f4f6;
-            --white: #ffffff;
-            --text-dark: #1f2937;
-            --text-light: #6b7280;
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --border-radius: 16px;
-            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
+            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --blue: #3b82f6;
+            --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
-
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* Dynamic Header Area */
+        /* Header Area */
         .app-header {
             position: relative; padding: 20px 20px 45px 20px; color: white; 
             border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; 
-            z-index: 50; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24);
-            overflow: hidden;
+            z-index: 50; box-shadow: 0 10px 20px rgba(11, 74, 62, 0.24); overflow: hidden;
         }
         .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, #12604F 100%); z-index: 1; }
         #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: hidden; }
@@ -74,13 +59,11 @@
         .text-red { color: var(--danger) !important; }
 
         /* Filters & Search */
-        .filter-section { padding: 0 15px; margin-bottom: 15px; display: flex; gap: 10px; }
-        .search-box { flex: 1; position: relative; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: 1px solid #e5e7eb; outline: none; font-size: 13px; font-family: inherit; background: #f8fafc; color: var(--text-dark); transition: 0.3s; }
-        .search-box input:focus { border-color: var(--primary); background: white; }
-        .filter-select { background: var(--white); border: 1px solid #e5e7eb; padding: 0 10px; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--primary); outline: none; font-family: inherit; cursor: pointer; transition: 0.3s; }
-        .filter-select:focus { border-color: var(--primary); }
+        .filter-section { padding: 0 15px; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .search-container { grid-column: span 2; position: relative; }
+        .search-container i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-container input { width: 100%; padding: 12px 15px 12px 38px; border-radius: 12px; border: 1px solid #e5e7eb; outline: none; font-size: 13px; font-family: inherit; background: var(--white); color: var(--text-dark); }
+        .filter-select { background: var(--white); border: 1px solid #e5e7eb; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--text-dark); outline: none; font-family: inherit; cursor: pointer; }
 
         /* Product List */
         .product-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
@@ -89,7 +72,7 @@
         .stock-card.low-stock { border-left-color: var(--danger); background: #fef2f2; }
         .stock-card.high-value { border-left-color: var(--warning); }
         
-        .stock-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; background: #f8fafc; border: 1px solid #f1f5f9; }
+        .stock-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; background: #f8fafc; border: 1px solid #f1f5f9; flex-shrink: 0; }
         .stock-info { flex: 1; min-width: 0; }
         .stock-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; justify-content: space-between; }
         .stock-brand { font-size: 10px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 4px; }
@@ -113,8 +96,7 @@
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
         .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; }
-        .btn-close:active { background: #f1f5f9; }
+        .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; display: flex; justify-content: center; align-items: center; }
         
         .timeline { padding: 20px; overflow-y: auto; flex: 1; }
         .timeline-item { display: flex; gap: 15px; margin-bottom: 20px; position: relative; }
@@ -128,11 +110,26 @@
         .tl-content { flex: 1; background: #f8fafc; padding: 10px 15px; border-radius: 12px; border: 1px solid #f1f5f9; }
         .tl-title { font-size: 12px; font-weight: 700; color: var(--text-dark); display: flex; justify-content: space-between; }
         .tl-date { font-size: 10px; color: var(--text-light); margin-top: 3px; font-weight: 500; }
+
+        /* Print Specific CSS (Landscape A4 multi-page fix) */
+        @media print {
+            @page { size: A4 portrait; margin: 8mm; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            #printAreaHolder { display: block !important; }
+            #printAreaHolder table { width: 100% !important; border-collapse: collapse !important; }
+            #printAreaHolder thead { display: table-header-group !important; }
+            #printAreaHolder tfoot { display: table-row-group !important; }
+            #printAreaHolder tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #printAreaHolder th, #printAreaHolder td { border: 1px solid #000000 !important; padding: 5px 6px !important; font-size: 10px !important; color: black !important; }
+            #printAreaHolder th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-signatures { page-break-inside: avoid !important; margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="app-header" id="header-container">
+    <div class="app-header no-print" id="header-container">
         <div class="header-bg"></div>
         <div id="dynamicThemeContainer"></div>
         <div class="header-top">
@@ -141,15 +138,16 @@
                 <span>Stock Analytics</span>
             </div>
             <div class="header-actions">
-                <button onclick="downloadStockPDF()" class="btn-header" id="btnPdf"><i class="fas fa-file-pdf"></i> Save PDF</button>
+                <button onclick="exportToExcel()" class="btn-header" style="background:#16a34a;"><i class="fas fa-file-excel"></i> Excel</button>
+                <button onclick="printStockReport()" class="btn-header"><i class="fas fa-print"></i> Print / PDF</button>
             </div>
         </div>
     </div>
 
-    <div class="analytics-container">
+    <div class="analytics-container no-print">
         <div class="stat-card full">
             <div>
-                <div class="stat-title">Total Stock Value</div>
+                <div class="stat-title">Total Stock Asset Value</div>
                 <div class="stat-value" id="valTotalAsset">৳0</div>
             </div>
             <i class="fas fa-chart-pie" style="font-size: 32px; opacity: 0.5;"></i>
@@ -159,48 +157,56 @@
             <div class="stat-value" id="valTotalItems">0</div>
         </div>
         <div class="stat-card">
-            <div class="stat-title text-red"><i class="fas fa-exclamation-triangle"></i> Low Stock</div>
+            <div class="stat-title text-red"><i class="fas fa-exclamation-triangle"></i> Low Stock Alert</div>
             <div class="stat-value text-red" id="valLowStock">0</div>
         </div>
     </div>
 
-    <div class="filter-section">
-        <div class="search-box">
+    <!-- Filter Section -->
+    <div class="filter-section no-print">
+        <div class="search-container">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search by name, brand...">
+            <input type="text" id="searchInput" placeholder="Search by product name, brand or barcode...">
         </div>
         <select id="filterSelect" class="filter-select" onchange="applyFilters()">
-            <option value="all">All Items</option>
-            <option value="low">Low Stock</option>
-            <option value="value">Highest Value</option>
+            <option value="all">All Stock Status (সব)</option>
+            <option value="low">Low Stock Only (অ্যালার্ট স্টক)</option>
+            <option value="out">Out of Stock (স্টক ০)</option>
+            <option value="value">Highest Asset Value (সর্বোচ্চ সম্পদ)</option>
+        </select>
+        <select id="brandFilter" class="filter-select" onchange="applyFilters()">
+            <option value="all">All Brands (সব ব্র্যান্ড)</option>
         </select>
     </div>
 
-    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+    <div id="loading" class="no-print" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
         <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Analyzing Stock...
     </div>
 
-    <div class="product-list" id="stockList"></div>
-    <div id="loadMoreBtn" class="load-more-btn" onclick="loadMoreProducts()">Load More Products</div>
+    <div class="product-list no-print" id="stockList"></div>
+    <div id="loadMoreBtn" class="load-more-btn no-print" onclick="loadMoreProducts()">Load More Products</div>
 
-    <div class="modal-overlay" id="historyModal">
+    <!-- Stock History Modal -->
+    <div class="modal-overlay no-print" id="historyModal">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
-                    <h3 style="font-size: 14px;">Stock History</h3>
+                    <h3 style="font-size: 14px; font-weight:700;">Stock History</h3>
                     <p id="historyProductName" style="font-size: 11px; color: var(--text-light); margin-top: 2px; font-weight: 600;"></p>
                 </div>
                 <button onclick="document.getElementById('historyModal').style.display='none'" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
-            <div class="timeline" id="historyTimeline">
-                </div>
+            <div class="timeline" id="historyTimeline"></div>
         </div>
     </div>
+
+    <!-- Container for Browser Direct Print -->
+    <div id="printAreaHolder" style="display:none;"></div>
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-        import { showPdfPreview } from './invoice_kit.js';
+        import { getShopBranding } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
@@ -227,6 +233,7 @@
             const cachedProducts = localStorage.getItem(`stock_${SHOP_ID}`);
             if(cachedProducts) {
                 allProducts = JSON.parse(cachedProducts);
+                populateBrands();
                 updateDashboard(allProducts);
                 applyFilters();
             }
@@ -242,6 +249,7 @@
                         
                     localStorage.setItem(`stock_${SHOP_ID}`, JSON.stringify(allProducts));
                     
+                    populateBrands();
                     updateDashboard(allProducts);
                     applyFilters(); 
                 } else {
@@ -250,13 +258,25 @@
             });
         };
 
+        function populateBrands() {
+            const brandSelect = document.getElementById('brandFilter');
+            const currentSelected = brandSelect.value;
+            brandSelect.innerHTML = '<option value="all">All Brands (সব ব্র্যান্ড)</option>';
+            const brands = new Set();
+            allProducts.forEach(p => { if (p.brand && p.brand.trim() !== '') brands.add(p.brand.trim()); });
+            Array.from(brands).sort().forEach(b => {
+                brandSelect.innerHTML += `<option value="${b}">${b}</option>`;
+            });
+            brandSelect.value = currentSelected;
+        }
+
         function updateDashboard(data) {
             let totalValue = 0;
             let lowStockCount = 0;
 
             data.forEach(p => {
-                totalValue += (p.stock * (p.buy_price || 0));
-                if(p.stock <= (p.alert_qty || 5)) lowStockCount++;
+                totalValue += (Number(p.stock || 0) * Number(p.buy_price || 0));
+                if(Number(p.stock || 0) <= Number(p.alert_qty || 5)) lowStockCount++;
             });
 
             document.getElementById('valTotalAsset').innerText = `৳${totalValue.toLocaleString()}`;
@@ -267,6 +287,7 @@
         window.applyFilters = () => {
             const term = document.getElementById('searchInput').value.toLowerCase().trim();
             const filterType = document.getElementById('filterSelect').value;
+            const selectedBrand = document.getElementById('brandFilter').value;
 
             let filtered = allProducts.filter(p => 
                 p.name.toLowerCase().includes(term) || 
@@ -274,10 +295,16 @@
                 (p.barcode && p.barcode.toString().includes(term))
             );
 
+            if (selectedBrand !== 'all') {
+                filtered = filtered.filter(p => p.brand && p.brand.trim() === selectedBrand);
+            }
+
             if(filterType === 'low') {
-                filtered = filtered.filter(p => p.stock <= (p.alert_qty || 5));
+                filtered = filtered.filter(p => Number(p.stock || 0) <= Number(p.alert_qty || 5));
+            } else if(filterType === 'out') {
+                filtered = filtered.filter(p => Number(p.stock || 0) <= 0);
             } else if(filterType === 'value') {
-                filtered.sort((a, b) => (b.stock * b.buy_price) - (a.stock * a.buy_price));
+                filtered.sort((a, b) => (Number(b.stock || 0) * Number(b.buy_price || 0)) - (Number(a.stock || 0) * Number(a.buy_price || 0)));
             } else {
                 filtered.sort((a, b) => a.name.localeCompare(b.name));
             }
@@ -287,7 +314,6 @@
 
         document.getElementById('searchInput').addEventListener('input', applyFilters);
 
-        // --- INFINITE SCROLL LOGIC ---
         function initPagination(products) {
             currentPage = 1;
             displayedProducts = products;
@@ -327,8 +353,8 @@
             
             products.forEach((p) => {
                 const imgUrl = p.image || 'https://via.placeholder.com/100?text=Item';
-                const isLowStock = p.stock <= (p.alert_qty || 5);
-                const assetValue = p.stock * (p.buy_price || 0);
+                const isLowStock = Number(p.stock || 0) <= Number(p.alert_qty || 5);
+                const assetValue = Number(p.stock || 0) * Number(p.buy_price || 0);
                 const isHighValue = assetValue > 10000; 
                 
                 let cardClass = 'stock-card';
@@ -346,7 +372,7 @@
                         
                         <div class="stock-stats">
                             <div class="qty-box">
-                                <div class="qty-num">${p.stock}</div>
+                                <div class="qty-num">${p.stock || 0}</div>
                                 <div class="qty-unit">${p.unit || 'pcs'}</div>
                             </div>
                             
@@ -365,7 +391,7 @@
             });
         }
 
-        // --- HISTORY FETCHING (Updated to include stock_history for Opening/Manual Stock) ---
+        // --- STOCK HISTORY TIMELINE ---
         window.fetchHistory = async (productId, productName) => {
             const modal = document.getElementById('historyModal');
             const timeline = document.getElementById('historyTimeline');
@@ -375,16 +401,14 @@
             modal.style.display = 'flex';
 
             try {
-                // এখন তিনটি জায়গা থেকে ডেটা টানবে: Purchase, Sales, এবং Stock History
                 const [purchaseSnap, salesSnap, stockSnap] = await Promise.all([
                     get(query(rtdbRef(rtdb, 'purchase_history'), orderByChild('shop_id'), equalTo(SHOP_ID))),
                     get(query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID))),
-                    get(query(rtdbRef(rtdb, 'stock_history'), orderByChild('shop_id'), equalTo(SHOP_ID))) // <--- নতুন ফোল্ডার যুক্ত করা হলো
+                    get(query(rtdbRef(rtdb, 'stock_history'), orderByChild('shop_id'), equalTo(SHOP_ID)))
                 ]);
 
                 let historyLogs = [];
 
-                // ১. Purchase History পার্স করা
                 if(purchaseSnap.exists()) {
                     Object.values(purchaseSnap.val()).forEach(purchase => {
                         const item = purchase.items?.find(i => i.id === productId);
@@ -397,7 +421,6 @@
                     });
                 }
 
-                // ২. Sales History পার্স করা
                 if(salesSnap.exists()) {
                     Object.values(salesSnap.val()).forEach(sale => {
                         const item = sale.items?.find(i => i.id === productId);
@@ -410,24 +433,18 @@
                     });
                 }
 
-                // ৩. নতুন Stock History (Opening / Manual Update) পার্স করা
                 if(stockSnap.exists()) {
                     Object.values(stockSnap.val()).forEach(log => {
                         if (log.product_id === productId) {
-                            // যদি লেখার মাঝে Reduce কথাটি থাকে, তার মানে স্টক কমানো হয়েছে (out), নাহলে বাড়ানো হয়েছে (in)
                             const isOut = log.action && log.action.toLowerCase().includes("reduce");
                             historyLogs.push({
-                                type: isOut ? 'out' : 'in', 
-                                date: log.date,
-                                qty: log.qty, 
-                                rate: "-", // ম্যানুয়াল আপডেটে রেট থাকে না, তাই ফাকা রাখলাম
-                                ref: `${log.action}`
+                                type: isOut ? 'out' : 'in', date: log.date,
+                                qty: log.qty, rate: "-", ref: `${log.action}`
                             });
                         }
                     });
                 }
 
-                // তারিখ অনুযায়ী সাজানো (নতুনটা আগে)
                 historyLogs.sort((a, b) => b.date - a.date);
 
                 if(historyLogs.length === 0) {
@@ -460,71 +477,159 @@
             }
         };
 
-        // --- PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
-        window.downloadStockPDF = () => {
-            const currentList = allProducts.filter(p => document.getElementById('filterSelect').value === 'low' ? p.stock <= (p.alert_qty||5) : true);
+        // --- DIRECT PRINT (STOCK REPORT) ---
+        window.printStockReport = async () => {
+            if(displayedProducts.length === 0) return alert("প্রিন্ট করার জন্য কোনো পণ্য পাওয়া যায়নি!");
+            const shop = await getShopBranding(SHOP_ID);
+            const printArea = document.getElementById('printAreaHolder');
 
-            if(currentList.length === 0) {
-                alert("No records to generate PDF!"); return;
-            }
+            let rowsHtml = '';
+            let sumQty = 0, sumAssetVal = 0;
 
-            const btn = document.getElementById('btnPdf');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            displayedProducts.forEach((p, idx) => {
+                const stockQty = Number(p.stock || 0);
+                const buyPrice = Number(p.buy_price || 0);
+                const sellPrice = Number(p.sell_price || 0);
+                const assetVal = stockQty * buyPrice;
 
-            const tempDiv = document.createElement('div');
-            tempDiv.style.padding = '20px';
-            tempDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
-            
-            let html = `
-                <h2 style="text-align:center; font-size: 24px; margin-bottom: 5px; color:#1f2937;">${SHOP_NAME}</h2>
-                <p style="text-align:center; font-size: 14px; margin-bottom: 20px; color: #6b7280;">Detailed Stock Report<br><span style="font-size: 12px; font-weight: bold;">Date: ${new Date().toLocaleDateString('en-GB')}</span></p>
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                    <thead style="background-color: #10b981; color: white;">
-                        <tr>
-                            <th style="padding: 10px; border: 1px solid #ddd;">#</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Product & Brand</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Current Stock</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Avg. Buy Price</th>
-                            <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Asset Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            let totalVal = 0;
-            
-            currentList.forEach((p, i) => {
-                let val = p.stock * (p.buy_price || 0);
-                totalVal += val;
-                const brandHtml = p.brand ? `<br><span style="font-size:9px; color:#6b7280;">(${p.brand})</span>` : '';
-                
-                html += `
-                    <tr style="${p.stock <= (p.alert_qty||5) ? 'background-color: #fef2f2;' : ''}">
-                        <td style="padding: 10px; border: 1px solid #ddd;">${i+1}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight:bold;">${p.name} ${p.stock <= (p.alert_qty||5) ? '(Low)' : ''} ${brandHtml}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; color:${p.stock <= (p.alert_qty||5) ? 'red' : 'black'};">${p.stock} ${p.unit || 'pcs'}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${p.buy_price || 0}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right;">${val.toLocaleString()}</td>
+                sumQty += stockQty;
+                sumAssetVal += assetVal;
+
+                const isLow = stockQty <= Number(p.alert_qty || 5);
+
+                rowsHtml += `
+                    <tr>
+                        <td style="text-align:center;">${idx + 1}</td>
+                        <td><b>${p.name}</b> ${isLow ? '<span style="color:red;">(Low)</span>' : ''}</td>
+                        <td>${p.brand || '—'}</td>
+                        <td style="font-family:monospace; text-align:center;">${p.barcode || '—'}</td>
+                        <td style="text-align:center; font-weight:bold; ${isLow ? 'color:red;' : ''}">${stockQty} ${p.unit || 'pcs'}</td>
+                        <td style="text-align:right;">৳${buyPrice.toLocaleString()}</td>
+                        <td style="text-align:right;">৳${sellPrice.toLocaleString()}</td>
+                        <td style="text-align:right; font-weight:bold;">৳${assetVal.toLocaleString()}</td>
                     </tr>
                 `;
             });
-            
-            html += `
-                    </tbody>
+
+            printArea.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px; font-family:'Hind Siliguri',sans-serif;">
+                    ${shop.logo ? `<img src="${shop.logo}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; margin-bottom:5px;">` : ''}
+                    <h2 style="font-size: 20px; margin: 0; color:#0f172a;">${shop.name}</h2>
+                    <p style="font-size: 11px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
+                    <div style="display:inline-block; background:#10b981; color:white; font-size:12px; font-weight:700; padding:2px 12px; border-radius:12px; margin-top:4px;">ইনভেন্টরি ও স্টক বিবরণী (Stock Report)</div>
+                    <p style="font-size: 11px; color: #334155; margin-top: 4px; font-weight:600;">তারিখ: <b>${new Date().toLocaleDateString('en-GB')}</b> | মোট পণ্য: <b>${displayedProducts.length}</b></p>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:30px;">#</th>
+                            <th>পণ্যের নাম</th>
+                            <th>ব্র্যান্ড</th>
+                            <th style="width:80px; text-align:center;">বারকোড</th>
+                            <th style="width:65px; text-align:center;">বর্তমান স্টক</th>
+                            <th style="text-align:right; width:65px;">ক্রয়মূল্য</th>
+                            <th style="text-align:right; width:65px;">বিক্রয়মূল্য</th>
+                            <th style="text-align:right; width:80px;">সম্পদ মূল্য (Asset)</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
                     <tfoot>
-                        <tr style="font-weight: bold; background-color: #f3f4f6;">
-                            <td colspan="4" style="padding: 10px; border: 1px solid #ddd; text-align: right;">Total Stock Value / মোট ভ্যালু:</td>
-                            <td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-size:14px; color:#10b981;">${totalVal.toLocaleString()} ৳</td>
+                        <tr>
+                            <td colspan="4" style="text-align:right; font-weight:bold;">সর্বমোট (Total):</td>
+                            <td style="text-align:center; font-weight:bold;">${sumQty}</td>
+                            <td colspan="2"></td>
+                            <td style="text-align:right; font-weight:bold; color:#10b981;">৳${sumAssetVal.toLocaleString()}</td>
                         </tr>
                     </tfoot>
                 </table>
-            `;
-            tempDiv.innerHTML = html;
 
-            showPdfPreview(tempDiv, 'Stock_Analytics_Report.pdf').finally(() => {
-                btn.innerHTML = originalText;
+                <div class="print-signatures">
+                    <div>স্টোরকিপার স্বাক্ষর: ____________________</div>
+                    <div>হিসাবরক্ষক স্বাক্ষর: ____________________</div>
+                    <div>কর্তৃপক্ষের স্বাক্ষর: ____________________</div>
+                </div>
+            `;
+
+            window.print();
+        };
+
+        // --- EXPORT TO EXCEL ---
+        window.exportToExcel = () => {
+            if(displayedProducts.length === 0) return alert("এক্সেলে ডাউনলোড করার মতো কোনো পণ্য নেই!");
+            const filename = `Stock_Report_${new Date().toISOString().split('T')[0]}.xls`;
+
+            let rowsHtml = '';
+            let sumQty = 0, sumAssetVal = 0;
+
+            displayedProducts.forEach((p, idx) => {
+                const stockQty = Number(p.stock || 0);
+                const buyPrice = Number(p.buy_price || 0);
+                const sellPrice = Number(p.sell_price || 0);
+                const assetVal = stockQty * buyPrice;
+
+                sumQty += stockQty;
+                sumAssetVal += assetVal;
+
+                rowsHtml += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${p.name}</td>
+                        <td>${p.brand || '—'}</td>
+                        <td>${p.barcode || '—'}</td>
+                        <td>${stockQty}</td>
+                        <td>${p.unit || 'pcs'}</td>
+                        <td>${buyPrice}</td>
+                        <td>${sellPrice}</td>
+                        <td>${assetVal}</td>
+                        <td>${stockQty <= Number(p.alert_qty || 5) ? 'Low Stock' : 'In Stock'}</td>
+                    </tr>
+                `;
             });
+
+            const excelTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body>
+                    <h2 style="text-align:center;">${SHOP_NAME}</h2>
+                    <p style="text-align:center;">ইনভেন্টরি ও স্টক বিবরণী (${new Date().toLocaleDateString('en-GB')})</p>
+                    <table border="1">
+                        <thead>
+                            <tr style="background:#fef3c7; font-weight:bold;">
+                                <th>SL</th>
+                                <th>Product Name</th>
+                                <th>Brand</th>
+                                <th>Barcode / SKU</th>
+                                <th>Current Stock</th>
+                                <th>Unit</th>
+                                <th>Buy Price (Tk)</th>
+                                <th>Sell Price (Tk)</th>
+                                <th>Asset Value (Tk)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr style="font-weight:bold; background:#f1f5f9;">
+                                <td colspan="4" align="right">Total:</td>
+                                <td>${sumQty}</td>
+                                <td colspan="3"></td>
+                                <td>${sumAssetVal}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff' + excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
     </script>
 </body>
