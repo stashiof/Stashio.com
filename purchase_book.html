@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,28 +11,22 @@
     <script>
         const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        
-        if (!loggedInUser) {
-            window.location.replace("index.html");
-        } else if (!activeShopId) {
-            window.location.replace("dashboard.html");
-        }
+        if (!loggedInUser) window.location.replace("index.html");
+        else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
             --primary: #0B4A3E; --secondary: #D4A017; --bg-color: #f3f4f6;
             --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
-            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --blue: #3b82f6;
             --border-radius: 16px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
-
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 30px; position: relative; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
@@ -49,24 +43,34 @@
         .header-top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
-        .btn-pdf { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-pdf:active { transform: scale(0.95); }
-
         
+        .header-actions { display: flex; gap: 8px; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-header:active { transform: scale(0.95); }
+
         /* Filter Section */
-        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; display: flex; gap: 10px; align-items: flex-end; border: 1px solid #f8fafc; }
+        .filter-card { background: var(--white); border-radius: 16px; padding: 15px; margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; border: 1px solid #f8fafc; }
+        .filter-row { display: flex; gap: 10px; align-items: flex-end; }
         .date-input { flex: 1; }
         .date-input label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 3px; text-transform: uppercase; }
         .date-input input { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
-        .btn-filter { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; width: 40px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 4px 10px rgba(11, 74, 62, 0.24); }
-        .btn-filter:active { transform: scale(0.95); }
+        .date-input input:focus { border-color: var(--primary); background: white; }
+        .btn-filter { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; width: 40px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(11, 74, 62, 0.24); }
+
+        .search-box { position: relative; margin-top: 10px; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; outline: none; background: #f8fafc; font-family: inherit; }
+        .search-box input:focus { border-color: var(--primary); background: white; }
+
+        .quick-presets { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; }
+        .preset-chip { padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: var(--text-dark); border: none; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .preset-chip.active { background: var(--primary); color: white; }
 
         /* Summary */
-        .summary-bar { display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 15px; }
-        .sum-box { flex: 1; background: var(--white); padding: 12px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
-        .sum-box:first-child { margin-right: 10px; }
-        .sum-title { font-size: 10px; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
-        .sum-val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+        .summary-bar { display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 15px; gap: 8px; }
+        .sum-box { flex: 1; background: var(--white); padding: 12px 8px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
+        .sum-title { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+        .sum-val { font-size: 15px; font-weight: 800; margin-top: 2px; }
 
         /* List */
         .history-list { padding: 0 15px; display: flex; flex-direction: column; gap: 12px; }
@@ -94,17 +98,32 @@
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; font-size: 12px; color: var(--text-dark); }
         
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-        th { text-align: left; color: var(--text-light); font-weight: 600; text-transform: uppercase; font-size: 10px; }
+        .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .receipt-table th, .receipt-table td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+        .receipt-table th { text-align: left; color: var(--text-light); font-weight: 600; text-transform: uppercase; font-size: 10px; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-bold { font-weight: 700; }
+
+        /* Print Specific CSS */
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            #printAreaHolder { display: block !important; }
+            #printAreaHolder table { width: 100% !important; border-collapse: collapse !important; }
+            #printAreaHolder thead { display: table-header-group !important; }
+            #printAreaHolder tfoot { display: table-row-group !important; }
+            #printAreaHolder tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #printAreaHolder th, #printAreaHolder td { border: 1px solid #000000 !important; padding: 6px 8px !important; font-size: 11px !important; color: black !important; }
+            #printAreaHolder th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-signatures { page-break-inside: avoid !important; margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="app-header" id="header-container">
+    <div class="app-header no-print" id="header-container">
         <div class="header-bg"></div>
         <div id="dynamicThemeContainer"></div>
         <div class="header-top">
@@ -112,26 +131,47 @@
                 <a href="home.html"><i class="fas fa-arrow-left"></i></a>
                 <span>Purchase Book</span>
             </div>
-            <button onclick="downloadPDF()" class="btn-pdf"><i class="fas fa-file-pdf"></i> Save PDF</button>
+            <div class="header-actions">
+                <button onclick="exportToExcel()" class="btn-header" style="background:#16a34a;"><i class="fas fa-file-excel"></i> Excel</button>
+                <button onclick="printPurchaseReport()" class="btn-header"><i class="fas fa-print"></i> Print / PDF</button>
+            </div>
         </div>
     </div>
 
-    <div class="filter-card">
-        <div class="date-input">
-            <label>From Date</label>
-            <input type="date" id="dateFrom">
+    <div class="filter-card no-print">
+        <div class="filter-row">
+            <div class="date-input">
+                <label>From Date</label>
+                <input type="date" id="dateFrom">
+            </div>
+            <div class="date-input">
+                <label>To Date</label>
+                <input type="date" id="dateTo">
+            </div>
+            <button onclick="loadHistory()" class="btn-filter"><i class="fas fa-search"></i></button>
         </div>
-        <div class="date-input">
-            <label>To Date</label>
-            <input type="date" id="dateTo">
+        
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search supplier or challan no..." oninput="renderList()">
         </div>
-        <button onclick="loadHistory()" class="btn-filter"><i class="fas fa-search"></i></button>
+
+        <div class="quick-presets">
+            <button class="preset-chip active" onclick="setPreset('this_month', this)">চলতি মাস</button>
+            <button class="preset-chip" onclick="setPreset('last_month', this)">গত মাস</button>
+            <button class="preset-chip" onclick="setPreset('today', this)">আজকের দিন</button>
+            <button class="preset-chip" onclick="setPreset('all_time', this)">সব সময় (All)</button>
+        </div>
     </div>
 
-    <div class="summary-bar">
+    <div class="summary-bar no-print">
         <div class="sum-box">
             <div class="sum-title">Total Purchased</div>
             <div class="sum-val text-primary" id="sumTotal">৳0</div>
+        </div>
+        <div class="sum-box">
+            <div class="sum-title" style="color:var(--success)">Total Paid</div>
+            <div class="sum-val" style="color:var(--success)" id="sumPaid">৳0</div>
         </div>
         <div class="sum-box">
             <div class="sum-title text-danger">Total Due</div>
@@ -139,45 +179,36 @@
         </div>
     </div>
 
-    <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
+    <div id="loading" class="no-print" style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600; font-size: 13px;">
         <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i><br>Loading Records...
     </div>
 
-    <div class="history-list" id="historyList"></div>
+    <div class="history-list no-print" id="historyList"></div>
 
-    <div class="modal-overlay" id="receiptModal">
+    <div class="modal-overlay no-print" id="receiptModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Purchase Details</h3>
                 <button onclick="document.getElementById('receiptModal').style.display='none'" style="background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; color: var(--text-dark); cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body" id="receiptContent">
-            </div>
+            <div class="modal-body" id="receiptContent"></div>
         </div>
     </div>
 
+    <div id="printAreaHolder" style="display:none;"></div>
 
     <script type="module">
-        // মডুলার ফায়ারবেস ইমপোর্ট
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-        import { getShopBranding, showPdfPreview } from './invoice_kit.js';
+        import { getShopBranding } from './invoice_kit.js';
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
         let allRecords = [];
         let filteredRecords = [];
-        
-        // PDF Template Variables
-        let globalPdfTemplateCode = ""; 
-        let shopLogoImgUrl = ""; 
 
         window.onload = () => {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('dateFrom').value = today;
-            document.getElementById('dateTo').value = today;
-
             // Theme sync
             rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                 const themeCode = snap.exists() ? snap.val().code : null;
@@ -190,12 +221,9 @@
                 }
             });
 
-            // Fetch Dynamic PDF Template from Admin
-            rtdbOnValue(rtdbRef(rtdb, `global_settings/pdf_purchase_template`), (snap) => {
-                if(snap.exists()) globalPdfTemplateCode = snap.val().code || "";
-            });
+            setPreset('this_month');
 
-            // Fetch Purchase History (Offline Cache First)
+            // Offline Cache First
             const cachedPurchases = localStorage.getItem(`purchase_history_${SHOP_ID}`);
             if(cachedPurchases) {
                 allRecords = JSON.parse(cachedPurchases);
@@ -220,14 +248,39 @@
             });
         };
 
+        window.setPreset = (type, btn = null) => {
+            if (btn) {
+                document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+            }
+
+            const now = new Date();
+            let start, end;
+
+            if (type === 'today') {
+                start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            } else if (type === 'last_month') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (type === 'all_time') {
+                start = new Date(2020, 0, 1);
+                end = new Date(now.getFullYear() + 2, 11, 31, 23, 59, 59);
+            } else { // this_month
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            }
+
+            document.getElementById('dateFrom').value = start.toISOString().split('T')[0];
+            document.getElementById('dateTo').value = end.toISOString().split('T')[0];
+
+            if (allRecords.length > 0) loadHistory();
+        };
+
         window.loadHistory = () => {
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
-
-            if(!dateFrom || !dateTo) {
-                alert("Please select both dates.");
-                return;
-            }
+            if(!dateFrom || !dateTo) return;
 
             const startStr = new Date(dateFrom).setHours(0,0,0,0);
             const endStr = new Date(dateTo).setHours(23,59,59,999);
@@ -240,21 +293,34 @@
             renderList();
         };
 
-        function renderList() {
+        window.renderList = () => {
             const listEl = document.getElementById('historyList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             listEl.innerHTML = '';
 
-            let totalPurchased = 0;
-            let totalDue = 0;
+            let recordsToDisplay = filteredRecords;
+            if (searchTerm) {
+                recordsToDisplay = filteredRecords.filter(r => 
+                    (r.supplier && r.supplier.toLowerCase().includes(searchTerm)) ||
+                    (r.challan_no && r.challan_no.toLowerCase().includes(searchTerm))
+                );
+            }
 
-            if (filteredRecords.length === 0) {
-                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-clipboard-list" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No purchase records found for this date.</div>`;
+            let totalPurchased = 0, totalPaid = 0, totalDue = 0;
+
+            if (recordsToDisplay.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light); font-weight: 600;"><i class="fas fa-clipboard-list" style="font-size: 40px; color: #cbd5e1; margin-bottom: 10px;"></i><br>No purchase records found.</div>`;
             } else {
-                filteredRecords.forEach(r => {
-                    totalPurchased += Number(r.total_amount || 0);
-                    totalDue += Number(r.due_amount || 0);
+                recordsToDisplay.forEach(r => {
+                    const tot = Number(r.total_amount || 0);
+                    const paid = Number(r.paid_amount || 0);
+                    const due = Number(r.due_amount || 0);
 
-                    const hasDue = Number(r.due_amount) > 0;
+                    totalPurchased += tot;
+                    totalPaid += paid;
+                    totalDue += due;
+
+                    const hasDue = due > 0;
                     const d = new Date(r.created_at || r.date);
                     
                     const html = `
@@ -262,16 +328,16 @@
                         <div class="hc-header">
                             <div>
                                 <div class="hc-supp">${r.supplier || 'Local'}</div>
-                                <div class="hc-inv">INV: ${r.challan_no || 'N/A'}</div>
+                                <div class="hc-inv">CHALLAN: ${r.challan_no || 'N/A'}</div>
                             </div>
                             <div class="hc-date">${d.toLocaleDateString('en-GB')}</div>
                         </div>
                         <div class="hc-body">
                             <div class="hc-items"><i class="fas fa-box" style="color: #cbd5e1;"></i> ${r.items ? r.items.length : 0} Items</div>
                             <div class="hc-amt-box">
-                                <div class="hc-total">৳${Number(r.total_amount).toLocaleString()}</div>
-                                <div class="hc-paid">Paid: ৳${Number(r.paid_amount || 0).toLocaleString()}</div>
-                                ${hasDue ? `<div class="hc-due">Due: ৳${Number(r.due_amount).toLocaleString()}</div>` : ''}
+                                <div class="hc-total">৳${tot.toLocaleString()}</div>
+                                <div class="hc-paid">Paid: ৳${paid.toLocaleString()}</div>
+                                ${hasDue ? `<div class="hc-due">Due: ৳${due.toLocaleString()}</div>` : ''}
                             </div>
                         </div>
                         <button onclick="viewReceipt('${r.id}')" class="btn-view">View Details</button>
@@ -280,13 +346,13 @@
                 });
             }
 
-            // Update Summary
             document.getElementById('sumTotal').innerText = `৳${totalPurchased.toLocaleString()}`;
+            document.getElementById('sumPaid').innerText = `৳${totalPaid.toLocaleString()}`;
             document.getElementById('sumDue').innerText = `৳${totalDue.toLocaleString()}`;
-        }
+        };
 
         window.viewReceipt = (id) => {
-            const r = filteredRecords.find(x => x.id === id);
+            const r = allRecords.find(x => x.id === id);
             if(!r) return;
 
             const content = document.getElementById('receiptContent');
@@ -294,11 +360,12 @@
             
             if(r.items && r.items.length > 0) {
                 r.items.forEach(i => {
+                    const rate = Number(i.purchaseRate || i.buy_price || 0);
                     itemsHtml += `
                         <tr>
-                            <td>${i.name}<br><span style="color:#9ca3af; font-size:10px;">@৳${i.purchaseRate}</span></td>
+                            <td>${i.name}<br><span style="color:#9ca3af; font-size:10px;">@৳${rate}</span></td>
                             <td class="text-center">${i.qty} ${i.unit || 'pcs'}</td>
-                            <td class="text-right font-bold">৳${i.qty * i.purchaseRate}</td>
+                            <td class="text-right font-bold">৳${(i.qty * rate).toLocaleString()}</td>
                         </tr>
                     `;
                 });
@@ -312,54 +379,46 @@
                     <div class="text-right"><span style="color:var(--text-light); font-size:10px; text-transform:uppercase;">Date:</span><br><strong>${rDate}</strong></div>
                 </div>
                 
-                <table>
+                <table class="receipt-table">
                     <thead><tr><th>Item</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
                     <tbody>${itemsHtml}</tbody>
                 </table>
                 
                 <div style="border-top: 2px solid #e5e7eb; padding-top: 10px; font-size: 13px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:800; font-size: 15px; color: var(--primary);"><span>Total Amount:</span><span>৳${r.total_amount}</span></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:var(--success); font-weight: 600;"><span>Paid:</span><span>৳${r.paid_amount || 0}</span></div>
-                    ${r.due_amount > 0 ? `<div style="display:flex; justify-content:space-between; font-weight:700; color:var(--danger);"><span>Due:</span><span>৳${r.due_amount}</span></div>` : ''}
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:800; font-size: 15px; color: var(--primary);"><span>Total Amount:</span><span>৳${Number(r.total_amount || 0).toLocaleString()}</span></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:var(--success); font-weight: 600;"><span>Paid:</span><span>৳${Number(r.paid_amount || 0).toLocaleString()}</span></div>
+                    ${r.due_amount > 0 ? `<div style="display:flex; justify-content:space-between; font-weight:700; color:var(--danger);"><span>Due:</span><span>৳${Number(r.due_amount || 0).toLocaleString()}</span></div>` : ''}
                 </div>
-                <div style="margin-top: 15px; font-size: 11px; color: var(--text-light); text-align: center; background: #f8fafc; padding: 5px; border-radius: 8px;">Payment Method: <strong style="color: var(--text-dark);">${r.payment_method || 'Cash'}</strong></div>
+                <div style="margin-top: 15px; font-size: 11px; color: var(--text-light); text-align: center; background: #f8fafc; padding: 6px; border-radius: 8px;">Payment Method: <strong style="color: var(--text-dark);">${r.payment_method || 'Cash'}</strong></div>
             `;
 
             document.getElementById('receiptModal').style.display = 'flex';
         };
 
-        // --- DIRECT PDF EXPORT (PREVIEW BEFORE DOWNLOAD) ---
-        window.downloadPDF = async () => {
-            if(filteredRecords.length === 0) {
-                alert("No records to generate PDF!");
-                return;
-            }
-
-            const btn = document.querySelector('.btn-pdf');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
+        // --- DIRECT PRINT / SAVE AS PDF ---
+        window.printPurchaseReport = async () => {
+            if(filteredRecords.length === 0) return alert("প্রিন্ট করার জন্য কোনো তথ্য পাওয়া যায়নি!");
             const shop = await getShopBranding(SHOP_ID);
-            shopLogoImgUrl = shop.logo || "";
-
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
+            const printArea = document.getElementById('printAreaHolder');
 
-            // 1. Build Table Rows with Item Details
             let rowsHtml = '';
             let sumT = 0, sumP = 0, sumD = 0;
 
-            filteredRecords.forEach(r => {
-                sumT += Number(r.total_amount || 0);
-                sumP += Number(r.paid_amount || 0);
-                sumD += Number(r.due_amount || 0);
+            filteredRecords.forEach((r, idx) => {
+                const tot = Number(r.total_amount || 0);
+                const paid = Number(r.paid_amount || 0);
+                const due = Number(r.due_amount || 0);
+                sumT += tot; sumP += paid; sumD += due;
                 
                 const dDate = new Date(r.created_at || r.date).toLocaleDateString('en-GB');
                 
                 let itemsStr = "";
                 if(r.items && r.items.length > 0) {
                     r.items.forEach(i => {
-                        itemsStr += `• ${i.name} (${i.qty} ${i.unit || 'pcs'} @ ৳${i.purchaseRate})<br>`;
+                        const rate = Number(i.purchaseRate || i.buy_price || 0);
+                        itemsStr += `• ${i.name} (${i.qty} ${i.unit || 'pcs'} @ ৳${rate})<br>`;
                     });
                 } else {
                     itemsStr = "No item details";
@@ -367,80 +426,144 @@
 
                 rowsHtml += `
                     <tr>
-                        <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top;">
-                            <strong>${dDate}</strong><br>
-                            <span style="color:#6b7280">${r.supplier || 'Local'}</span><br>
-                            <span style="font-size:10px; color:#9ca3af;">INV: ${r.challan_no || 'N/A'}</span>
+                        <td style="text-align:center;">${idx + 1}</td>
+                        <td>
+                            <b>${r.supplier || 'Local'}</b><br>
+                            <span style="font-size:10px; color:#555;">Challan: ${r.challan_no || 'N/A'}</span>
                         </td>
-                        <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top; line-height:1.5;">
-                            ${itemsStr}
-                        </td>
-                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right; vertical-align: top; font-weight:bold;">
-                            ${r.total_amount}
-                        </td>
-                        <td style="padding: 10px; border: 1px solid #ddd; text-align:right; vertical-align: top;">
-                            <span style="color:green;">Paid: ${r.paid_amount || 0}</span><br>
-                            ${r.due_amount > 0 ? `<span style="color:red; font-weight:bold;">Due: ${r.due_amount}</span>` : ''}
-                        </td>
+                        <td style="text-align:center;">${dDate}</td>
+                        <td style="line-height:1.4;">${itemsStr}</td>
+                        <td style="text-align:right; font-weight:bold;">৳${tot.toLocaleString()}</td>
+                        <td style="text-align:right; color:#16a34a;">৳${paid.toLocaleString()}</td>
+                        <td style="text-align:right; color:#dc2626; font-weight:bold;">৳${due.toLocaleString()}</td>
                     </tr>
                 `;
             });
 
-            // 2. Default Poysha POS Template 
-            const defaultTemplate = `
-                <div style="font-family: 'Hind Siliguri', sans-serif; padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        {{SHOP_LOGO_IMG}}
-                        <h2 style="font-size: 24px; margin-bottom: 5px; color: #1f2937;">{{SHOP_NAME}}</h2>
-                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Detailed Purchase Report</p>
-                        <p style="font-size: 12px; font-weight: bold; margin-top: 5px;">Date: {{DATE_RANGE}}</p>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                        <thead style="background-color: #0B4A3E; color: white;">
-                            <tr>
-                                <th style="padding: 10px; border: 1px solid #ddd;">Date & Supplier</th>
-                                <th style="padding: 10px; border: 1px solid #ddd;">Items Purchased</th>
-                                <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Total (৳)</th>
-                                <th style="padding: 10px; border: 1px solid #ddd; text-align:right;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{TABLE_ROWS}}
-                        </tbody>
-                        <tfoot>
-                            <tr style="background-color: #f3f4f6; font-size: 14px;">
-                                <td colspan="2" style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight:bold;">Grand Total:</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-weight:bold;">৳ {{GRAND_TOTAL}}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align:right; font-weight:bold; color:red;">Due: ৳ {{TOTAL_DUE}}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+            printArea.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px; font-family:'Hind Siliguri',sans-serif;">
+                    ${shop.logo ? `<img src="${shop.logo}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; margin-bottom:5px;">` : ''}
+                    <h2 style="font-size: 20px; margin: 0; color:#0f172a;">${shop.name}</h2>
+                    <p style="font-size: 11px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
+                    <div style="display:inline-block; background:#0B4A3E; color:white; font-size:12px; font-weight:700; padding:2px 12px; border-radius:12px; margin-top:4px;">ক্রয় খাতা রিপোর্ট (Purchase Report)</div>
+                    <p style="font-size: 11px; color: #334155; margin-top: 4px; font-weight:600;">তারিখ: <b>${dateFrom}</b> থেকে <b>${dateTo}</b></p>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:30px;">#</th>
+                            <th>সাপ্লায়ার ও চালান</th>
+                            <th style="width:80px; text-align:center;">তারিখ</th>
+                            <th>ক্রয়কৃত পণ্যের বিবরণী</th>
+                            <th style="text-align:right; width:80px;">মোট বিল</th>
+                            <th style="text-align:right; width:80px;">পরিশোধ</th>
+                            <th style="text-align:right; width:80px;">বকেয়া</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" style="text-align:right; font-weight:bold;">সর্বমোট (Total):</td>
+                            <td style="text-align:right; font-weight:bold; color:#0B4A3E;">৳${sumT.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold; color:#16a34a;">৳${sumP.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold; color:#dc2626;">৳${sumD.toLocaleString()}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="print-signatures">
+                    <div>প্রস্তুতকারী স্বাক্ষর: ____________________</div>
+                    <div>হিসাবরক্ষক স্বাক্ষর: ____________________</div>
+                    <div>কর্তৃপক্ষের স্বাক্ষর: ____________________</div>
                 </div>
             `;
 
-            // 3. Admin Template Replace Logic
-            let finalTemplate = globalPdfTemplateCode ? globalPdfTemplateCode : defaultTemplate;
-            
-            let logoHtml = "";
-            if(shopLogoImgUrl) {
-                logoHtml = `<img src="${shopLogoImgUrl}" style="width:70px; height:70px; object-fit:cover; border-radius:50%; margin-bottom:10px;">`;
-            }
-            
-            finalTemplate = finalTemplate.replace(/{{SHOP_NAME}}/g, SHOP_NAME);
-            finalTemplate = finalTemplate.replace(/{{SHOP_LOGO_IMG}}/g, logoHtml);
-            finalTemplate = finalTemplate.replace(/{{DATE_RANGE}}/g, `${dateFrom} to ${dateTo}`);
-            finalTemplate = finalTemplate.replace(/{{TABLE_ROWS}}/g, rowsHtml);
-            finalTemplate = finalTemplate.replace(/{{GRAND_TOTAL}}/g, sumT.toLocaleString());
-            finalTemplate = finalTemplate.replace(/{{TOTAL_PAID}}/g, sumP.toLocaleString());
-            finalTemplate = finalTemplate.replace(/{{TOTAL_DUE}}/g, sumD.toLocaleString());
+            window.print();
+        };
 
-            // 4. Generate Preview
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = finalTemplate;
+        // --- EXPORT TO EXCEL ---
+        window.exportToExcel = () => {
+            if(filteredRecords.length === 0) return alert("এক্সেলে ডাউনলোড করার জন্য কোনো তথ্য নেই!");
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const filename = `Purchase_Book_${dateFrom}_to_${dateTo}.xls`;
 
-            showPdfPreview(tempDiv, `Purchase_Report_${dateFrom}.pdf`).finally(() => {
-                btn.innerHTML = originalText;
+            let rowsHtml = '';
+            let sumT = 0, sumP = 0, sumD = 0;
+
+            filteredRecords.forEach((r, idx) => {
+                const tot = Number(r.total_amount || 0);
+                const paid = Number(r.paid_amount || 0);
+                const due = Number(r.due_amount || 0);
+                sumT += tot; sumP += paid; sumD += due;
+                
+                const dDate = new Date(r.created_at || r.date).toLocaleDateString('en-GB');
+                
+                let itemsStr = "";
+                if(r.items && r.items.length > 0) {
+                    r.items.forEach(i => {
+                        itemsStr += `${i.name} (${i.qty} ${i.unit || 'pcs'} @ ${i.purchaseRate || i.buy_price || 0}); `;
+                    });
+                }
+
+                rowsHtml += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${r.supplier || 'Local'}</td>
+                        <td>${r.challan_no || 'N/A'}</td>
+                        <td>${dDate}</td>
+                        <td>${itemsStr}</td>
+                        <td>${tot}</td>
+                        <td>${paid}</td>
+                        <td>${due}</td>
+                        <td>${r.payment_method || 'Cash'}</td>
+                    </tr>
+                `;
             });
+
+            const excelTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body>
+                    <h2 style="text-align:center;">${SHOP_NAME}</h2>
+                    <p style="text-align:center;">ক্রয় খাতা রিপোর্ট (${dateFrom} থেকে ${dateTo})</p>
+                    <table border="1">
+                        <thead>
+                            <tr style="background:#e0f2fe; font-weight:bold;">
+                                <th>SL</th>
+                                <th>Supplier Name</th>
+                                <th>Challan No</th>
+                                <th>Date</th>
+                                <th>Items Details</th>
+                                <th>Total Bill (Tk)</th>
+                                <th>Paid Amount (Tk)</th>
+                                <th>Due Amount (Tk)</th>
+                                <th>Payment Method</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr style="font-weight:bold; background:#f1f5f9;">
+                                <td colspan="5" align="right">Total:</td>
+                                <td>${sumT}</td>
+                                <td>${sumP}</td>
+                                <td>${sumD}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff' + excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
     </script>
 </body>
