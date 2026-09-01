@@ -28,7 +28,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; padding-bottom: 40px; position: relative; }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         /* Dynamic Header */
@@ -46,46 +46,53 @@
         .header-title a { color: white; text-decoration: none; }
         
         .header-actions { display: flex; gap: 8px; }
-        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 14px; border-radius: 12px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 12px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; transition: 0.2s; }
         .btn-header:active { transform: scale(0.95); }
 
-        /* Quick Filters & Date Control */
+        /* Advanced Filter Card */
         .filter-card {
-            background: var(--white); border-radius: var(--border-radius); padding: 16px; 
+            background: var(--white); border-radius: var(--border-radius); padding: 18px; 
             margin: -25px 15px 15px 15px; box-shadow: var(--shadow); position: relative; z-index: 60; 
             border: 1px solid #f8fafc;
         }
-        .filter-row { display: flex; gap: 10px; align-items: flex-end; }
-        .date-group { flex: 1; }
-        .date-group label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
-        .date-group input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
-        .date-group input:focus { border-color: var(--primary); background: white; }
-        .btn-filter { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; width: 42px; height: 38px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(11, 74, 62, 0.2); }
-        
-        .quick-presets { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; padding-bottom: 2px; }
-        .preset-chip { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: var(--text-dark); border: none; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
+        .filter-group input, .filter-group select { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); transition: 0.2s; }
+        .filter-group input:focus, .filter-group select:focus { border-color: var(--primary); background: white; }
+
+        .search-row { display: flex; gap: 10px; margin-top: 10px; }
+        .search-box { flex: 1; position: relative; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 10px 12px 10px 35px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 12px; outline: none; background: #f8fafc; }
+        .search-box input:focus { border-color: var(--primary); background: white; }
+
+        .quick-presets { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; padding-bottom: 4px; }
+        .preset-chip { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: var(--text-dark); border: none; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         .preset-chip.active { background: var(--primary); color: white; }
 
         /* Summary Metrics */
         .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0 15px; margin-bottom: 15px; }
-        .metric-card { background: var(--white); padding: 14px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
-        .mc-title { font-size: 10.5px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .metric-card { background: var(--white); padding: 14px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #f8fafc; position: relative; overflow: hidden; }
+        .mc-title { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         .mc-val { font-size: 17px; font-weight: 800; color: var(--text-dark); }
+        .mc-sub { font-size: 10px; color: var(--text-light); margin-top: 2px; font-weight: 600; }
 
         /* Table Area */
         .table-card {
             background: var(--white); border-radius: var(--border-radius); padding: 15px;
             margin: 0 15px 20px 15px; box-shadow: var(--shadow); border: 1px solid #f8fafc;
         }
-        .table-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .table-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
         .table-title { font-size: 14px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 6px; }
         
-        .table-responsive { width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .table-responsive { width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 12px; max-height: 65vh; }
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; white-space: nowrap; }
         
-        th, td { padding: 9px 8px; border: 1px solid #e2e8f0; }
+        th, td { padding: 8px 8px; border: 1px solid #e2e8f0; }
         
         /* Multi-level Headers */
+        thead { position: sticky; top: 0; z-index: 10; }
         thead tr:first-child th { background: #f8fafc; font-weight: 800; color: var(--text-dark); font-size: 12px; }
         .head-purchase { background: #e0f2fe !important; color: #0369a1 !important; }
         .head-sale { background: #dcfce7 !important; color: #15803d !important; }
@@ -99,13 +106,13 @@
         .text-right { text-align: right; }
         .font-bold { font-weight: 700; }
 
-        tfoot tr { background: #f8fafc; font-weight: 800; font-size: 12px; border-top: 2px solid #cbd5e1; }
+        tfoot tr { background: #f8fafc; font-weight: 800; font-size: 12px; border-top: 2px solid #cbd5e1; position: sticky; bottom: 0; z-index: 5; }
 
-        /* Clean Printable Landscape A4 Styles */
+        /* Perfect Print Stylesheet (Fixes multi-page total repeating issue) */
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 10mm;
+                margin: 8mm;
             }
             body {
                 background: white !important;
@@ -118,15 +125,36 @@
             #printAreaHolder table {
                 width: 100% !important;
                 border-collapse: collapse !important;
+                page-break-after: auto;
+            }
+            #printAreaHolder thead {
+                display: table-header-group !important; /* Header repeats on top of every page */
+            }
+            #printAreaHolder tfoot {
+                display: table-row-group !important; /* Total displays ONLY AT THE VERY END */
+            }
+            #printAreaHolder tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
             #printAreaHolder th, #printAreaHolder td {
                 border: 1px solid #000000 !important;
-                padding: 6px 8px !important;
-                font-size: 11px !important;
+                padding: 4px 6px !important;
+                font-size: 9.5px !important;
+                color: black !important;
             }
             #printAreaHolder .head-purchase { background: #e0f2fe !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             #printAreaHolder .head-sale { background: #dcfce7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             #printAreaHolder .head-stock { background: #fef3c7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            
+            .print-signatures {
+                page-break-inside: avoid !important;
+                margin-top: 25px;
+                display: flex;
+                justify-content: space-between;
+                font-size: 11px;
+                font-family: 'Hind Siliguri', sans-serif;
+            }
         }
     </style>
 </head>
@@ -138,30 +166,70 @@
         <div class="header-top">
             <div class="header-title">
                 <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-                <span>Monthly Report</span>
+                <span>Monthly Report Hub</span>
             </div>
             <div class="header-actions">
                 <button onclick="exportToExcel()" class="btn-header" style="background:#16a34a;"><i class="fas fa-file-excel"></i> Excel</button>
+                <button onclick="exportToCSV()" class="btn-header" style="background:#0284c7;"><i class="fas fa-file-csv"></i> CSV</button>
                 <button onclick="printReportDirectly()" class="btn-header" style="background:#dc2626;"><i class="fas fa-print"></i> Print / PDF</button>
             </div>
         </div>
     </div>
 
+    <!-- Advanced Filter Area -->
     <div class="filter-card no-print">
-        <div class="filter-row">
-            <div class="date-group">
+        <div class="filter-grid">
+            <div class="filter-group">
                 <label>From Date</label>
-                <input type="date" id="dateFrom">
+                <input type="date" id="dateFrom" onchange="calculateMonthlyReport()">
             </div>
-            <div class="date-group">
+            <div class="filter-group">
                 <label>To Date</label>
-                <input type="date" id="dateTo">
+                <input type="date" id="dateTo" onchange="calculateMonthlyReport()">
             </div>
-            <button onclick="applyDateFilter()" class="btn-filter"><i class="fas fa-search"></i></button>
+            <div class="filter-group">
+                <label>Report View / Type</label>
+                <select id="reportMode" onchange="calculateMonthlyReport()">
+                    <option value="all">১. সব পণ্য (Full Statement)</option>
+                    <option value="sold">২. বিক্রিত পণ্য (Sold Items Only)</option>
+                    <option value="purchased">৩. নতুন কেনা পণ্য (Purchased Only)</option>
+                    <option value="zero_sale">৪. অবিক্রিত স্টক (Dead / Zero Sale)</option>
+                    <option value="low_stock">৫. স্টক অ্যালার্ট (Low Stock Only)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Brand Filter</label>
+                <select id="brandFilter" onchange="calculateMonthlyReport()">
+                    <option value="all">All Brands (সব ব্র্যান্ড)</option>
+                </select>
+            </div>
         </div>
+
+        <div class="filter-grid" style="margin-bottom: 0;">
+            <div class="filter-group">
+                <label>Sort By (ক্রমানুসার)</label>
+                <select id="sortBy" onchange="calculateMonthlyReport()">
+                    <option value="name">নাম অনুযায়ী (A-Z)</option>
+                    <option value="sale_desc">সর্বোচ্চ বিক্রি (Sale Qty)</option>
+                    <option value="profit_desc">সর্বোচ্চ লাভ (Profit Tk)</option>
+                    <option value="purchase_desc">সর্বোচ্চ ক্রয় (Purchase Tk)</option>
+                    <option value="stock_asc">কম স্টক আগে (Low Stock)</option>
+                    <option value="stock_val_desc">সর্বোচ্চ স্টক ভ্যালু (Asset Value)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Search Product</label>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search name, brand, barcode..." oninput="calculateMonthlyReport()">
+                </div>
+            </div>
+        </div>
+
         <div class="quick-presets">
             <button class="preset-chip active" onclick="setPreset('this_month', this)">চলতি মাস</button>
             <button class="preset-chip" onclick="setPreset('last_month', this)">গত মাস</button>
+            <button class="preset-chip" onclick="setPreset('this_year', this)">চলতি বছর</button>
             <button class="preset-chip" onclick="setPreset('today', this)">আজকের দিন</button>
             <button class="preset-chip" onclick="setPreset('all_time', this)">সব সময় (All Time)</button>
         </div>
@@ -172,30 +240,34 @@
         <div class="metric-card" style="border-left: 4px solid var(--blue);">
             <div class="mc-title"><i class="fas fa-truck-loading" style="color:var(--blue);"></i> Total Purchase</div>
             <div class="mc-val" id="sumPurchase" style="color:var(--blue);">৳0</div>
+            <div class="mc-sub" id="sumPurchaseQty">0 pcs bought</div>
         </div>
         <div class="metric-card" style="border-left: 4px solid var(--success);">
             <div class="mc-title"><i class="fas fa-shopping-cart" style="color:var(--success);"></i> Total Sale</div>
             <div class="mc-val" id="sumSale" style="color:var(--success);">৳0</div>
+            <div class="mc-sub" id="sumSaleQty">0 pcs sold</div>
         </div>
         <div class="metric-card" style="border-left: 4px solid var(--warning);">
-            <div class="mc-title"><i class="fas fa-boxes-stacked" style="color:var(--warning);"></i> Stock Assets</div>
+            <div class="mc-title"><i class="fas fa-boxes-stacked" style="color:var(--warning);"></i> Stock Asset Value</div>
             <div class="mc-val" id="sumStockVal" style="color:var(--warning);">৳0</div>
+            <div class="mc-sub" id="sumStockQty">0 pcs in inventory</div>
         </div>
         <div class="metric-card" style="border-left: 4px solid var(--purple);">
             <div class="mc-title"><i class="fas fa-chart-line" style="color:var(--purple);"></i> Estimated Profit</div>
             <div class="mc-val" id="sumEstProfit" style="color:var(--purple);">৳0</div>
+            <div class="mc-sub" id="sumMargin">Margin: 0%</div>
         </div>
     </div>
 
-    <!-- Main Table Section -->
+    <!-- Main Report Table -->
     <div class="table-card no-print">
         <div class="table-top-bar">
             <div class="table-title"><i class="fas fa-table-list text-primary"></i> <span id="reportRangeTitle">মাসিক পণ্যের বিবরণী</span></div>
-            <div style="font-size: 11px; color: var(--text-light); font-weight: 600;" id="itemCountLabel">0 টি পণ্য</div>
+            <div style="font-size: 11px; color: var(--text-light); font-weight: 700;" id="itemCountLabel">0 টি পণ্য প্রদর্শিত</div>
         </div>
 
-        <div id="loading" style="text-align: center; padding: 30px; color: var(--text-light); font-size: 13px;">
-            <i class="fas fa-spinner fa-spin text-primary" style="font-size: 24px; margin-bottom: 8px;"></i><br>হিসাব বিশ্লেষণ হচ্ছে...
+        <div id="loading" style="text-align: center; padding: 40px; color: var(--text-light); font-size: 13px;">
+            <i class="fas fa-spinner fa-spin text-primary" style="font-size: 26px; margin-bottom: 10px;"></i><br>হিসাব বিশ্লেষণ হচ্ছে...
         </div>
 
         <div class="table-responsive" id="tableWrapper" style="display:none;">
@@ -209,6 +281,7 @@
                         <th colspan="3" class="head-purchase">Purchases (ক্রয়)</th>
                         <th colspan="3" class="head-sale">Sale (বিক্রয়)</th>
                         <th colspan="2" class="head-stock">Stock / Balance</th>
+                        <th rowspan="2" class="head-sale">Est. Profit</th>
                     </tr>
                     <tr>
                         <th class="head-purchase">Qty</th>
@@ -227,7 +300,7 @@
         </div>
     </div>
 
-    <!-- Container for Browser Direct Print -->
+    <!-- Print Container for Landscape Printing -->
     <div id="printAreaHolder" style="display:none;"></div>
 
     <script type="module">
@@ -275,6 +348,9 @@
             } else if (type === 'last_month') {
                 start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (type === 'this_year') {
+                start = new Date(now.getFullYear(), 0, 1);
+                end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
             } else if (type === 'all_time') {
                 start = new Date(2020, 0, 1);
                 end = new Date(now.getFullYear() + 2, 11, 31, 23, 59, 59);
@@ -287,11 +363,6 @@
             document.getElementById('dateTo').value = end.toISOString().split('T')[0];
 
             if (allProducts.length > 0) calculateMonthlyReport();
-        };
-
-        window.applyDateFilter = () => {
-            document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
-            calculateMonthlyReport();
         };
 
         async function fetchAllData() {
@@ -308,6 +379,15 @@
                 allSales = sSnap.exists() ? Object.values(sSnap.val()) : [];
                 allOrders = ordSnap.exists() ? Object.values(ordSnap.val()).filter(o => o.status !== 'Cancelled') : [];
 
+                // Populate Brand Dropdown
+                const brandSelect = document.getElementById('brandFilter');
+                brandSelect.innerHTML = '<option value="all">All Brands (সব ব্র্যান্ড)</option>';
+                const brands = new Set();
+                allProducts.forEach(p => { if (p.brand && p.brand.trim() !== '') brands.add(p.brand.trim()); });
+                Array.from(brands).sort().forEach(b => {
+                    brandSelect.innerHTML += `<option value="${b}">${b}</option>`;
+                });
+
                 calculateMonthlyReport();
             } catch (error) {
                 console.error("Data fetch error:", error);
@@ -315,28 +395,22 @@
             }
         }
 
-        function calculateMonthlyReport() {
+        window.calculateMonthlyReport = () => {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('tableWrapper').style.display = 'block';
 
             const dFrom = new Date(document.getElementById('dateFrom').value).setHours(0, 0, 0, 0);
             const dTo = new Date(document.getElementById('dateTo').value).setHours(23, 59, 59, 999);
+            const reportMode = document.getElementById('reportMode').value;
+            const selectedBrand = document.getElementById('brandFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
 
-            const filteredPurchases = allPurchases.filter(p => {
-                const t = p.created_at || (p.date ? new Date(p.date).getTime() : 0);
-                return t >= dFrom && t <= dTo;
-            });
-
-            const filteredSales = allSales.filter(s => {
-                const t = s.created_at || (s.date ? new Date(s.date).getTime() : 0);
-                return t >= dFrom && t <= dTo;
-            });
-
+            // Filter Purchases in range
             const purchaseMap = {};
-            const saleMap = {};
-
-            filteredPurchases.forEach(pur => {
-                if (pur.items && Array.isArray(pur.items)) {
+            allPurchases.forEach(pur => {
+                const t = pur.created_at || (pur.date ? new Date(pur.date).getTime() : 0);
+                if (t >= dFrom && t <= dTo && pur.items && Array.isArray(pur.items)) {
                     pur.items.forEach(it => {
                         const id = it.id || it.name;
                         if (!purchaseMap[id]) purchaseMap[id] = { qty: 0, totalCost: 0, lastRate: it.purchaseRate || 0 };
@@ -349,66 +423,132 @@
                 }
             });
 
-            filteredSales.forEach(sale => {
-                if (sale.items && Array.isArray(sale.items)) {
+            // Filter Sales in range
+            const saleMap = {};
+            allSales.forEach(sale => {
+                const t = sale.created_at || (sale.date ? new Date(sale.date).getTime() : 0);
+                if (t >= dFrom && t <= dTo && sale.items && Array.isArray(sale.items)) {
                     sale.items.forEach(it => {
                         const id = it.id || it.name;
-                        if (!saleMap[id]) saleMap[id] = { qty: 0, totalRevenue: 0, lastRate: it.sellRate || 0 };
+                        if (!saleMap[id]) saleMap[id] = { qty: 0, totalRevenue: 0, lastRate: it.sellRate || 0, buyPrice: it.buyRate || it.buy_price || 0 };
                         const q = Number(it.qty || 0);
                         const rate = Number(it.sellRate || it.rate || 0);
                         saleMap[id].qty += q;
                         saleMap[id].totalRevenue += (q * rate);
                         if (rate > 0) saleMap[id].lastRate = rate;
+                        if (it.buyRate || it.buy_price) saleMap[id].buyPrice = Number(it.buyRate || it.buy_price);
                     });
                 }
             });
 
-            const tbody = document.getElementById('reportBody');
-            tbody.innerHTML = '';
-
-            let grandPurQty = 0, grandPurTotal = 0;
-            let grandSaleQty = 0, grandSaleTotal = 0;
-            let grandStockQty = 0, grandStockVal = 0;
-
-            allProducts.forEach((prod, index) => {
+            // Map and Enrich Product List
+            let processedList = allProducts.map(prod => {
                 const pId = prod.id;
                 const purData = purchaseMap[pId] || { qty: 0, totalCost: 0, lastRate: prod.buy_price || 0 };
-                const saleData = saleMap[pId] || { qty: 0, totalRevenue: 0, lastRate: prod.sell_price || 0 };
+                const saleData = saleMap[pId] || { qty: 0, totalRevenue: 0, lastRate: prod.sell_price || 0, buyPrice: prod.buy_price || 0 };
 
                 const purRate = purData.qty > 0 ? (purData.totalCost / purData.qty) : (purData.lastRate || prod.buy_price || 0);
                 const saleRate = saleData.qty > 0 ? (saleData.totalRevenue / saleData.qty) : (saleData.lastRate || prod.sell_price || 0);
 
                 const currentStock = Number(prod.stock || 0);
                 const stockAsset = currentStock * (prod.buy_price || purRate || 0);
+                const baseBuyRate = (saleData.buyPrice > 0 ? saleData.buyPrice : (purRate > 0 ? purRate : Number(prod.buy_price || 0)));
+                const itemProfit = saleData.totalRevenue - (saleData.qty * baseBuyRate);
 
-                grandPurQty += purData.qty;
-                grandPurTotal += purData.totalCost;
-                grandSaleQty += saleData.qty;
-                grandSaleTotal += saleData.totalRevenue;
-                grandStockQty += currentStock;
-                grandStockVal += stockAsset;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td class="text-left font-bold">${prod.name}</td>
-                    <td>${prod.brand || '—'}</td>
-                    <td>${prod.unit || 'Pcs'}</td>
-                    
-                    <td>${purData.qty > 0 ? purData.qty : '—'}</td>
-                    <td class="text-right">${purRate > 0 ? purRate.toFixed(2) : '—'}</td>
-                    <td class="text-right font-bold" style="color:var(--blue);">${purData.totalCost > 0 ? purData.totalCost.toLocaleString('en-US', {minimumFractionDigits: 2}) : '—'}</td>
-                    
-                    <td>${saleData.qty > 0 ? saleData.qty : '—'}</td>
-                    <td class="text-right">${saleRate > 0 ? saleRate.toFixed(2) : '—'}</td>
-                    <td class="text-right font-bold" style="color:var(--success);">${saleData.totalRevenue > 0 ? saleData.totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2}) : '—'}</td>
-                    
-                    <td class="font-bold">${currentStock}</td>
-                    <td class="text-right font-bold" style="color:#b45309;">${stockAsset.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                `;
-                tbody.appendChild(tr);
+                return {
+                    ...prod,
+                    purQty: purData.qty,
+                    purRate: purRate,
+                    purTotal: purData.totalCost,
+                    saleQty: saleData.qty,
+                    saleRate: saleRate,
+                    saleTotal: saleData.totalRevenue,
+                    stockQty: currentStock,
+                    stockAsset: stockAsset,
+                    itemProfit: saleData.qty > 0 ? itemProfit : 0
+                };
             });
 
+            // Apply Search
+            if (searchTerm) {
+                processedList = processedList.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) || 
+                    (p.brand && p.brand.toLowerCase().includes(searchTerm)) || 
+                    (p.barcode && p.barcode.toString().toLowerCase().includes(searchTerm))
+                );
+            }
+
+            // Apply Brand Filter
+            if (selectedBrand !== 'all') {
+                processedList = processedList.filter(p => p.brand && p.brand.trim() === selectedBrand);
+            }
+
+            // Apply Report Mode
+            if (reportMode === 'sold') {
+                processedList = processedList.filter(p => p.saleQty > 0);
+            } else if (reportMode === 'purchased') {
+                processedList = processedList.filter(p => p.purQty > 0);
+            } else if (reportMode === 'zero_sale') {
+                processedList = processedList.filter(p => p.stockQty > 0 && p.saleQty === 0);
+            } else if (reportMode === 'low_stock') {
+                processedList = processedList.filter(p => p.stockQty <= (p.alert_qty || 5));
+            }
+
+            // Apply Sorting
+            processedList.sort((a, b) => {
+                if (sortBy === 'sale_desc') return b.saleQty - a.saleQty;
+                if (sortBy === 'profit_desc') return b.itemProfit - a.itemProfit;
+                if (sortBy === 'purchase_desc') return b.purTotal - a.purTotal;
+                if (sortBy === 'stock_asc') return a.stockQty - b.stockQty;
+                if (sortBy === 'stock_val_desc') return b.stockAsset - a.stockAsset;
+                return a.name.localeCompare(b.name);
+            });
+
+            // Render Rows
+            const tbody = document.getElementById('reportBody');
+            tbody.innerHTML = '';
+
+            let grandPurQty = 0, grandPurTotal = 0;
+            let grandSaleQty = 0, grandSaleTotal = 0;
+            let grandStockQty = 0, grandStockVal = 0;
+            let grandProfit = 0;
+
+            if (processedList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="13" style="padding: 30px; color: var(--text-light);"><i class="fas fa-box-open" style="font-size:30px; margin-bottom:10px; color:#cbd5e1;"></i><br>কোনো ডাটা পাওয়া যায়নি। ফিল্টার পরিবর্তন করে দেখুন।</td></tr>`;
+            } else {
+                processedList.forEach((prod, index) => {
+                    grandPurQty += prod.purQty;
+                    grandPurTotal += prod.purTotal;
+                    grandSaleQty += prod.saleQty;
+                    grandSaleTotal += prod.saleTotal;
+                    grandStockQty += prod.stockQty;
+                    grandStockVal += prod.stockAsset;
+                    grandProfit += prod.itemProfit;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td class="text-left font-bold">${prod.name}</td>
+                        <td>${prod.brand || '—'}</td>
+                        <td>${prod.unit || 'Pcs'}</td>
+                        
+                        <td>${prod.purQty > 0 ? prod.purQty : '—'}</td>
+                        <td class="text-right">${prod.purRate > 0 ? prod.purRate.toFixed(2) : '—'}</td>
+                        <td class="text-right font-bold" style="color:var(--blue);">${prod.purTotal > 0 ? prod.purTotal.toLocaleString('en-US', {minimumFractionDigits: 2}) : '—'}</td>
+                        
+                        <td>${prod.saleQty > 0 ? prod.saleQty : '—'}</td>
+                        <td class="text-right">${prod.saleRate > 0 ? prod.saleRate.toFixed(2) : '—'}</td>
+                        <td class="text-right font-bold" style="color:var(--success);">${prod.saleTotal > 0 ? prod.saleTotal.toLocaleString('en-US', {minimumFractionDigits: 2}) : '—'}</td>
+                        
+                        <td class="font-bold">${prod.stockQty}</td>
+                        <td class="text-right font-bold" style="color:#b45309;">${prod.stockAsset.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                        <td class="text-right font-bold" style="color:${prod.itemProfit >= 0 ? 'var(--purple)' : 'var(--danger)'};">${prod.saleQty > 0 ? prod.itemProfit.toLocaleString('en-US', {minimumFractionDigits: 2}) : '—'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Render Footer
             const tfoot = document.getElementById('reportFooter');
             tfoot.innerHTML = `
                 <tr>
@@ -421,36 +561,48 @@
                     <td class="text-right font-bold" style="color:var(--success);">৳${grandSaleTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td class="font-bold">${grandStockQty}</td>
                     <td class="text-right font-bold" style="color:#b45309;">৳${grandStockVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="text-right font-bold" style="color:var(--purple);">৳${grandProfit.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                 </tr>
             `;
 
+            // Update Summary Dashboard
             document.getElementById('sumPurchase').innerText = `৳${grandPurTotal.toLocaleString()}`;
+            document.getElementById('sumPurchaseQty').innerText = `${grandPurQty} pcs bought`;
+            
             document.getElementById('sumSale').innerText = `৳${grandSaleTotal.toLocaleString()}`;
+            document.getElementById('sumSaleQty').innerText = `${grandSaleQty} pcs sold`;
+            
             document.getElementById('sumStockVal').innerText = `৳${grandStockVal.toLocaleString()}`;
-            const estProfit = grandSaleTotal - (grandSaleQty * (grandPurTotal / (grandPurQty || 1)));
-            document.getElementById('sumEstProfit').innerText = `৳${(grandSaleTotal > 0 ? Math.max(0, estProfit) : 0).toLocaleString()}`;
-            document.getElementById('itemCountLabel').innerText = `${allProducts.length} টি পণ্য`;
-        }
+            document.getElementById('sumStockQty').innerText = `${grandStockQty} pcs in inventory`;
+            
+            document.getElementById('sumEstProfit').innerText = `৳${grandProfit.toLocaleString()}`;
+            const margin = grandSaleTotal > 0 ? ((grandProfit / grandSaleTotal) * 100).toFixed(1) : 0;
+            document.getElementById('sumMargin').innerText = `Margin: ${margin}%`;
 
-        // --- DIRECT PRINT / SAVE PDF ---
+            document.getElementById('itemCountLabel').innerText = `${processedList.length} টি পণ্য প্রদর্শিত`;
+        };
+
+        // --- DIRECT CLEAN PRINT (LANDSCAPE A4) ---
         window.printReportDirectly = async () => {
             const shop = await getShopBranding(SHOP_ID);
             const dFrom = document.getElementById('dateFrom').value;
             const dTo = document.getElementById('dateTo').value;
             const printArea = document.getElementById('printAreaHolder');
+            const modeText = document.getElementById('reportMode').options[document.getElementById('reportMode').selectedIndex].text;
 
             printArea.innerHTML = `
                 <div style="text-align: center; margin-bottom: 15px; font-family:'Hind Siliguri',sans-serif;">
-                    ${shop.logo ? `<img src="${shop.logo}" style="width:60px; height:60px; border-radius:10px; object-fit:cover; margin-bottom:6px;">` : ''}
-                    <h2 style="font-size: 22px; margin: 0; color:#0f172a;">${shop.name}</h2>
-                    <p style="font-size: 12px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
-                    <div style="display:inline-block; background:#0B4A3E; color:white; font-size:12px; font-weight:700; padding:3px 12px; border-radius:15px; margin-top:6px;">মাসিক ইনভেন্টরি ও বিক্রয় রিপোর্ট</div>
-                    <p style="font-size: 11px; color: #334155; margin-top: 4px; font-weight:600;">তারিখ: <b>${dFrom}</b> থেকে <b>${dTo}</b></p>
+                    ${shop.logo ? `<img src="${shop.logo}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; margin-bottom:5px;">` : ''}
+                    <h2 style="font-size: 20px; margin: 0; color:#0f172a;">${shop.name}</h2>
+                    <p style="font-size: 11px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
+                    <div style="display:inline-block; background:#0B4A3E; color:white; font-size:11px; font-weight:700; padding:2px 10px; border-radius:12px; margin-top:4px;">${modeText}</div>
+                    <p style="font-size: 10.5px; color: #334155; margin-top: 4px; font-weight:600;">তারিখ: <b>${dFrom}</b> থেকে <b>${dTo}</b></p>
                 </div>
                 ${document.getElementById('reportTable').outerHTML}
-                <div style="margin-top: 30px; display:flex; justify-content:space-between; font-size:11px; color:#475569; font-family:'Hind Siliguri',sans-serif;">
-                    <div>প্রস্তুতকারী স্বাক্ষর: _________________</div>
-                    <div>স্বত্বাধিকারী / ম্যানেজার স্বাক্ষর: _________________</div>
+                <div class="print-signatures">
+                    <div>প্রস্তুতকারী স্বাক্ষর: ____________________</div>
+                    <div>হিসাবরক্ষক স্বাক্ষর: ____________________</div>
+                    <div>স্বত্বাধিকারী স্বাক্ষর: ____________________</div>
                 </div>
             `;
 
@@ -482,6 +634,29 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        };
+
+        // --- EXPORT TO CSV ---
+        window.exportToCSV = () => {
+            const rows = document.querySelectorAll("#reportTable tr");
+            let csv = [];
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length; j++) {
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s+)/gm, ' ');
+                    data = data.replace(/"/g, '""');
+                    row.push('"' + data + '"');
+                }
+                csv.push(row.join(","));
+            }
+            const csvFile = new Blob(['\ufeff' + csv.join("\n")], {type: "text/csv;charset=utf-8;"});
+            const downloadLink = document.createElement("a");
+            downloadLink.download = `Monthly_Report_${new Date().toISOString().split('T')[0]}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
         };
     </script>
 </body>
