@@ -1,22 +1,17 @@
 // ============================================================================
 // invoice_kit.js
-// কেন্দ্রীয়/শেয়ার্ড মডিউল — প্রিমিয়াম ইনভয়েস/চালান/কোটেশন টেমপ্লেট এবং
-// "ডাউনলোডের আগে প্রিভিউ" PDF মোডাল সিস্টেম। সব পেজ এটা import করে ব্যবহার করে,
-// যাতে ডিজাইন সবখানে একই রকম প্রিমিয়াম মানের থাকে এবং কোড ডুপ্লিকেট না হয়।
+// কেন্দ্রীয় শেয়ার্ড মডিউল — ইনভয়েস/কোটেশন টেমপ্লেট ও নিরাপদ PDF প্রিন্ট সিস্টেম
 // ============================================================================
 
 import { dbFirestore, doc, getDoc } from './firebase_config.js';
 
-// ---- ১. দোকানের ব্র্যান্ডিং তথ্য (নাম, লোগো, ঠিকানা, ফোন) আনা ----
-// আগে localStorage cache চেক করে (দ্রুত), তারপর দরকার হলে Firestore থেকে fresh আনে।
 export async function getShopBranding(SHOP_ID) {
     let details = {};
     try {
         const cached = localStorage.getItem(`shop_details_${SHOP_ID}`);
         if (cached) details = JSON.parse(cached);
-    } catch (e) { /* cache পড়তে ব্যর্থ হলে সমস্যা নেই, Firestore থেকে আনবে */ }
+    } catch (e) { }
 
-    // যদি cache-এ লোগো/ঠিকানা না থাকে, Firestore থেকে fresh টেনে cache আপডেট করি
     if (!details.image || !details.address) {
         try {
             const snap = await getDoc(doc(dbFirestore, "shops", SHOP_ID));
@@ -24,7 +19,7 @@ export async function getShopBranding(SHOP_ID) {
                 details = { ...details, ...snap.data() };
                 localStorage.setItem(`shop_details_${SHOP_ID}`, JSON.stringify(details));
             }
-        } catch (e) { /* অফলাইন হলে যা cache-এ আছে তাই দিয়ে চালাবো */ }
+        } catch (e) { }
     }
 
     return {
@@ -35,7 +30,6 @@ export async function getShopBranding(SHOP_ID) {
     };
 }
 
-// ---- ২. সংখ্যাকে কথায় রূপান্তর (টাকার অংকের জন্য) ----
 export function numberToWordsBDT(num) {
     num = Math.round(Number(num) || 0);
     if (num === 0) return "Zero Taka Only";
@@ -55,8 +49,6 @@ export function numberToWordsBDT(num) {
     return words.trim() + ' Taka Only';
 }
 
-// ---- ৩. প্রিমিয়াম ডকুমেন্ট টেমপ্লেট (ইনভয়েস / চালান / কোটেশন সব একই বেস ব্যবহার করে) ----
-// docType: 'INVOICE' | 'PURCHASE' | 'QUOTATION' | 'RETURN'
 export function renderPremiumDocument({
     docType = 'INVOICE',
     docNo = '',
@@ -65,13 +57,13 @@ export function renderPremiumDocument({
     partyLabel = 'Customer',
     partyName = '',
     partyPhone = '',
-    items = [],           // [{ name, brand, unit, qty, rate, amount }]
+    items = [],
     subtotal = 0,
     discount = 0,
     total = 0,
-    paid = null,           // null হলে "Paid" সারি দেখাবে না (যেমন quotation-এ)
+    paid = null,
     due = null,
-    extraNote = '',        // যেমন quotation-এর "Valid until" বা purchase-এর batch no
+    extraNote = '',
     footerNote = 'Thank you for your business!'
 }) {
     const accentColor = docType === 'PURCHASE' ? '#7c3aed' : docType === 'QUOTATION' ? '#0891b2' : docType === 'RETURN' ? '#dc2626' : '#4F46E5';
@@ -95,22 +87,13 @@ export function renderPremiumDocument({
         <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:14px; font-weight:700; color:${due > 0 ? '#dc2626' : '#059669'};"><span>${due > 0 ? 'Due Amount' : 'Status'}</span><span>${due > 0 ? '৳' + Number(due).toLocaleString() : 'Fully Paid ✓'}</span></div>
     ` : '';
 
-    // দোকানের লোগো watermark হিসেবে ব্যাকগ্রাউন্ডে হালকাভাবে বসানো হচ্ছে
-    const watermarkHtml = shop.logo ? `
-        <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow:hidden;">
-            <img src="${shop.logo}" crossorigin="anonymous" style="width:340px; height:340px; object-fit:contain; opacity:0.06; transform:rotate(-15deg);">
-        </div>` : '';
-
     const logoHeaderHtml = shop.logo
         ? `<img src="${shop.logo}" crossorigin="anonymous" style="width:64px; height:64px; border-radius:16px; object-fit:cover; box-shadow:0 4px 14px rgba(0,0,0,0.12); border:2px solid white;">`
         : `<div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg, ${accentColor}, #1e1b4b); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:24px;">${(shop.name || 'S').charAt(0).toUpperCase()}</div>`;
 
     return `
     <div style="position:relative; font-family:'Poppins','Hind Siliguri',sans-serif; width:100%; max-width:800px; margin:0 auto; background:#ffffff; color:#1e293b; overflow:hidden;">
-        ${watermarkHtml}
         <div style="position:relative; z-index:1; padding:32px;">
-
-            <!-- হেডার -->
             <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:20px; border-bottom:3px solid ${accentColor};">
                 <div style="display:flex; gap:14px; align-items:center;">
                     ${logoHeaderHtml}
@@ -127,7 +110,6 @@ export function renderPremiumDocument({
                 </div>
             </div>
 
-            <!-- পার্টি তথ্য -->
             <div style="margin-top:18px; background:#f8fafc; border-radius:12px; padding:14px 18px;">
                 <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:4px;">${partyLabel}</div>
                 <div style="font-size:14px; font-weight:700; color:#0f172a;">${partyName || 'Walk-in'}</div>
@@ -135,21 +117,19 @@ export function renderPremiumDocument({
                 ${extraNote ? `<div style="font-size:11px; color:${accentColor}; font-weight:600; margin-top:4px;">${extraNote}</div>` : ''}
             </div>
 
-            <!-- আইটেম টেবিল -->
             <table style="width:100%; border-collapse:collapse; margin-top:20px;">
                 <thead>
                     <tr style="background:#0f172a;">
-                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:center; border-radius:8px 0 0 8px;">#</th>
-                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Item</th>
-                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:center;">Qty</th>
-                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Rate</th>
-                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:right; border-radius:0 8px 8px 0;">Amount</th>
+                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; text-align:center; border-radius:8px 0 0 8px;">#</th>
+                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; text-align:left;">Item</th>
+                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; text-align:center;">Qty</th>
+                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; text-align:right;">Rate</th>
+                        <th style="padding:10px 8px; color:white; font-size:10px; text-transform:uppercase; text-align:right; border-radius:0 8px 8px 0;">Amount</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
 
-            <!-- সামারি -->
             <div style="display:flex; justify-content:flex-end; margin-top:16px;">
                 <div style="width:260px;">
                     <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px; color:#64748b;"><span>Subtotal</span><span>৳${Number(subtotal).toLocaleString()}</span></div>
@@ -159,12 +139,10 @@ export function renderPremiumDocument({
                 </div>
             </div>
 
-            <!-- কথায় (word) -->
             <div style="margin-top:16px; padding:10px 14px; background:#fffbeb; border-radius:10px; font-size:11px; color:#78350f;">
                 <strong>In Words:</strong> ${numberToWordsBDT(total)}
             </div>
 
-            <!-- ফুটার / স্বাক্ষর -->
             <div style="display:flex; justify-content:space-between; margin-top:50px; padding-top:14px;">
                 <div style="text-align:center; width:160px;">
                     <div style="border-top:1px solid #cbd5e1; padding-top:6px; font-size:11px; color:#64748b; font-weight:600;">${partyLabel} Signature</div>
@@ -179,125 +157,38 @@ export function renderPremiumDocument({
     </div>`;
 }
 
-// ---- ৪. PDF প্রিভিউ মোডাল ----
-// html2pdf দিয়ে PDF বানিয়ে সরাসরি ডাউনলোড না করে, একটা in-page মোডালে
-// প্রিভিউ দেখায় — ইউজার চাইলে তবেই ডাউনলোড/শেয়ার করবে। এতে মোবাইলের
-// Downloads ফোল্ডারে অপ্রয়োজনীয় ফাইল জমে স্টোরেজ নষ্ট হবে না।
-let _pdfKitStylesInjected = false;
-function ensurePdfKitStyles() {
-    if (_pdfKitStylesInjected) return;
-    const style = document.createElement('style');
-    style.textContent = `
-        #pdfPreviewOverlay { position:fixed; inset:0; background:rgba(15,23,42,0.75); backdrop-filter:blur(4px); z-index:9999; display:flex; flex-direction:column; animation:pdfFadeIn 0.2s ease-out; }
-        @keyframes pdfFadeIn { from{opacity:0;} to{opacity:1;} }
-        #pdfPreviewBar { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; background:#0f172a; color:white; }
-        #pdfPreviewBar .pdf-title { font-family:'Poppins',sans-serif; font-weight:700; font-size:14px; display:flex; align-items:center; gap:8px; }
-        #pdfPreviewBar button { font-family:'Poppins',sans-serif; border:none; cursor:pointer; font-weight:700; border-radius:10px; padding:9px 16px; font-size:13px; display:flex; align-items:center; gap:6px; }
-        .pdf-btn-close { background:#334155; color:white; }
-        .pdf-btn-download { background:linear-gradient(135deg,#4F46E5,#7c3aed); color:white; }
-        #pdfPreviewFrameWrap { flex:1; overflow-y:auto; overflow-x:hidden; background:#525659; padding:14px 0; }
-        #pdfPreviewFrameWrap img.pdf-page-img { display:block; width:calc(100% - 24px); max-width:700px; margin:0 auto 14px auto; box-shadow:0 4px 18px rgba(0,0,0,0.35); border-radius:2px; }
-        #pdfPreviewLoading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Poppins',sans-serif; gap:12px; }
-    `;
-    document.head.appendChild(style);
-    _pdfKitStylesInjected = true;
-}
-
-/**
- * htmlContent (string বা DOM element) থেকে PDF-এর প্রতিটা পেজকে ছবি হিসেবে
- * রেন্ডার করে প্রিভিউ মোডাল দেখায়। এটা <iframe src="blob:...">-এর চেয়ে বেশি
- * নির্ভরযোগ্য কারণ মোবাইল Chrome/Safari প্রায়ই blob PDF-কে ইনলাইনে না দেখিয়ে
- * সরাসরি ডাউনলোড-প্রম্পট দেখায়। ছবি-ভিত্তিক প্রিভিউ সব ব্রাউজারে একই রকম কাজ করে।
- * আসল PDF ফাইল শুধুই Download বাটনে চাপলে জেনারেট হয়।
- * filename: ডাউনলোড করলে যে নামে সেভ হবে।
- * options: html2pdf-এর jsPDF/html2canvas অপশন override করার জন্য (ঐচ্ছিক)।
- */
+// PDF Preview Handler with Safe Fallback
 export async function showPdfPreview(htmlContent, filename, options = {}) {
-    ensurePdfKitStyles();
-
-    // মোডাল স্কেলেটন তৈরি
-    const overlay = document.createElement('div');
-    overlay.id = 'pdfPreviewOverlay';
-    overlay.innerHTML = `
-        <div id="pdfPreviewBar">
-            <div class="pdf-title"><i class="fas fa-file-pdf"></i> Preview</div>
-            <div style="display:flex; gap:10px;">
-                <button class="pdf-btn-download" id="pdfKitDownloadBtn" disabled><i class="fas fa-download"></i> Download</button>
-                <button class="pdf-btn-close" id="pdfKitCloseBtn"><i class="fas fa-times"></i> Close</button>
-            </div>
-        </div>
-        <div id="pdfPreviewFrameWrap">
-            <div id="pdfPreviewLoading"><i class="fas fa-spinner fa-spin" style="font-size:28px;"></i><span>প্রিভিউ তৈরি হচ্ছে...</span></div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    let sourceEl = htmlContent;
-    let tempWrapper = null;
-    document.getElementById('pdfKitCloseBtn').onclick = () => {
-        overlay.remove();
-        if (tempWrapper) tempWrapper.remove();
-    };
-
-    // কন্টেন্ট তৈরি — string হলে অস্থায়ী div-এ বসানো (viewport-এর বাইরে, যাতে দেখা না যায় কিন্তু render হয়)
-    if (typeof htmlContent === 'string') {
-        tempWrapper = document.createElement('div');
-        tempWrapper.style.cssText = 'position:fixed; left:-9999px; top:0;';
-        tempWrapper.innerHTML = htmlContent;
-        document.body.appendChild(tempWrapper);
-        sourceEl = tempWrapper;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // যদি মোবাইল ডিভাইস হয় অথবা সরাসরি প্রিন্ট ডায়ালগ দিয়ে PDF চাওয়া হয়
+    if (isMobile) {
+        const printWindow = document.createElement('div');
+        printWindow.id = 'tempPrintHolder';
+        printWindow.style.display = 'none';
+        printWindow.innerHTML = typeof htmlContent === 'string' ? htmlContent : htmlContent.outerHTML;
+        document.body.appendChild(printWindow);
+        window.print();
+        setTimeout(() => printWindow.remove(), 1000);
+        return;
     }
 
-    const pdfOptions = Object.assign({
-        margin: 8,
-        filename: filename || 'document.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }, options);
-
+    // ডেস্কটপে সরাসরি html2pdf এক্সপোর্ট
     try {
-        const frameWrap = document.getElementById('pdfPreviewFrameWrap');
+        if (typeof window.html2pdf !== 'undefined') {
+            const pdfOptions = Object.assign({
+                margin: 8,
+                filename: filename || 'document.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }, options);
 
-        // html2canvas দিয়ে সোর্স এলিমেন্টকে সরাসরি একটা লম্বা ছবিতে ক্যাপচার করে
-        // প্রিভিউতে দেখানো হচ্ছে (স্ক্রলযোগ্য) — এটা মোবাইল ব্রাউজারে সবসময় নির্ভরযোগ্যভাবে
-        // কাজ করে, blob PDF-কে iframe-এ দেখানোর মতো নয়।
-        const canvas = await window.html2canvas(sourceEl, { scale: 2, useCORS: true, allowTaint: true });
-        const imgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
-
-        if (frameWrap) {
-            frameWrap.innerHTML = '';
-            const img = document.createElement('img');
-            img.className = 'pdf-page-img';
-            img.src = imgDataUrl;
-            frameWrap.appendChild(img);
+            await window.html2pdf().set(pdfOptions).from(htmlContent).save();
+        } else {
+            window.print();
         }
-
-        const downloadBtn = document.getElementById('pdfKitDownloadBtn');
-        if (downloadBtn) {
-            downloadBtn.disabled = false;
-            downloadBtn.onclick = async () => {
-                downloadBtn.disabled = true;
-                downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
-                try {
-                    const pdfBlob = await window.html2pdf().set(pdfOptions).from(sourceEl).outputPdf('blob');
-                    const blobUrl = URL.createObjectURL(pdfBlob);
-                    const a = document.createElement('a');
-                    a.href = blobUrl;
-                    a.download = pdfOptions.filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
-                } finally {
-                    downloadBtn.disabled = false;
-                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
-                }
-            };
-        }
-    } catch (err) {
-        const frameWrap = document.getElementById('pdfPreviewFrameWrap');
-        if (frameWrap) {
-            frameWrap.innerHTML = `<div style="color:white; text-align:center; padding:40px; font-family:'Poppins',sans-serif;"><i class="fas fa-exclamation-triangle" style="font-size:32px; margin-bottom:10px; color:#f59e0b;"></i><p>PDF তৈরি করা যায়নি।</p><p style="font-size:12px; opacity:0.7;">${err.message}</p></div>`;
-        }
+    } catch (e) {
+        window.print();
     }
 }
