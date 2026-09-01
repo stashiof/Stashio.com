@@ -17,7 +17,6 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -32,7 +31,7 @@
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* Dynamic Header Area */
+        /* Dynamic Header */
         .app-header {
             position: relative; padding: 22px 20px 48px 20px; color: white; 
             border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; 
@@ -47,7 +46,7 @@
         .header-title a { color: white; text-decoration: none; }
         
         .header-actions { display: flex; gap: 8px; }
-        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 12px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 14px; border-radius: 12px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; transition: 0.2s; }
         .btn-header:active { transform: scale(0.95); }
 
         /* Quick Filters & Date Control */
@@ -59,21 +58,21 @@
         .filter-row { display: flex; gap: 10px; align-items: flex-end; }
         .date-group { flex: 1; }
         .date-group label { display: block; font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
-        .date-group input, .date-group select { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
-        .date-group input:focus, .date-group select:focus { border-color: var(--primary); background: white; }
+        .date-group input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text-dark); }
+        .date-group input:focus { border-color: var(--primary); background: white; }
         .btn-filter { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; width: 42px; height: 38px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(11, 74, 62, 0.2); }
         
         .quick-presets { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; padding-bottom: 2px; }
         .preset-chip { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: var(--text-dark); border: none; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         .preset-chip.active { background: var(--primary); color: white; }
 
-        /* Summary Metric Cards */
+        /* Summary Metrics */
         .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0 15px; margin-bottom: 15px; }
         .metric-card { background: var(--white); padding: 14px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
         .mc-title { font-size: 10.5px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         .mc-val { font-size: 17px; font-weight: 800; color: var(--text-dark); }
 
-        /* Main Report Table Container */
+        /* Table Area */
         .table-card {
             background: var(--white); border-radius: var(--border-radius); padding: 15px;
             margin: 0 15px 20px 15px; box-shadow: var(--shadow); border: 1px solid #f8fafc;
@@ -102,14 +101,32 @@
 
         tfoot tr { background: #f8fafc; font-weight: 800; font-size: 12px; border-top: 2px solid #cbd5e1; }
 
-        /* Print Specific CSS */
+        /* Clean Printable Landscape A4 Styles */
         @media print {
-            body * { visibility: hidden; }
-            #printableArea, #printableArea * { visibility: visible; }
-            #printableArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 10mm; display: block !important; }
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
             .no-print { display: none !important; }
-            table { border-collapse: collapse !important; width: 100% !important; }
-            th, td { border: 1px solid #000 !important; }
+            #printAreaHolder { display: block !important; }
+            
+            #printAreaHolder table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            #printAreaHolder th, #printAreaHolder td {
+                border: 1px solid #000000 !important;
+                padding: 6px 8px !important;
+                font-size: 11px !important;
+            }
+            #printAreaHolder .head-purchase { background: #e0f2fe !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #printAreaHolder .head-sale { background: #dcfce7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #printAreaHolder .head-stock { background: #fef3c7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
@@ -125,7 +142,7 @@
             </div>
             <div class="header-actions">
                 <button onclick="exportToExcel()" class="btn-header" style="background:#16a34a;"><i class="fas fa-file-excel"></i> Excel</button>
-                <button onclick="downloadPDF()" class="btn-header" style="background:rgba(255,255,255,0.25);"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button onclick="printReportDirectly()" class="btn-header" style="background:#dc2626;"><i class="fas fa-print"></i> Print / PDF</button>
             </div>
         </div>
     </div>
@@ -170,7 +187,7 @@
         </div>
     </div>
 
-    <!-- Table Section -->
+    <!-- Main Table Section -->
     <div class="table-card no-print">
         <div class="table-top-bar">
             <div class="table-title"><i class="fas fa-table-list text-primary"></i> <span id="reportRangeTitle">মাসিক পণ্যের বিবরণী</span></div>
@@ -210,13 +227,13 @@
         </div>
     </div>
 
-    <!-- Hidden Printable Element for PDF / Print -->
-    <div id="printableArea" style="display:none;"></div>
+    <!-- Container for Browser Direct Print -->
+    <div id="printAreaHolder" style="display:none;"></div>
 
     <script type="module">
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue, get } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-        import { showPdfPreview, getShopBranding } from './invoice_kit.js';
+        import { getShopBranding } from './invoice_kit.js';
 
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
@@ -239,7 +256,6 @@
                 }
             });
 
-            // Set Current Month by Default
             setPreset('this_month');
             fetchAllData();
         };
@@ -306,7 +322,6 @@
             const dFrom = new Date(document.getElementById('dateFrom').value).setHours(0, 0, 0, 0);
             const dTo = new Date(document.getElementById('dateTo').value).setHours(23, 59, 59, 999);
 
-            // Filter records within date range
             const filteredPurchases = allPurchases.filter(p => {
                 const t = p.created_at || (p.date ? new Date(p.date).getTime() : 0);
                 return t >= dFrom && t <= dTo;
@@ -317,14 +332,8 @@
                 return t >= dFrom && t <= dTo;
             });
 
-            const filteredOrders = allOrders.filter(o => {
-                const t = o.created_at || (o.date ? new Date(o.date).getTime() : 0);
-                return t >= dFrom && t <= dTo;
-            });
-
-            // Maps for Item Aggregation
-            const purchaseMap = {}; // { prodId: { qty, totalCost } }
-            const saleMap = {};     // { prodId: { qty, totalRevenue } }
+            const purchaseMap = {};
+            const saleMap = {};
 
             filteredPurchases.forEach(pur => {
                 if (pur.items && Array.isArray(pur.items)) {
@@ -354,7 +363,6 @@
                 }
             });
 
-            // Build Rows
             const tbody = document.getElementById('reportBody');
             tbody.innerHTML = '';
 
@@ -401,23 +409,21 @@
                 tbody.appendChild(tr);
             });
 
-            // Footer Total
             const tfoot = document.getElementById('reportFooter');
             tfoot.innerHTML = `
                 <tr>
-                    <td colspan="4" class="text-left">সর্বমোট (Total)</td>
-                    <td>${grandPurQty}</td>
+                    <td colspan="4" class="text-left font-bold">সর্বমোট (Total)</td>
+                    <td class="font-bold">${grandPurQty}</td>
                     <td>—</td>
-                    <td class="text-right" style="color:var(--blue);">৳${grandPurTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                    <td>${grandSaleQty}</td>
+                    <td class="text-right font-bold" style="color:var(--blue);">৳${grandPurTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="font-bold">${grandSaleQty}</td>
                     <td>—</td>
-                    <td class="text-right" style="color:var(--success);">৳${grandSaleTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                    <td>${grandStockQty}</td>
-                    <td class="text-right" style="color:#b45309;">৳${grandStockVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="text-right font-bold" style="color:var(--success);">৳${grandSaleTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="font-bold">${grandStockQty}</td>
+                    <td class="text-right font-bold" style="color:#b45309;">৳${grandStockVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                 </tr>
             `;
 
-            // Update Summary Cards
             document.getElementById('sumPurchase').innerText = `৳${grandPurTotal.toLocaleString()}`;
             document.getElementById('sumSale').innerText = `৳${grandSaleTotal.toLocaleString()}`;
             document.getElementById('sumStockVal').innerText = `৳${grandStockVal.toLocaleString()}`;
@@ -426,7 +432,32 @@
             document.getElementById('itemCountLabel').innerText = `${allProducts.length} টি পণ্য`;
         }
 
-        // --- EXPORT TO EXCEL (.XLS HTML FORMAT) ---
+        // --- DIRECT PRINT / SAVE PDF ---
+        window.printReportDirectly = async () => {
+            const shop = await getShopBranding(SHOP_ID);
+            const dFrom = document.getElementById('dateFrom').value;
+            const dTo = document.getElementById('dateTo').value;
+            const printArea = document.getElementById('printAreaHolder');
+
+            printArea.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px; font-family:'Hind Siliguri',sans-serif;">
+                    ${shop.logo ? `<img src="${shop.logo}" style="width:60px; height:60px; border-radius:10px; object-fit:cover; margin-bottom:6px;">` : ''}
+                    <h2 style="font-size: 22px; margin: 0; color:#0f172a;">${shop.name}</h2>
+                    <p style="font-size: 12px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
+                    <div style="display:inline-block; background:#0B4A3E; color:white; font-size:12px; font-weight:700; padding:3px 12px; border-radius:15px; margin-top:6px;">মাসিক ইনভেন্টরি ও বিক্রয় রিপোর্ট</div>
+                    <p style="font-size: 11px; color: #334155; margin-top: 4px; font-weight:600;">তারিখ: <b>${dFrom}</b> থেকে <b>${dTo}</b></p>
+                </div>
+                ${document.getElementById('reportTable').outerHTML}
+                <div style="margin-top: 30px; display:flex; justify-content:space-between; font-size:11px; color:#475569; font-family:'Hind Siliguri',sans-serif;">
+                    <div>প্রস্তুতকারী স্বাক্ষর: _________________</div>
+                    <div>স্বত্বাধিকারী / ম্যানেজার স্বাক্ষর: _________________</div>
+                </div>
+            `;
+
+            window.print();
+        };
+
+        // --- EXPORT TO EXCEL ---
         window.exportToExcel = () => {
             const table = document.getElementById('reportTable');
             const dFrom = document.getElementById('dateFrom').value;
@@ -451,37 +482,6 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        };
-
-        // --- DOWNLOAD PDF PREVIEW ---
-        window.downloadPDF = async () => {
-            const shop = await getShopBranding(SHOP_ID);
-            const dFrom = document.getElementById('dateFrom').value;
-            const dTo = document.getElementById('dateTo').value;
-
-            const printWrapper = document.createElement('div');
-            printWrapper.style.padding = '20px';
-            printWrapper.style.fontFamily = "'Hind Siliguri', 'Poppins', sans-serif";
-
-            printWrapper.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    ${shop.logo ? `<img src="${shop.logo}" style="width:65px; height:65px; border-radius:12px; object-fit:cover; margin-bottom:8px;">` : ''}
-                    <h2 style="font-size: 22px; margin: 0; color:#0f172a;">${shop.name}</h2>
-                    <p style="font-size: 13px; color: #64748b; margin: 2px 0;">${shop.address || ''}</p>
-                    <div style="display:inline-block; background:#0B4A3E; color:white; font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; margin-top:8px;">মাসিক স্টক ও বিক্রয় রিপোর্ট</div>
-                    <p style="font-size: 11px; color: #64748b; margin-top: 5px;">তারিখ: <b>${dFrom}</b> থেকে <b>${dTo}</b></p>
-                </div>
-                ${document.getElementById('reportTable').outerHTML}
-                <div style="margin-top: 35px; display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
-                    <div>প্রস্তুতকারী স্বাক্ষর: _________________</div>
-                    <div>কর্তৃপক্ষের স্বাক্ষর: _________________</div>
-                </div>
-            `;
-
-            showPdfPreview(printWrapper, `Monthly_Report_${dFrom}.pdf`, {
-                margin: 6,
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            });
         };
     </script>
 </body>
