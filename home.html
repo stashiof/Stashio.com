@@ -9,19 +9,16 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0B4A3E">
     
-            <script>
-        // শুধুমাত্র localStorage ব্যবহার করা হচ্ছে
+    <script>
         const loggedInUser = localStorage.getItem('userPhone') || localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone');
         const activeShopId = localStorage.getItem('activeShopId');
         
-        // লগইন বা শপ সিলেক্ট না থাকলে রিডাইরেক্ট
         if (!loggedInUser) {
             window.location.replace("index.html");
         } else if (!activeShopId) {
             window.location.replace("dashboard.html");
         }
     </script>
- 
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -98,12 +95,9 @@
         .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 10px; text-align: center; }
         .grid-item { display: flex; flex-direction: column; align-items: center; transition: 0.15s; cursor: pointer; }
         .grid-item:active { transform: scale(0.9); }
-        .grid-item:active .icon-box { box-shadow: inset 0 2px 8px rgba(0,0,0,0.08); }
         .icon-box { width: 48px; height: 48px; border-radius: 16px; background: #f8fafc; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 21px; box-shadow: 0 2px 8px rgba(30, 41, 59, 0.05); border: 1px solid #f1f5f9; transition: 0.15s; }
         .grid-label { font-size: 11px; font-weight: 600; color: var(--text-light); line-height: 1.2; word-wrap: break-word; }
 
-        /* প্রতিটা আইকনের নিজস্ব রঙের হালকা tint ব্যাকগ্রাউন্ড — সাদামাটা গ্রে বক্সের বদলে
-           প্রতিটা মডিউল দৃশ্যত আলাদা এবং প্রাণবন্ত দেখায় */
         .icon-box:has(.text-orange) { background: linear-gradient(150deg, #fff7ed, #fef3c7); }
         .icon-box:has(.text-blue) { background: linear-gradient(150deg, #eff6ff, #dbeafe); }
         .icon-box:has(.text-green) { background: linear-gradient(150deg, #ecfdf5, #d1fae5); }
@@ -235,6 +229,10 @@
                 <div class="icon-box"><i class="fa-solid fa-chart-line text-blue"></i></div>
                 <div class="grid-label">Business<br>Report</div>
             </a>
+            <a href="monthly_report.html" class="grid-item">
+                <div class="icon-box"><i class="fa-solid fa-table-list text-purple"></i></div>
+                <div class="grid-label">Monthly<br>Report</div>
+            </a>
         </div>
     </div>
 
@@ -279,23 +277,19 @@
     <div id="bottom-nav-container" class="bottom-nav"></div>
 
     <script type="module">
-        // ১. মডুলার ফায়ারবেস কনফিগ ফাইল ইমপোর্ট করা
         import { rtdb, ref as rtdbRef, onValue as rtdbOnValue } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
         
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName');
 
-        // ২. ডাইনামিক কম্পোনেন্ট লোড করার ফাংশন (Header & Footer)
         async function loadComponents() {
             try {
-                // Header Load
                 const headerRes = await fetch('header.html');
                 if (headerRes.ok) {
                     document.getElementById('header-container').innerHTML = await headerRes.text();
                     if(SHOP_NAME) document.getElementById('shopTitle').innerHTML = `<span style="color:#fef08a;">✨</span> ${SHOP_NAME}`;
 
-                    // সময়-ভিত্তিক গ্রিটিং (সুপ্রভাত/শুভ অপরাহ্ন/শুভ সন্ধ্যা) ও আজকের তারিখ
                     const now = new Date();
                     const hour = now.getHours();
                     let greeting = "Good Evening";
@@ -312,7 +306,6 @@
                         dateBadge.innerHTML = `<div class="hd-day">${dayNum} ${monthShort}</div><div>${weekday}</div>`;
                     }
                     
-                    // Header Theme Sync (From Firebase)
                     rtdbOnValue(rtdbRef(rtdb, `global_settings/header_theme`), (snap) => {
                         if (snap.exists() && snap.val().code) {
                             document.getElementById('dynamicThemeContainer').innerHTML = snap.val().code;
@@ -320,11 +313,9 @@
                     });
                 }
 
-                // Bottom Nav Load
                 const navRes = await fetch('bottom_nav.html');
                 if (navRes.ok) {
                     document.getElementById('bottom-nav-container').innerHTML = await navRes.text();
-                    // বর্তমান পেজ অনুযায়ী এক্টিভ ক্লাস সেট করা
                     document.getElementById('nav-home').classList.add('active');
                 }
             } catch (error) {
@@ -337,13 +328,13 @@
 
             const todayStr = new Date().setHours(0,0,0,0);
             
-            // 1. Get Live Cash Balance
+            // 1. Live Cash Balance
             rtdbOnValue(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (snap) => {
                 const bal = snap.val() || 0;
                 document.getElementById('dashBalance').innerText = `৳${bal.toLocaleString()}`;
             });
 
-            // 2. Get Today's Sales
+            // 2. Today's Sales
             const salesQuery = query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(salesQuery, (snap) => {
                 let todaySales = 0;
@@ -357,7 +348,7 @@
                 document.getElementById('dashSales').innerText = `৳${todaySales.toLocaleString()}`;
             });
 
-            // 3. Get Today's Expenses
+            // 3. Today's Expenses
             const expensesQuery = query(rtdbRef(rtdb, 'expenses_book'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(expensesQuery, (snap) => {
                 let todayExp = 0;
@@ -371,7 +362,7 @@
                 document.getElementById('dashExpense').innerText = `৳${todayExp.toLocaleString()}`;
             });
 
-            // 4. Get Total Due 
+            // 4. Total Due 
             const dueQuery = query(rtdbRef(rtdb, 'due_book'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(dueQuery, (snap) => {
                 let toRecv = 0, toPay = 0;
@@ -387,7 +378,7 @@
                 document.getElementById('dashDuePay').innerText = `Pay: ৳${toPay.toLocaleString()}`;
             });
 
-            // 5. Get Total Stock Qty
+            // 5. Total Stock Qty
             const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(productsQuery, (snap) => {
                 let totalQty = 0;
