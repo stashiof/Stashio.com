@@ -1,183 +1,251 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/png" href="icon-192x192.png">
-    <title>Estimate & Quotation - Poysha POS</title>
+    <title>Estimate & Quotation Hub - Poysha POS</title>
     
     <meta name="theme-color" content="#f59e0b">
     <script>
         const activeShopId = localStorage.getItem('activeShopId');
         if (!activeShopId) window.location.replace("dashboard.html");
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        :root { --primary: #f59e0b; --secondary: #d97706; --bg-color: #f3f4f6; --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280; --danger: #ef4444; --success: #10b981; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 30px; }
-        
-        @media print {
-            body * { visibility: hidden; }
-            #printableInvoiceHolder, #printableInvoiceHolder * { visibility: visible; }
-            #printableInvoiceHolder { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 15mm; display: block !important; }
-            .no-print { display: none !important; }
+        :root { 
+            --primary: #f59e0b; --secondary: #d97706; --primary-dark: #b45309; 
+            --bg-color: #f8fafc; --white: #ffffff; --text-dark: #1e293b; --text-light: #64748b; 
+            --danger: #ef4444; --success: #10b981; --blue: #3b82f6; --purple: #8b5cf6;
+            --border-radius: 18px; --shadow: 0 4px 20px rgba(0,0,0,0.06); 
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 40px; position: relative; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* Header */
-        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 30px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; position: sticky; top: 0; z-index: 50; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2); display: flex; justify-content: space-between; align-items: center; }
-        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+        /* Header Area */
+        .app-header { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
+            padding: 22px 20px 48px 20px; color: white; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; 
+            position: sticky; top: 0; z-index: 50; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.25); 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        .header-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: inherit; z-index: 1; }
+        #dynamicThemeContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; position: relative; z-index: 10; }
         .header-title a { color: white; text-decoration: none; }
-        .btn-header { background: rgba(255,255,255,0.2); border: none; padding: 8px 12px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        
+        .header-actions { display: flex; gap: 8px; position: relative; z-index: 10; }
+        .btn-header { background: rgba(255,255,255,0.22); border: none; padding: 8px 12px; border-radius: 12px; color: white; font-size: 12px; font-weight: 700; cursor: pointer; backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; transition: 0.2s; }
         .btn-header:active { transform: scale(0.95); }
         
         /* Search Box */
-        .search-container { margin: -15px 15px 15px 15px; display: flex; gap: 10px; position: relative; z-index: 60; }
+        .search-container { margin: -25px 15px 15px 15px; display: flex; gap: 10px; position: relative; z-index: 60; }
         .search-box { flex: 1; position: relative; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .search-box input { width: 100%; padding: 14px 15px 14px 40px; border-radius: 14px; border: none; outline: none; box-shadow: var(--shadow); font-size: 13px; font-family: 'Poppins', sans-serif; }
-        .btn-scan { background: var(--text-dark); color: white; width: 50px; border-radius: 14px; border: none; box-shadow: var(--shadow); cursor: pointer; font-size: 20px; transition: 0.2s; }
+        .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-box input { width: 100%; padding: 13px 15px 13px 40px; border-radius: 16px; border: 1px solid #e2e8f0; outline: none; box-shadow: var(--shadow); font-size: 13px; font-family: inherit; background: var(--white); color: var(--text-dark); }
+        .search-box input:focus { border-color: var(--primary); }
+        .btn-scan { background: var(--text-dark); color: white; width: 48px; border-radius: 16px; border: none; box-shadow: var(--shadow); cursor: pointer; font-size: 18px; transition: 0.2s; }
         .btn-scan:active { transform: scale(0.95); }
 
-        /* Product Grid */
-        .product-list { padding: 0 15px; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; border-bottom: 2px dashed #e5e7eb; padding-bottom: 15px; }
-        .product-card { background: var(--white); border-radius: 16px; padding: 12px; display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow); border: 2px solid transparent; transition: 0.2s; cursor: pointer; }
+        /* Client Details Card */
+        .client-card { background: var(--white); border-radius: var(--border-radius); padding: 16px; margin: 0 15px 15px 15px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+        .section-label { font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .input-group { display: flex; flex-direction: column; margin-bottom: 8px; }
+        .input-group label { font-size: 10px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase; }
+        .input-group input, .input-group select { padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 12px; font-family: inherit; outline: none; background: #f8fafc; }
+        .input-group input:focus, .input-group select:focus { border-color: var(--primary); background: white; }
+
+        /* Product Selector Grid */
+        .product-picker { padding: 0 15px; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .product-card { background: var(--white); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; transition: 0.2s; cursor: pointer; }
         .product-card:active { transform: scale(0.98); }
-        .product-card.in-cart { border-color: var(--primary); background: #fef3c7; }
-        
-        .product-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: #f8fafc; border: 1px solid #f1f5f9; }
-        .product-info { flex: 1; }
-        .product-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .product-brand { font-size: 10px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 4px; }
-        .product-meta { display: flex; gap: 10px; font-size: 11px; }
-        .badge-stock { background: #f1f5f9; padding: 2px 8px; border-radius: 8px; color: var(--text-light); font-weight: 600; }
-        .badge-price { background: #ffedd5; padding: 2px 8px; border-radius: 8px; color: var(--secondary); font-weight: 700; }
-        
-        .cart-toggle-btn { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #9ca3af; font-size: 14px; transition: 0.2s; }
+        .product-card.in-cart { border-color: var(--primary); background: #fffbeb; }
+        .product-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; background: #f8fafc; border: 1px solid #f1f5f9; }
+        .product-info { flex: 1; min-width: 0; }
+        .product-name { font-size: 13px; font-weight: 700; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .product-meta { font-size: 10.5px; color: var(--text-light); margin-top: 2px; }
+        .cart-toggle-btn { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: var(--text-light); font-size: 12px; }
         .product-card.in-cart .cart-toggle-btn { background: var(--primary); color: white; }
 
-        /* Estimate Cart Area */
+        /* Estimate Item Cards */
         .cart-container { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
-        .cart-item { background: white; padding: 15px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid #f8fafc; }
-        .item-header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; font-size: 14px; color: var(--text-dark); }
-        .item-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .cart-item { background: white; padding: 14px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-dark); }
+        .item-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .input-box { display: flex; flex-direction: column; }
-        .input-box label { font-size: 10px; color: var(--text-light); font-weight: 700; margin-bottom: 2px; }
-        .input-box input { padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; font-weight: bold; width: 100%; text-align: center; outline: none;}
+        .input-box label { font-size: 9.5px; color: var(--text-light); font-weight: 700; margin-bottom: 2px; text-transform: uppercase; }
+        .input-box input { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-weight: bold; width: 100%; text-align: center; outline: none; }
         .input-box input:focus { border-color: var(--primary); }
         .input-box input.buy { color: var(--danger); border-color: #fca5a5; background: #fef2f2; }
         .input-box input.sell { color: var(--success); border-color: #86efac; background: #f0fdf4; }
-        
-        .summary-card { background: white; margin: 20px 15px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); border: 2px solid var(--primary); }
-        .summary-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
-        .summary-row.profit { font-size: 18px; font-weight: 800; color: var(--success); border-top: 2px dashed #e5e7eb; padding-top: 10px; margin-top: 10px; }
-        
+
+        /* Summary Card */
+        .summary-card { background: white; margin: 15px; padding: 18px; border-radius: var(--border-radius); box-shadow: var(--shadow); border: 2px solid var(--primary); }
+        .summary-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .summary-row.profit { font-size: 16px; font-weight: 800; color: var(--success); border-top: 1px dashed #e2e8f0; padding-top: 10px; margin-top: 10px; }
+
+        /* Action Grid */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 15px 30px 15px; }
-        .btn-action { padding: 15px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-action { padding: 13px; border: none; border-radius: 14px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-action:active { transform: scale(0.98); }
 
         /* Modals */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
+        .modal-content { background: white; width: 100%; max-width: 420px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
         .btn-close { background: white; border: 1px solid #e5e7eb; width: 30px; height: 30px; border-radius: 50%; color: var(--text-light); cursor: pointer; }
         
         .saved-list { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
-        .saved-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; background: #f8fafc; }
-        .sc-title { font-size: 14px; font-weight: 800; color: var(--text-dark); margin-bottom: 5px; }
-        .sc-date { font-size: 11px; color: var(--text-light); margin-bottom: 10px; }
-        .sc-actions { display: flex; gap: 10px; }
+        .saved-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; background: #f8fafc; }
+        .sc-title { font-size: 13.5px; font-weight: 800; color: var(--text-dark); margin-bottom: 3px; }
+        .sc-date { font-size: 10.5px; color: var(--text-light); margin-bottom: 8px; }
+        .sc-actions { display: flex; gap: 8px; }
         .sc-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
 
         #scannerModal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #reader { width: 100%; max-width: 350px; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); }
-        .btn-close-scanner { margin-top: 30px; background: white; color: var(--danger); border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+        #reader { width: 100%; max-width: 320px; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); }
+        .btn-close-scanner { margin-top: 25px; background: white; color: var(--danger); border: none; padding: 10px 25px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+
+        /* Clean Printable Layout */
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            #printAreaHolder { display: block !important; }
+            #printAreaHolder table { width: 100% !important; border-collapse: collapse !important; }
+            #printAreaHolder thead { display: table-header-group !important; }
+            #printAreaHolder tfoot { display: table-row-group !important; }
+            #printAreaHolder tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #printAreaHolder th, #printAreaHolder td { border: 1px solid #000000 !important; padding: 6px 8px !important; font-size: 11px !important; color: black !important; }
+            #printAreaHolder th { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-signatures { page-break-inside: avoid !important; margin-top: 35px; display: flex; justify-content: space-between; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
 
     <div class="app-header no-print">
-        <div class="header-title"><a href="home.html"><i class="fas fa-arrow-left"></i></a><span>Estimate & Quotation</span></div>
-        <button onclick="openSavedModal()" class="btn-header"><i class="fas fa-list-alt"></i> Saved List</button>
+        <div class="header-bg"></div>
+        <div id="dynamicThemeContainer"></div>
+        <div class="header-title">
+            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+            <span>Estimate & Quotation</span>
+        </div>
+        <div class="header-actions">
+            <button onclick="openSavedModal()" class="btn-header"><i class="fas fa-list-alt"></i> Saved List</button>
+        </div>
     </div>
 
+    <!-- Search / Picker -->
     <div class="search-container no-print">
         <div class="search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search by name, brand or scan...">
+            <input type="text" id="searchInput" placeholder="Search inventory by name, brand or scan barcode...">
         </div>
         <button onclick="startScanner()" class="btn-scan"><i class="fas fa-barcode"></i></button>
     </div>
 
-    <div id="loading" class="no-print" style="text-align: center; padding: 20px; color: var(--text-light); font-size: 12px;">
-        <i class="fas fa-spinner fa-spin text-primary" style="font-size: 24px; margin-bottom: 10px;"></i><br>Loading Inventory...
+    <div id="loading" class="no-print" style="text-align: center; padding: 15px; color: var(--text-light); font-size: 12px;">
+        <i class="fas fa-spinner fa-spin text-primary" style="font-size: 20px; margin-bottom: 6px;"></i><br>Loading Products...
     </div>
 
-    <div class="product-list no-print" id="productGrid"></div>
+    <!-- Product Fast Picker -->
+    <div class="product-picker no-print" id="productGrid"></div>
 
-    <div style="padding: 0 15px; margin-bottom: 10px; font-weight: 800; color: var(--primary); font-size: 12px; display: flex; justify-content: space-between; align-items: center;" class="no-print">
-        <span><i class="fas fa-clipboard-list"></i> ITEMS IN QUOTATION:</span>
-        <span id="currentClientLabel" style="color: var(--text-dark); background: #fef3c7; padding: 2px 8px; border-radius: 5px; font-size: 10px; display: none;"></span>
+    <!-- Client Details Section -->
+    <div class="client-card no-print">
+        <div class="section-label"><i class="fas fa-user-tag text-primary"></i> Client & Quotation Info</div>
+        <div class="grid-2">
+            <div class="input-group">
+                <label>Client / Customer Name *</label>
+                <input type="text" id="qClientName" placeholder="e.g. Rahim Traders" list="customerSuggestions" autocomplete="off">
+                <datalist id="customerSuggestions"></datalist>
+            </div>
+            <div class="input-group">
+                <label>Phone Number</label>
+                <input type="tel" id="qClientPhone" placeholder="01XXXXXXXXX">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="input-group">
+                <label>Quotation Date</label>
+                <input type="date" id="qDate">
+            </div>
+            <div class="input-group">
+                <label>Valid Until</label>
+                <input type="date" id="qValidUntil">
+            </div>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+            <label>Notes / Terms (Optional)</label>
+            <input type="text" id="qNotes" placeholder="e.g. Delivery within 3 days, 50% advance">
+        </div>
+    </div>
+
+    <!-- Items In Quotation -->
+    <div style="padding: 0 15px; margin-bottom: 8px; font-weight: 800; color: var(--primary-dark); font-size: 12px; display: flex; justify-content: space-between; align-items: center;" class="no-print">
+        <span><i class="fas fa-clipboard-list"></i> ITEMS IN QUOTATION (<span id="cartCount">0</span>):</span>
+        <span id="currentStatusBadge" style="background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:6px; font-size:10px; display:none;"></span>
     </div>
     
     <div class="cart-container no-print" id="cartList">
-        <div style="text-align: center; color: #9ca3af; padding: 20px 0; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 12px;">
-            Tap on products above to add them here.
+        <div style="text-align: center; color: #9ca3af; padding: 25px 0; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 14px;">
+            <i class="fas fa-hand-pointer" style="font-size:20px; margin-bottom:6px; opacity:0.6;"></i><br>
+            উপরে দেওয়া পণ্য তালিকায় ক্লিক করে এখানে আইটেম যুক্ত করুন।
         </div>
     </div>
 
+    <!-- Summary Card -->
     <div class="summary-card no-print">
         <div class="summary-row"><span>Total Market Cost (Buy):</span> <span id="sumBuy" style="color: var(--danger);">৳0</span></div>
-        <div class="summary-row"><span>Total Client Bill (Sell):</span> <span id="sumSell" style="color: var(--text-dark);">৳0</span></div>
-        <div class="summary-row profit"><span>Estimated Profit:</span> <span id="sumProfit">৳0</span></div>
-    </div>
-
-    <div class="action-grid no-print">
-        <button class="btn-action" style="background: var(--success); color: white; grid-column: span 2;" onclick="saveQuotation()"><i class="fas fa-save"></i> Save / Update Quotation</button>
-        <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; grid-column: span 2;" onclick="openClientDetailsModal()"><i class="fas fa-file-invoice"></i> Generate Quotation PDF</button>
-        <button class="btn-action" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; grid-column: span 2;" onclick="convertToSale()"><i class="fas fa-cash-register"></i> Convert to Sale (এই দামে বিক্রি করুন)</button>
-        <button class="btn-action" style="background: #fee2e2; color: var(--danger); grid-column: span 2;" onclick="clearEstimate()"><i class="fas fa-times"></i> Clear All</button>
-    </div>
-
-    <div id="printableInvoiceHolder" style="display:none;"></div>
-
-    <!-- Client Details Modal — quotation সেভ বা PDF বানানোর আগে ক্লায়েন্টের তথ্য নেয় -->
-    <div class="modal-overlay no-print" id="clientDetailsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 style="margin: 0; font-size: 16px;" id="clientModalTitle">Quotation Details</h3>
-                <button onclick="closeClientDetailsModal()" class="btn-close"><i class="fas fa-times"></i></button>
+        <div class="summary-row"><span>Subtotal Client Bill:</span> <span id="sumSubtotal">৳0</span></div>
+        
+        <div class="grid-2" style="margin: 8px 0; border-top: 1px dashed #e2e8f0; padding-top: 8px;">
+            <div class="input-group" style="margin-bottom:0;">
+                <label>Discount (৳)</label>
+                <input type="number" id="discountInput" value="0" oninput="calculateSummary()" style="padding:6px; font-size:12px; text-align:right;">
             </div>
-            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
-                <div class="input-box" style="text-align:left;">
-                    <label style="text-align:left;">Client / Company Name *</label>
-                    <input type="text" id="qClientName" placeholder="e.g. ABC Traders" style="text-align:left; padding:12px;">
-                </div>
-                <div class="input-box" style="text-align:left;" id="qPhoneBox">
-                    <label style="text-align:left;">Client Phone (optional)</label>
-                    <input type="text" id="qClientPhone" placeholder="e.g. 01XXXXXXXXX" style="text-align:left; padding:12px;">
-                </div>
-                <div class="input-box" style="text-align:left;" id="qValidUntilBox">
-                    <label style="text-align:left;">Valid Until</label>
-                    <input type="date" id="qValidUntil" style="text-align:left; padding:12px;">
-                </div>
-                <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;" onclick="generateQuotationPdf()" id="clientModalActionBtn"><i class="fas fa-check"></i> Generate PDF Preview</button>
+            <div class="input-group" style="margin-bottom:0;">
+                <label>Delivery / Extra (৳)</label>
+                <input type="number" id="extraChargeInput" value="0" oninput="calculateSummary()" style="padding:6px; font-size:12px; text-align:right;">
             </div>
+        </div>
+
+        <div class="summary-row" style="font-size:15px; font-weight:800; margin-top:6px;"><span>Net Client Total:</span> <span id="sumSell" style="color:var(--text-dark);">৳0</span></div>
+        <div class="summary-row profit">
+            <span>Estimated Profit:</span>
+            <span id="sumProfit">৳0 (0%)</span>
         </div>
     </div>
 
+    <!-- Actions Hub -->
+    <div class="action-grid no-print">
+        <button class="btn-action" style="background: var(--success); color: white; grid-column: span 2;" onclick="saveQuotation()"><i class="fas fa-save"></i> Save / Update Quotation</button>
+        <button class="btn-action" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;" onclick="printDirectQuotation('client')"><i class="fas fa-print"></i> Print Client Copy</button>
+        <button class="btn-action" style="background: #e0e7ff; color: #0B4A3E;" onclick="printDirectQuotation('internal')"><i class="fas fa-chart-pie"></i> Cost Audit Sheet</button>
+        <button class="btn-action" style="background: #16a34a; color: white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
+        <button class="btn-action" style="background: #25d366; color: white;" onclick="shareViaWhatsApp()"><i class="fab fa-whatsapp"></i> Share WhatsApp</button>
+        <button class="btn-action" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; grid-column: span 2;" onclick="convertToSale()"><i class="fas fa-cash-register"></i> Convert to Sale (এই দামে বিক্রি করুন)</button>
+        <button class="btn-action" style="background: #fee2e2; color: var(--danger); grid-column: span 2;" onclick="clearEstimate()"><i class="fas fa-trash-alt"></i> Clear All</button>
+    </div>
+
+    <!-- Saved Quotations Modal -->
     <div class="modal-overlay no-print" id="savedModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="margin: 0; font-size: 16px;">Saved Quotations</h3>
+                <h3 style="margin: 0; font-size: 15px; font-weight:800;"><i class="fas fa-folder-open text-primary"></i> Saved Quotations</h3>
                 <button onclick="closeSavedModal()" class="btn-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="saved-list" id="savedQuotesList">
-                <div style="text-align: center; padding: 20px; color: #9ca3af;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                <div style="text-align: center; padding: 25px; color: #9ca3af;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
             </div>
         </div>
     </div>
@@ -187,23 +255,33 @@
         <button onclick="stopScanner()" class="btn-close-scanner">Close Camera</button>
     </div>
 
+    <!-- Clean Printable Container -->
+    <div id="printAreaHolder" style="display:none;"></div>
+
     <script type="module">
         import { rtdb, ref as rtdbRef, get, onValue as rtdbOnValue, push, update, remove } from './firebase_config.js';
         import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-        import { getShopBranding, renderPremiumDocument, showPdfPreview } from './invoice_kit.js';
+        import { getShopBranding, numberToWordsBDT } from './invoice_kit.js';
+
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || "Poysha POS Store";
         
         let allProducts = [];
+        let allCustomers = [];
         let estimateCart = {};
         let html5QrcodeScanner = null;
 
-        // State for saving/updating
         let editingQuoteId = null;
-        let editingClientName = '';
         let allSavedQuotes = [];
 
+        function safeKey(name) { return name.trim().replace(/[.#$\[\]\/]/g, '_'); }
+
         window.onload = () => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('qDate').value = todayStr;
+            const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
+            document.getElementById('qValidUntil').value = nextWeek.toISOString().split('T')[0];
+
             // Load Inventory
             const productsQuery = query(rtdbRef(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
             rtdbOnValue(productsQuery, (snap) => {
@@ -214,7 +292,21 @@
                         .filter(p => !p.is_deleted);
                     applySearch(''); 
                 } else {
-                    document.getElementById('productGrid').innerHTML = '<div style="text-align:center; padding: 20px; color:#9ca3af;">No products found in inventory.</div>';
+                    document.getElementById('productGrid').innerHTML = '<div style="text-align:center; padding: 20px; color:#9ca3af;">No products found.</div>';
+                }
+            });
+
+            // Load Customers for Datalist
+            const custQuery = query(rtdbRef(rtdb, 'contacts/customers'), orderByChild('shop_id'), equalTo(SHOP_ID));
+            rtdbOnValue(custQuery, (snap) => {
+                const dl = document.getElementById('customerSuggestions');
+                dl.innerHTML = '';
+                allCustomers = [];
+                if(snap.exists()) {
+                    Object.values(snap.val()).forEach(c => {
+                        allCustomers.push(c);
+                        dl.innerHTML += `<option value="${c.name}">${c.phone || ''}</option>`;
+                    });
                 }
             });
 
@@ -230,32 +322,41 @@
                 }
                 renderSavedQuotesList();
 
-                // contacts.html-এর কাস্টমার প্রোফাইল থেকে "View/Edit in Estimate" চাপলে
-                // এখানে ?loadCustomer= প্যারামিটার দিয়ে আসে — সেই কাস্টমারের সবচেয়ে
-                // সাম্প্রতিক quotation স্বয়ংক্রিয়ভাবে লোড করে দেওয়া হয়।
                 const params = new URLSearchParams(window.location.search);
                 const loadCustomerName = params.get('loadCustomer');
                 if (loadCustomerName && !editingQuoteId) {
                     const match = allSavedQuotes.find(q => q.client_name === loadCustomerName);
-                    if (match) {
-                        loadSavedQuotation(match.id);
-                    } else {
-                        // এই কাস্টমারের নামে কোনো quotation নেই — শুধু নামটা প্রি-ফিল করে রাখি
-                        editingClientName = loadCustomerName;
-                        document.getElementById('currentClientLabel').innerText = `New Quotation For: ${loadCustomerName}`;
-                        document.getElementById('currentClientLabel').style.display = 'inline-block';
+                    if (match) loadSavedQuotation(match.id);
+                    else {
+                        document.getElementById('qClientName').value = loadCustomerName;
+                        updateStatusBadge(`New for: ${loadCustomerName}`);
                     }
                 }
             });
         };
 
-        // Render Product Grid
+        // Auto-fill phone on customer name match
+        document.getElementById('qClientName').addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            const found = allCustomers.find(c => c.name.toLowerCase() === val.toLowerCase());
+            if(found && found.phone) {
+                document.getElementById('qClientPhone').value = found.phone;
+            }
+        });
+
+        function updateStatusBadge(text) {
+            const badge = document.getElementById('currentStatusBadge');
+            if(text) { badge.innerText = text; badge.style.display = 'inline-block'; }
+            else { badge.style.display = 'none'; }
+        }
+
+        // Render Product Picker Grid
         function renderProductGrid(products) {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '';
             
             if(products.length === 0) {
-                grid.innerHTML = '<div style="text-align:center; padding: 20px; color:#9ca3af;">No matching products found.</div>';
+                grid.innerHTML = '<div style="text-align:center; padding: 20px; color:#9ca3af; font-size:12px;">No matching products.</div>';
                 return;
             }
 
@@ -268,10 +369,8 @@
                     <img src="${img}" class="product-img">
                     <div class="product-info">
                         <div class="product-name">${p.name}</div>
-                        ${p.brand ? `<span class="product-brand"><i class="fas fa-tag"></i> ${p.brand}</span>` : ''}
                         <div class="product-meta">
-                            <span class="badge-stock">Stock: ${p.stock || 0}</span>
-                            <span class="badge-price">Avg Rate: ৳${p.sell_price || 0}</span>
+                            <span>Cost: ৳${p.buy_price || 0}</span> • <span style="color:var(--primary); font-weight:700;">Rate: ৳${p.sell_price || 0}</span> • <span>Stock: ${p.stock || 0}</span>
                         </div>
                     </div>
                     <div class="cart-toggle-btn">
@@ -287,7 +386,12 @@
                 delete estimateCart[id];
             } else {
                 const p = allProducts.find(x => x.id === id);
-                estimateCart[id] = { ...p, estQty: 1, estBuy: p.buy_price || 0, estSell: p.sell_price || 0 };
+                estimateCart[id] = { 
+                    ...p, 
+                    estQty: 1, 
+                    estBuy: Number(p.buy_price || 0), 
+                    estSell: Number(p.sell_price || 0) 
+                };
             }
             
             const term = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -301,14 +405,14 @@
 
         function applySearch(term) {
             if(term === '') {
-                renderProductGrid(allProducts.slice(0, 30)); 
+                renderProductGrid(allProducts.slice(0, 25)); 
             } else {
                 const filtered = allProducts.filter(p => 
                     p.name.toLowerCase().includes(term) || 
                     (p.brand && p.brand.toLowerCase().includes(term)) || 
                     (p.barcode && p.barcode.toString().toLowerCase().includes(term))
                 );
-                renderProductGrid(filtered.slice(0, 30));
+                renderProductGrid(filtered.slice(0, 25));
             }
         }
 
@@ -328,91 +432,110 @@
             const list = document.getElementById('cartList');
             list.innerHTML = '';
             
-            if(Object.keys(estimateCart).length === 0) {
-                list.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px 0; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 12px;">Tap on products above to add them here.</div>';
+            const keys = Object.keys(estimateCart);
+            document.getElementById('cartCount').innerText = keys.length;
+
+            if(keys.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 25px 0; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 14px;"><i class="fas fa-hand-pointer" style="font-size:20px; margin-bottom:6px; opacity:0.6;"></i><br>উপরে দেওয়া পণ্য তালিকায় ক্লিক করে এখানে আইটেম যুক্ত করুন।</div>';
                 calculateSummary();
                 return;
             }
 
             Object.values(estimateCart).forEach(item => {
+                const itemBuyTotal = item.estBuy * item.estQty;
+                const itemSellTotal = item.estSell * item.estQty;
+                const itemProfit = itemSellTotal - itemBuyTotal;
+
                 list.innerHTML += `
                 <div class="cart-item">
                     <div class="item-header">
-                        <span>${item.name} ${item.brand ? `<small style="color:#6b7280; font-weight:normal;">(${item.brand})</small>` : ''}</span>
+                        <span>${item.name} ${item.brand ? `<small style="color:#64748b; font-weight:normal;">(${item.brand})</small>` : ''}</span>
                         <button onclick="removeItem('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-trash"></i></button>
                     </div>
                     <div class="item-grid">
                         <div class="input-box">
-                            <label>Required Qty</label>
+                            <label>Qty (${item.unit || 'Pcs'})</label>
                             <input type="number" value="${item.estQty}" onchange="updateField('${item.id}', 'estQty', this.value)">
                         </div>
                         <div class="input-box">
-                            <label>Market Buy (৳)</label>
+                            <label>Buy Cost (৳)</label>
                             <input type="number" class="buy" value="${item.estBuy}" onchange="updateField('${item.id}', 'estBuy', this.value)">
                         </div>
                         <div class="input-box">
-                            <label>Client Bill (৳)</label>
+                            <label>Quote Rate (৳)</label>
                             <input type="number" class="sell" value="${item.estSell}" onchange="updateField('${item.id}', 'estSell', this.value)">
                         </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:8px; color:#64748b; border-top:1px dashed #f1f5f9; padding-top:6px;">
+                        <span>Total: <b>৳${itemSellTotal.toLocaleString()}</b></span>
+                        <span style="color:${itemProfit>=0?'var(--success)':'var(--danger)'}; font-weight:bold;">Profit: ৳${itemProfit.toLocaleString()}</span>
                     </div>
                 </div>`;
             });
             calculateSummary();
         }
 
-        function calculateSummary() {
-            let totalBuy = 0, totalSell = 0;
+        window.calculateSummary = () => {
+            let totalBuy = 0, subtotalSell = 0;
             Object.values(estimateCart).forEach(item => {
                 totalBuy += (item.estBuy * item.estQty);
-                totalSell += (item.estSell * item.estQty);
+                subtotalSell += (item.estSell * item.estQty);
             });
-            const profit = totalSell - totalBuy;
+
+            const discount = Number(document.getElementById('discountInput').value) || 0;
+            const extra = Number(document.getElementById('extraChargeInput').value) || 0;
+            const netSell = (subtotalSell - discount) + extra;
+            const profit = netSell - totalBuy;
+            const margin = netSell > 0 ? ((profit / netSell) * 100).toFixed(1) : 0;
 
             document.getElementById('sumBuy').innerText = `৳${totalBuy.toLocaleString()}`;
-            document.getElementById('sumSell').innerText = `৳${totalSell.toLocaleString()}`;
-            document.getElementById('sumProfit').innerText = `৳${profit.toLocaleString()}`;
-        }
+            document.getElementById('sumSubtotal').innerText = `৳${subtotalSell.toLocaleString()}`;
+            document.getElementById('sumSell').innerText = `৳${netSell.toLocaleString()}`;
+            
+            const profitEl = document.getElementById('sumProfit');
+            profitEl.innerText = `৳${profit.toLocaleString()} (${margin}%)`;
+            profitEl.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
 
-        // --- SAVE / UPDATE LOGIC ---
-        // Firebase RTDB key-তে '.', '#', '$', '[', ']', '/' অক্ষর নিষিদ্ধ — sell.html-এর
-        // sanitizeKey()-এর সাথে হুবহু মিলিয়ে রাখা হলো, নাহলে দুই ফাইল ভিন্ন path-এ লিখবে/পড়বে।
-        function safeKey(name) { return name.trim().replace(/[.#$\[\]\/]/g, '_'); }
-
-        window.saveQuotation = async () => {
-            if(Object.keys(estimateCart).length === 0) return alert("Cart is empty! Add items first.");
-
-            let clientName = editingClientName;
-            if(!clientName) {
-                // নতুন quotation-এর জন্য নাম জিজ্ঞেস করি — client details modal-ই ব্যবহার করছি,
-                // prompt() এর বদলে, যাতে সাথে সাথে ফোন নম্বরও নেওয়া যায়
-                pendingSaveAfterModal = true;
-                openClientDetailsModal(true);
-                return;
-            }
-            await performSaveQuotation(clientName);
+            return { totalBuy, subtotalSell, discount, extra, netSell, profit, margin };
         };
 
-        let pendingSaveAfterModal = false;
+        // --- SAVE / UPDATE QUOTATION ---
+        window.saveQuotation = async () => {
+            if(Object.keys(estimateCart).length === 0) return alert("Quotation is empty! Add items first.");
+            const clientName = document.getElementById('qClientName').value.trim();
+            if(!clientName) return alert("অনুগ্রহ করে ক্লায়েন্ট বা কাস্টমারের নাম লিখুন!");
 
-        async function performSaveQuotation(clientName, silent = false) {
-            let totalBuy = 0, totalSell = 0;
-            const itemsToSave = [];
-            const priceUpdates = {}; // customer_prices/{SHOP_ID}/{clientName}/{productId} — sell.html-এ auto-apply হওয়ার জন্য
+            const clientPhone = document.getElementById('qClientPhone').value.trim();
+            const qDate = document.getElementById('qDate').value;
+            const qValid = document.getElementById('qValidUntil').value;
+            const qNotes = document.getElementById('qNotes').value.trim();
+            const { totalBuy, subtotalSell, discount, extra, netSell, profit, margin } = calculateSummary();
 
-            Object.values(estimateCart).forEach(item => {
-                totalBuy += (item.estBuy * item.estQty);
-                totalSell += (item.estSell * item.estQty);
-                itemsToSave.push({ id: item.id, name: item.name, brand: item.brand||"", estQty: item.estQty, estBuy: item.estBuy, estSell: item.estSell, unit: item.unit||"Pcs" });
-                priceUpdates[`customer_prices/${SHOP_ID}/${safeKey(clientName)}/${item.id}`] = item.estSell;
+            const itemsToSave = Object.values(estimateCart).map(item => ({
+                id: item.id, name: item.name, brand: item.brand || "", 
+                estQty: item.estQty, estBuy: item.estBuy, estSell: item.estSell, unit: item.unit || "Pcs"
+            }));
+
+            const priceUpdates = {};
+            itemsToSave.forEach(it => {
+                priceUpdates[`customer_prices/${SHOP_ID}/${safeKey(clientName)}/${it.id}`] = it.estSell;
             });
 
             const quoteData = {
                 shop_id: SHOP_ID,
                 client_name: clientName,
+                client_phone: clientPhone,
+                date: qDate,
+                valid_until: qValid,
+                notes: qNotes,
                 items: itemsToSave,
                 total_buy: totalBuy,
-                total_sell: totalSell,
-                profit: totalSell - totalBuy,
+                subtotal: subtotalSell,
+                discount: discount,
+                extra_charge: extra,
+                total_sell: netSell,
+                profit: profit,
+                margin: margin,
                 updated_at: Date.now()
             };
 
@@ -423,27 +546,281 @@
                     quoteData.created_at = Date.now();
                     const newRef = await push(rtdbRef(rtdb, 'quotations'), quoteData);
                     editingQuoteId = newRef.key;
-                    editingClientName = clientName;
-                    document.getElementById('currentClientLabel').innerText = `Editing: ${clientName}`;
-                    document.getElementById('currentClientLabel').style.display = 'inline-block';
                 }
 
-                // কাস্টমার-নাম-ভিত্তিক quick-lookup কপি — contacts.html প্রোফাইল থেকে সরাসরি দেখানোর জন্য
+                // Sync with customer quick profile & customer special prices
                 await update(rtdbRef(rtdb), {
                     [`customer_quotations/${SHOP_ID}/${safeKey(clientName)}`]: {
                         quote_id: editingQuoteId, customer_name: clientName,
-                        items: itemsToSave, total: totalSell, date: Date.now()
+                        items: itemsToSave, total: netSell, date: Date.now()
                     },
                     ...priceUpdates
                 });
 
-                if (!silent) {
-                    alert(`Quotation ${editingQuoteId ? 'updated' : 'saved'} successfully! এই দামগুলো এখন "${clientName}" নামে সেল করলে স্বয়ংক্রিয়ভাবে বসে যাবে।`);
-                }
+                updateStatusBadge(`Saved: ${clientName}`);
+                alert(`Quotation ${editingQuoteId ? 'updated' : 'saved'} successfully! এই পণ্যের দর এখন "${clientName}" এর জন্য স্বয়ংক্রিয়ভাবে সেভ থাকবে।`);
             } catch(e) { alert("Error saving quotation: " + e.message); }
-        }
+        };
 
-        // --- SAVED MODAL LOGIC ---
+        // --- DIRECT CLEAN PRINT (CLIENT QUOTE OR INTERNAL ANALYSIS) ---
+        window.printDirectQuotation = async (mode = 'client') => {
+            if(Object.keys(estimateCart).length === 0) return alert("Quotation is empty!");
+            const shop = await getShopBranding(SHOP_ID);
+            const clientName = document.getElementById('qClientName').value.trim() || 'Walk-in Client';
+            const clientPhone = document.getElementById('qClientPhone').value.trim();
+            const qDate = document.getElementById('qDate').value;
+            const qValid = document.getElementById('qValidUntil').value;
+            const qNotes = document.getElementById('qNotes').value.trim();
+            const { totalBuy, subtotalSell, discount, extra, netSell, profit, margin } = calculateSummary();
+            const printArea = document.getElementById('printAreaHolder');
+
+            const isInternal = (mode === 'internal');
+            let rowsHtml = '';
+
+            Object.values(estimateCart).forEach((it, idx) => {
+                const itemTotal = it.estSell * it.estQty;
+                const itemCost = it.estBuy * it.estQty;
+                const itProfit = itemTotal - itemCost;
+
+                if (isInternal) {
+                    rowsHtml += `
+                        <tr>
+                            <td style="text-align:center;">${idx + 1}</td>
+                            <td><b>${it.name}</b> ${it.brand ? `<small>(${it.brand})</small>` : ''}</td>
+                            <td style="text-align:center;">${it.estQty} ${it.unit || 'Pcs'}</td>
+                            <td style="text-align:right;">৳${it.estBuy.toLocaleString()}</td>
+                            <td style="text-align:right;">৳${itemCost.toLocaleString()}</td>
+                            <td style="text-align:right;">৳${it.estSell.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold;">৳${itemTotal.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold; color:${itProfit>=0?'#16a34a':'#dc2626'};">৳${itProfit.toLocaleString()}</td>
+                        </tr>
+                    `;
+                } else {
+                    rowsHtml += `
+                        <tr>
+                            <td style="text-align:center;">${idx + 1}</td>
+                            <td><b>${it.name}</b> ${it.brand ? `<small style="color:#555;">(${it.brand})</small>` : ''}</td>
+                            <td style="text-align:center;">${it.estQty} ${it.unit || 'Pcs'}</td>
+                            <td style="text-align:right;">৳${it.estSell.toLocaleString()}</td>
+                            <td style="text-align:right; font-weight:bold;">৳${itemTotal.toLocaleString()}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (isInternal) {
+                // INTERNAL COST ANALYSIS
+                printArea.innerHTML = `
+                    <div style="text-align:center; margin-bottom:15px; font-family:'Hind Siliguri',sans-serif;">
+                        <h2 style="font-size:20px; margin:0;">${shop.name}</h2>
+                        <div style="display:inline-block; background:#0B4A3E; color:white; font-size:11px; font-weight:700; padding:2px 12px; border-radius:12px; margin-top:4px;">Internal Cost & Profit Analysis (দোকানের হিসাব)</div>
+                        <p style="font-size:11px; color:#475569; margin-top:4px;">Client: <b>${clientName}</b> | Date: ${qDate}</p>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Item & Brand</th>
+                                <th style="text-align:center;">Qty</th>
+                                <th style="text-align:right;">Buy Rate</th>
+                                <th style="text-align:right;">Total Buy</th>
+                                <th style="text-align:right;">Quote Rate</th>
+                                <th style="text-align:right;">Client Bill</th>
+                                <th style="text-align:right;">Est. Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align:right;">Subtotal:</td>
+                                <td style="text-align:right; color:#dc2626;">৳${totalBuy.toLocaleString()}</td>
+                                <td></td>
+                                <td style="text-align:right; color:#0B4A3E;">৳${subtotalSell.toLocaleString()}</td>
+                                <td style="text-align:right; color:#16a34a;">৳${(subtotalSell - totalBuy).toLocaleString()}</td>
+                            </tr>
+                            ${discount > 0 ? `<tr><td colspan="6" style="text-align:right;">Discount:</td><td style="text-align:right; color:#dc2626;">-৳${discount.toLocaleString()}</td><td></td></tr>` : ''}
+                            ${extra > 0 ? `<tr><td colspan="6" style="text-align:right;">Delivery/Extra:</td><td style="text-align:right;">+৳${extra.toLocaleString()}</td><td></td></tr>` : ''}
+                            <tr style="background:#f1f5f9; font-weight:bold;">
+                                <td colspan="6" style="text-align:right; font-size:12px;">NET ESTIMATED PROFIT:</td>
+                                <td style="text-align:right; font-size:12px;">৳${netSell.toLocaleString()}</td>
+                                <td style="text-align:right; font-size:13px; color:#16a34a;">৳${profit.toLocaleString()} (${margin}%)</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                `;
+            } else {
+                // CLIENT FORMAL QUOTATION
+                printArea.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #f59e0b; padding-bottom:12px; margin-bottom:15px; font-family:'Hind Siliguri',sans-serif;">
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            ${shop.logo ? `<img src="${shop.logo}" style="width:55px; height:55px; border-radius:10px; object-fit:cover;">` : ''}
+                            <div>
+                                <h2 style="font-size:20px; margin:0; color:#0f172a;">${shop.name}</h2>
+                                <p style="font-size:11px; color:#64748b; margin:2px 0;">${shop.address || ''}</p>
+                                ${shop.phone ? `<p style="font-size:11px; color:#64748b; margin:0;">📞 ${shop.phone}</p>` : ''}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="background:#f59e0b; color:white; font-size:11px; font-weight:700; padding:3px 12px; border-radius:12px; display:inline-block; margin-bottom:4px;">PRICE ESTIMATE / QUOTATION</div>
+                            <div style="font-size:11px; color:#334155;">Date: <b>${qDate}</b></div>
+                            ${qValid ? `<div style="font-size:10.5px; color:#b45309; font-weight:600;">Valid Until: ${qValid}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:15px; font-family:'Hind Siliguri',sans-serif; font-size:12px;">
+                        <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700;">Quotation For:</span><br>
+                        <strong style="font-size:14px; color:#0f172a;">${clientName}</strong>
+                        ${clientPhone ? `<span style="color:#64748b; margin-left:10px;">📞 ${clientPhone}</span>` : ''}
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:30px;">#</th>
+                                <th>Item Description</th>
+                                <th style="width:70px; text-align:center;">Qty</th>
+                                <th style="width:90px; text-align:right;">Unit Price (Tk)</th>
+                                <th style="width:100px; text-align:right;">Total (Tk)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align:right; font-weight:bold;">Subtotal:</td>
+                                <td style="text-align:right; font-weight:bold;">৳${subtotalSell.toLocaleString()}</td>
+                            </tr>
+                            ${discount > 0 ? `<tr><td colspan="4" style="text-align:right; color:#dc2626;">Discount:</td><td style="text-align:right; color:#dc2626;">-৳${discount.toLocaleString()}</td></tr>` : ''}
+                            ${extra > 0 ? `<tr><td colspan="4" style="text-align:right;">Delivery / Handling:</td><td style="text-align:right;">+৳${extra.toLocaleString()}</td></tr>` : ''}
+                            <tr style="background:#fffbeb; font-weight:800; font-size:13px;">
+                                <td colspan="4" style="text-align:right; color:#b45309;">Grand Total:</td>
+                                <td style="text-align:right; color:#b45309;">৳${netSell.toLocaleString()}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div style="margin-top:12px; font-size:11px; color:#475569; font-family:'Hind Siliguri',sans-serif;">
+                        <b>In Words:</b> ${numberToWordsBDT(netSell)}
+                    </div>
+
+                    ${qNotes ? `<div style="margin-top:10px; font-size:11px; color:#b45309; background:#fffbeb; padding:8px 12px; border-radius:6px;"><b>Terms & Notes:</b> ${qNotes}</div>` : ''}
+
+                    <div class="print-signatures">
+                        <div>Client Acceptance: __________________</div>
+                        <div>Authorized Signature: __________________</div>
+                    </div>
+                `;
+            }
+
+            window.print();
+        };
+
+        // --- EXPORT TO EXCEL ---
+        window.exportToExcel = () => {
+            if(Object.keys(estimateCart).length === 0) return alert("Quotation is empty!");
+            const clientName = document.getElementById('qClientName').value.trim() || 'Client';
+            const qDate = document.getElementById('qDate').value;
+            const { totalBuy, subtotalSell, discount, extra, netSell, profit } = calculateSummary();
+            const filename = `Quotation_${clientName}_${qDate}.xls`;
+
+            let rowsHtml = '';
+            Object.values(estimateCart).forEach((it, idx) => {
+                rowsHtml += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${it.name}</td>
+                        <td>${it.brand || ''}</td>
+                        <td>${it.estQty}</td>
+                        <td>${it.unit || 'Pcs'}</td>
+                        <td>${it.estBuy}</td>
+                        <td>${it.estBuy * it.estQty}</td>
+                        <td>${it.estSell}</td>
+                        <td>${it.estSell * it.estQty}</td>
+                    </tr>
+                `;
+            });
+
+            const excelTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body>
+                    <h2 style="text-align:center;">${SHOP_NAME}</h2>
+                    <p style="text-align:center;">Price Quotation & Cost Sheet for: <b>${clientName}</b> | Date: ${qDate}</p>
+                    <table border="1">
+                        <thead>
+                            <tr style="background:#fef3c7; font-weight:bold;">
+                                <th>SL</th>
+                                <th>Item Name</th>
+                                <th>Brand</th>
+                                <th>Qty</th>
+                                <th>Unit</th>
+                                <th>Buy Cost (Tk)</th>
+                                <th>Total Buy (Tk)</th>
+                                <th>Quote Rate (Tk)</th>
+                                <th>Client Bill (Tk)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr style="font-weight:bold; background:#f1f5f9;">
+                                <td colspan="6" align="right">Subtotal:</td>
+                                <td>${totalBuy}</td>
+                                <td></td>
+                                <td>${subtotalSell}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="8" align="right">Discount:</td>
+                                <td>${discount}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="8" align="right">Extra/Delivery:</td>
+                                <td>${extra}</td>
+                            </tr>
+                            <tr style="font-weight:bold; background:#dcfce7;">
+                                <td colspan="8" align="right">Net Client Bill:</td>
+                                <td>${netSell}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff' + excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // --- SHARE VIA WHATSAPP ---
+        window.shareViaWhatsApp = () => {
+            if(Object.keys(estimateCart).length === 0) return alert("Quotation is empty!");
+            const clientName = document.getElementById('qClientName').value.trim() || 'সম্মানিত গ্রাহক';
+            const clientPhone = document.getElementById('qClientPhone').value.trim();
+            const qDate = document.getElementById('qDate').value;
+            const { subtotalSell, discount, extra, netSell } = calculateSummary();
+
+            let itemsText = '';
+            Object.values(estimateCart).forEach((it, idx) => {
+                itemsText += `${idx+1}. ${it.name} - ${it.estQty} ${it.unit||'pcs'} x ৳${it.estSell} = ৳${(it.estQty * it.estSell).toLocaleString()}\n`;
+            });
+
+            let msg = `*📋 Quotation / দরপত্র*\n*প্রতিষ্ঠান:* ${SHOP_NAME}\n*গ্রাহক:* ${clientName}\n*তারিখ:* ${qDate}\n\n*পণ্য বিবরণী:*\n${itemsText}\n------------------------\n*মোট বিল:* ৳${subtotalSell.toLocaleString()}\n`;
+            if (discount > 0) msg += `*ডিসকাউন্ট:* -৳${discount.toLocaleString()}\n`;
+            if (extra > 0) msg += `*ডেলিভারি/অন্যান্য:* +৳${extra.toLocaleString()}\n`;
+            msg += `*সর্বমোট প্রদেয়:* ৳${netSell.toLocaleString()}\n\nধন্যবাদ!`;
+
+            const cleanPhone = clientPhone.replace(/[^0-9]/g, '');
+            const targetPhone = cleanPhone.startsWith('88') ? cleanPhone : (cleanPhone.length === 11 ? '88' + cleanPhone : cleanPhone);
+            const waUrl = targetPhone ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+            
+            window.open(waUrl, '_blank');
+        };
+
+        // --- SAVED MODAL MANAGEMENT ---
         window.openSavedModal = () => { document.getElementById('savedModal').style.display = 'flex'; };
         window.closeSavedModal = () => { document.getElementById('savedModal').style.display = 'none'; };
 
@@ -452,19 +829,21 @@
             list.innerHTML = '';
             
             if(allSavedQuotes.length === 0) {
-                list.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">No saved quotations found.</div>';
+                list.innerHTML = '<div style="text-align: center; padding: 25px; color: #9ca3af; font-size:12px;">No saved quotations found.</div>';
                 return;
             }
 
             allSavedQuotes.forEach(q => {
-                const dateStr = new Date(q.created_at).toLocaleDateString('en-GB') + " " + new Date(q.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const dateStr = q.date || new Date(q.created_at || Date.now()).toLocaleDateString('en-GB');
+                const total = Number(q.total_sell || q.total || 0);
+
                 list.innerHTML += `
                 <div class="saved-card">
                     <div class="sc-title">${q.client_name}</div>
-                    <div class="sc-date">Created: ${dateStr} • Bill: ৳${q.total_sell.toLocaleString()}</div>
+                    <div class="sc-date">Date: ${dateStr} • Bill: <b>৳${total.toLocaleString()}</b> • ${q.items ? q.items.length : 0} items</div>
                     <div class="sc-actions">
-                        <button onclick="loadSavedQuotation('${q.id}')" class="sc-btn" style="background:#e0e7ff; color:var(--primary);"><i class="fas fa-folder-open"></i> Load / Edit</button>
-                        <button onclick="deleteQuotation('${q.id}')" class="sc-btn" style="background:#fee2e2; color:var(--danger); flex: 0.4;"><i class="fas fa-trash"></i></button>
+                        <button onclick="loadSavedQuotation('${q.id}')" class="sc-btn" style="background:#e0e7ff; color:var(--primary-dark);"><i class="fas fa-folder-open"></i> Load</button>
+                        <button onclick="deleteQuotation('${q.id}')" class="sc-btn" style="background:#fee2e2; color:var(--danger); flex: 0.35;"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>`;
             });
@@ -475,18 +854,22 @@
             if(!q) return;
 
             estimateCart = {};
-            q.items.forEach(item => {
+            (q.items || []).forEach(item => {
                 estimateCart[item.id] = { ...item };
             });
 
             editingQuoteId = q.id;
-            editingClientName = q.client_name;
+            document.getElementById('qClientName').value = q.client_name || '';
+            document.getElementById('qClientPhone').value = q.client_phone || '';
+            document.getElementById('qDate').value = q.date || new Date().toISOString().split('T')[0];
+            document.getElementById('qValidUntil').value = q.valid_until || '';
+            document.getElementById('qNotes').value = q.notes || '';
+            document.getElementById('discountInput').value = q.discount || 0;
+            document.getElementById('extraChargeInput').value = q.extra_charge || 0;
+
+            updateStatusBadge(`Editing: ${q.client_name}`);
             
-            document.getElementById('currentClientLabel').innerText = `Editing: ${editingClientName}`;
-            document.getElementById('currentClientLabel').style.display = 'inline-block';
-            
-            const term = document.getElementById('searchInput').value.toLowerCase().trim();
-            applySearch(term); // refresh checks
+            applySearch('');
             renderCart();
             closeSavedModal();
         };
@@ -504,116 +887,43 @@
             if(Object.keys(estimateCart).length > 0 && !confirm("Clear all items and start new?")) return;
             estimateCart = {};
             editingQuoteId = null;
-            editingClientName = '';
-            document.getElementById('currentClientLabel').style.display = 'none';
-            document.getElementById('searchInput').value = '';
+            document.getElementById('qClientName').value = '';
+            document.getElementById('qClientPhone').value = '';
+            document.getElementById('qNotes').value = '';
+            document.getElementById('discountInput').value = '0';
+            document.getElementById('extraChargeInput').value = '0';
+            updateStatusBadge('');
             applySearch('');
             renderCart();
         };
 
         // --- CONVERT TO SALE ---
-        // Quotation-এর দাম customer_prices-এ সেভ করে sell.html-এ পাঠিয়ে দেয়, যেখানে
-        // কাস্টমার নাম অটো-ফিল থাকবে এবং sell.html-এর existing pricing mechanism
-        // (triggerSpecialPriceFetch) স্বয়ংক্রিয়ভাবে এই quotation-এর রেট বসিয়ে দেবে।
         window.convertToSale = async () => {
             if(Object.keys(estimateCart).length === 0) return alert("Cart is empty! Add items first.");
-
-            let clientName = editingClientName;
+            let clientName = document.getElementById('qClientName').value.trim();
             if(!clientName) {
-                clientName = prompt("এই quotation কোন কাস্টমারের নামে সেভ করে বিক্রি করতে চান?");
+                clientName = prompt("কাস্টমারের নাম লিখুন:");
                 if(!clientName || !clientName.trim()) return;
                 clientName = clientName.trim();
+                document.getElementById('qClientName').value = clientName;
             }
 
-            await performSaveQuotation(clientName, true);
+            await window.saveQuotation();
             window.location.href = `sell.html?prefillCustomer=${encodeURIComponent(clientName)}`;
-        };
-
-        // --- QUOTATION PDF GENERATION (নতুন প্রিমিয়াম সিস্টেম) ---
-        let quoteSequence = 0; // simple session-level running number for the visible doc no.
-
-        window.openClientDetailsModal = (isSaveMode = false) => {
-            if(Object.keys(estimateCart).length === 0) return alert("Please add items to estimate first!");
-            document.getElementById('qClientName').value = editingClientName || '';
-            // ডিফল্টভাবে ৭ দিন পর মেয়াদ শেষ দেখানো হচ্ছে, ইউজার চাইলে বদলাতে পারবে
-            const defaultValid = new Date(); defaultValid.setDate(defaultValid.getDate() + 7);
-            document.getElementById('qValidUntil').value = defaultValid.toISOString().split('T')[0];
-
-            // Save mode-এ ফোন/মেয়াদ ফিল্ড লুকানো থাকে (সেভের জন্য শুধু নাম যথেষ্ট), PDF mode-এ দেখা যায়
-            document.getElementById('qPhoneBox').style.display = isSaveMode ? 'none' : 'block';
-            document.getElementById('qValidUntilBox').style.display = isSaveMode ? 'none' : 'block';
-            document.getElementById('clientModalTitle').innerText = isSaveMode ? 'Save Quotation As' : 'Quotation Details';
-            document.getElementById('clientModalActionBtn').innerHTML = isSaveMode
-                ? '<i class="fas fa-save"></i> Save Quotation'
-                : '<i class="fas fa-check"></i> Generate PDF Preview';
-
-            document.getElementById('clientDetailsModal').style.display = 'flex';
-        };
-        window.closeClientDetailsModal = () => { document.getElementById('clientDetailsModal').style.display = 'none'; };
-
-        window.generateQuotationPdf = async () => {
-            const clientName = document.getElementById('qClientName').value.trim();
-            const clientPhone = document.getElementById('qClientPhone').value.trim();
-            const validUntil = document.getElementById('qValidUntil').value;
-            if(!clientName) return alert("Client/Company name is required!");
-
-            editingClientName = clientName; // future save-এর জন্য মনে রাখা হচ্ছে
-            closeClientDetailsModal();
-
-            // যদি "Save" বাটন থেকে এই মোডাল খোলা হয়ে থাকে, PDF না বানিয়ে সরাসরি সেভ করি
-            if (pendingSaveAfterModal) {
-                pendingSaveAfterModal = false;
-                await performSaveQuotation(clientName);
-                return;
-            }
-
-            const shop = await getShopBranding(SHOP_ID);
-            quoteSequence += 1;
-            const docNo = "QUO-" + new Date().getFullYear() + "-" + String(quoteSequence).padStart(3, '0');
-
-            let finalTotal = 0;
-            const items = Object.values(estimateCart).map(item => {
-                const amount = item.estSell * item.estQty;
-                finalTotal += amount;
-                return { name: item.name, brand: item.brand, unit: item.unit || 'Pcs', qty: item.estQty, rate: item.estSell, amount: amount };
-            });
-
-            const validNote = validUntil ? `Valid Until: ${new Date(validUntil).toLocaleDateString('en-GB')}` : '';
-
-            const html = renderPremiumDocument({
-                docType: 'QUOTATION',
-                docNo: docNo,
-                docDate: new Date().toLocaleDateString('en-GB'),
-                shop: shop,
-                partyLabel: 'Quotation For',
-                partyName: clientName,
-                partyPhone: clientPhone,
-                items: items,
-                subtotal: finalTotal,
-                discount: 0,
-                total: finalTotal,
-                paid: null, // quotation-এ paid/due দেখানো হবে না
-                due: null,
-                extraNote: validNote,
-                footerNote: 'This is an estimate only and subject to market availability & price changes.'
-            });
-
-            document.getElementById('printableInvoiceHolder').innerHTML = html;
-            showPdfPreview(html, `Quotation_${clientName.replace(/\s+/g, '_')}.pdf`);
         };
 
         // --- BARCODE SCANNER ---
         window.startScanner = () => {
             document.getElementById('scannerModal').style.display = 'flex';
             html5QrcodeScanner = new Html5Qrcode("reader");
-            const config = { fps: 15, qrbox: { width: 300, height: 150 }, disableFlip: false };
+            const config = { fps: 15, qrbox: { width: 280, height: 140 }, disableFlip: false };
             
             html5QrcodeScanner.start({ facingMode: "environment" }, config, (decodedText) => {
                 window.stopScanner();
                 const audio = new Audio('https://www.soundjay.com/button/beep-07.wav'); audio.play().catch(e=>{});
                 document.getElementById('searchInput').value = decodedText;
                 document.getElementById('searchInput').dispatchEvent(new Event('input'));
-            }).catch(err => { alert("Camera access denied or error"); window.stopScanner(); });
+            }).catch(err => { alert("Camera error: " + err); window.stopScanner(); });
         };
         
         window.stopScanner = () => {
