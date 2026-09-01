@@ -1,95 +1,168 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/png" href="icon-192x192.png">
-    <title>Sales Return (Invoice Based) - Poysha POS</title>
+    <title>Sales Return - Poysha POS</title>
     
     <meta name="theme-color" content="#ef4444">
     <script>
+        const loggedInUser = localStorage.getItem('tempUserPhone') || sessionStorage.getItem('tempUserPhone') || localStorage.getItem('userPhone');
         const activeShopId = localStorage.getItem('activeShopId');
-        if (!activeShopId) window.location.replace("dashboard.html");
+        if (!loggedInUser) window.location.replace("index.html");
+        else if (!activeShopId) window.location.replace("dashboard.html");
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         :root {
-            --primary: #ef4444; --secondary: #b91c1c; --bg-color: #f3f4f6;
-            --white: #ffffff; --text-dark: #1f2937; --text-light: #6b7280;
-            --success: #10b981; --warning: #f59e0b;
-            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            --primary: #ef4444; --secondary: #b91c1c; --bg-color: #f8fafc;
+            --white: #ffffff; --text-dark: #1e293b; --text-light: #64748b;
+            --success: #10b981; --warning: #f59e0b; --blue: #3b82f6;
+            --border-radius: 18px; --shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 100px; }
-        
-        .app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 20px 20px 40px 20px; color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 120px; position: relative; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* App Header */
+        .app-header { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
+            padding: 22px 20px 45px 20px; color: white; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; 
+            position: sticky; top: 0; z-index: 50; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.25); 
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
         .header-title { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
         .header-title a { color: white; text-decoration: none; }
 
-        .search-card { background: white; margin: -20px 15px 15px 15px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); position: relative; z-index: 10; }
-        .search-box { position: relative; display: flex; gap: 10px; }
-        .search-box input { flex: 1; padding: 14px 15px; border-radius: 12px; border: 2px solid #f1f5f9; outline: none; font-size: 14px; font-weight: 600; }
-        .search-box input:focus { border-color: var(--primary); }
-        .btn-search { background: var(--text-dark); color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        /* Search & Picker Card */
+        .search-card { 
+            background: var(--white); margin: -25px 15px 15px 15px; padding: 16px; 
+            border-radius: var(--border-radius); box-shadow: var(--shadow); position: relative; z-index: 60; 
+            border: 1px solid #f1f5f9;
+        }
+        .search-box { display: flex; gap: 8px; position: relative; }
+        .search-input-wrap { flex: 1; position: relative; }
+        .search-input-wrap i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-input-wrap input { width: 100%; padding: 12px 14px 12px 38px; border-radius: 14px; border: 1px solid #e2e8f0; outline: none; font-size: 13px; font-family: inherit; background: #f8fafc; color: var(--text-dark); }
+        .search-input-wrap input:focus { border-color: var(--primary); background: white; }
+        .btn-scan { background: var(--text-dark); color: white; border: none; width: 46px; border-radius: 14px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
 
-        .invoice-details { background: white; margin: 0 15px 15px 15px; padding: 15px; border-radius: 16px; display: none; box-shadow: var(--shadow); border: 1px dashed var(--primary); }
-        .inv-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        /* Fast Invoices Selector (Recent Carousel) */
+        .recent-section { margin-top: 12px; }
+        .recent-title { font-size: 10.5px; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .recent-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+        .inv-chip { background: #f1f5f9; padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; color: var(--text-dark); border: 1px solid #e2e8f0; cursor: pointer; white-space: nowrap; transition: 0.2s; display: flex; flex-direction: column; text-align: left; }
+        .inv-chip:active { transform: scale(0.95); }
+        .inv-chip.active { background: #fee2e2; border-color: var(--primary); color: var(--secondary); }
+        .inv-chip .chip-no { font-weight: 800; font-family: monospace; font-size: 11.5px; }
+        .inv-chip .chip-cust { font-size: 9.5px; color: var(--text-light); }
+
+        /* Invoice Summary Details */
+        .invoice-details-box { 
+            background: var(--white); margin: 0 15px 15px 15px; padding: 16px; border-radius: var(--border-radius); 
+            box-shadow: var(--shadow); border: 1px dashed var(--primary); display: none; animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .inv-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+        .inv-row:last-child { margin-bottom: 0; }
         .inv-row span { color: var(--text-light); }
         .inv-row strong { color: var(--text-dark); font-weight: 700; }
 
+        /* Item Return List */
         .item-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
-        .item-card { background: white; padding: 15px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
-        .item-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 5px; }
-        .item-controls { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; border-radius: 10px; margin-top: 10px; }
+        .item-card { background: white; padding: 14px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+        .item-name { font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
         
+        .item-controls { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 12px; margin-top: 10px; }
         .qty-controls { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { width: 30px; height: 30px; border: none; background: white; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: var(--primary); }
-        .qty-input { width: 40px; text-align: center; border: none; background: transparent; font-weight: 800; font-size: 16px; }
+        .qty-btn { width: 30px; height: 30px; border: none; background: white; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: var(--primary); font-size: 14px; }
+        .qty-input { width: 40px; text-align: center; border: none; background: transparent; font-weight: 800; font-size: 14px; color: var(--text-dark); outline: none; }
         
-        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-top-left-radius: 20px; border-top-right-radius: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-        .btn-confirm { background: var(--primary); color: white; padding: 12px 25px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        .btn-confirm:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn-return-all { font-size: 10px; font-weight: 700; background: #fee2e2; color: var(--danger); border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+
+        /* Floating Bottom Confirmation Bar */
+        .bottom-bar { 
+            position: fixed; bottom: 0; left: 0; width: 100%; background: white; 
+            padding: 15px 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.08); 
+            border-top-left-radius: 25px; border-top-right-radius: 25px; 
+            display: flex; justify-content: space-between; align-items: center; z-index: 100; 
+        }
+        .btn-confirm { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 14px 24px; border: none; border-radius: 14px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); transition: 0.2s; }
+        .btn-confirm:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
+
+        #scannerModal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #reader { width: 100%; max-width: 320px; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); }
+        .btn-close-scanner { margin-top: 25px; background: white; color: var(--danger); border: none; padding: 10px 25px; border-radius: 30px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="header-title">
-            <a href="home.html"><i class="fas fa-arrow-left"></i></a>
-            <span>Sales Return (Invoice)</span>
+        <div class="header-top">
+            <div class="header-title">
+                <a href="home.html"><i class="fas fa-arrow-left"></i></a>
+                <span>Sales Return (বিক্রয় ফেরত)</span>
+            </div>
         </div>
     </div>
 
+    <!-- Search & Quick Picker -->
     <div class="search-card">
-        <label style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 5px; display: block;">Enter Invoice Number</label>
+        <label style="font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 6px; display: block;">Search Invoice or Customer</label>
         <div class="search-box">
-            <input type="text" id="invInput" placeholder="e.g. INV-123456">
-            <button onclick="searchInvoice()" class="btn-search"><i class="fas fa-search"></i></button>
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search customer, phone or invoice..." oninput="filterSalesList()">
+            </div>
+            <button onclick="startScanner()" class="btn-scan"><i class="fas fa-barcode"></i></button>
         </div>
-        <p id="searchError" style="color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 10px; display: none;">Invoice not found or does not belong to this shop.</p>
+
+        <div class="recent-section">
+            <div class="recent-title">
+                <span>Recent Invoices (সাম্প্রতিক বিক্রয়)</span>
+                <span id="recentCount" style="color:var(--primary)">0 found</span>
+            </div>
+            <div class="recent-chips" id="recentChips">
+                <div style="font-size:11px; color:#94a3b8; padding:5px 0;">ইনভয়েস লোড হচ্ছে...</div>
+            </div>
+        </div>
     </div>
 
-    <div id="invoiceDetails" class="invoice-details">
-        <div class="inv-row"><span>Customer:</span> <strong id="dCustomer"></strong></div>
-        <div class="inv-row"><span>Date:</span> <strong id="dDate"></strong></div>
-        <div class="inv-row"><span>Original Total:</span> <strong id="dTotal"></strong></div>
+    <!-- Selected Invoice Banner -->
+    <div id="invoiceDetails" class="invoice-details-box">
+        <div class="inv-row"><span>Customer Name:</span> <strong id="dCustomer"></strong></div>
+        <div class="inv-row"><span>Invoice No:</span> <strong id="dInvoiceNo" style="font-family:monospace; color:var(--primary);"></strong></div>
+        <div class="inv-row"><span>Sale Date:</span> <strong id="dDate"></strong></div>
+        <div class="inv-row"><span>Original Bill:</span> <strong id="dTotal"></strong></div>
+        <div class="inv-row"><span>Paid / Due:</span> <strong id="dPaidDue" style="color:#059669;"></strong></div>
     </div>
 
+    <!-- Items List -->
     <div class="item-list" id="itemList">
-        <div style="text-align: center; color: #9ca3af; padding: 40px 0; font-size: 14px;">
-            <i class="fas fa-file-invoice" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;"></i><br>
-            Search an invoice to start returning items.
+        <div style="text-align: center; color: #94a3b8; padding: 40px 0; font-size: 13px;">
+            <i class="fas fa-file-invoice-dollar" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;"></i><br>
+            উপরের তালিকা থেকে যেকোনো ইনভয়েস সিলেক্ট করুন বা সার্চ করুন।
         </div>
     </div>
 
+    <!-- Floating Confirmation Footer -->
     <div class="bottom-bar">
         <div>
-            <p style="margin:0; font-size: 11px; color: var(--text-light); font-weight: 600;">Total Refund Amount</p>
+            <p style="margin:0; font-size: 10.5px; color: var(--text-light); font-weight: 700; text-transform:uppercase;">Refund Amount</p>
             <h3 style="margin:0; font-size: 20px; color: var(--primary); font-weight: 800;" id="refundTotal">৳0</h3>
         </div>
         <button id="btnProcess" class="btn-confirm" disabled onclick="processReturn()">Confirm Return</button>
+    </div>
+
+    <div id="scannerModal">
+        <div id="reader"></div>
+        <button onclick="stopScanner()" class="btn-close-scanner">Close Camera</button>
     </div>
 
     <script type="module">
@@ -97,65 +170,120 @@
         import { runTransaction, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
         const SHOP_ID = localStorage.getItem('activeShopId');
+        let allSales = [];
         let currentInvoiceData = null;
         let returnCart = {}; 
+        let html5QrcodeScanner = null;
 
-        window.searchInvoice = async () => {
-            const invNo = document.getElementById('invInput').value.trim();
-            if(!invNo) return;
+        window.onload = async () => {
+            loadRecentInvoices();
+        };
 
-            document.getElementById('searchError').style.display = 'none';
-            document.getElementById('itemList').innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-spin text-primary"></i> Searching...</div>';
-            
+        async function loadRecentInvoices() {
             try {
                 const snap = await get(query(rtdbRef(rtdb, 'sales_history'), orderByChild('shop_id'), equalTo(SHOP_ID)));
                 if(snap.exists()) {
-                    const allSales = snap.val();
-                    const saleKey = Object.keys(allSales).find(key => 
-                        allSales[key].invoice_no === invNo
-                    );
-
-                    if(saleKey) {
-                        currentInvoiceData = { id: saleKey, ...allSales[saleKey] };
-                        renderInvoiceItems();
-                    } else {
-                        document.getElementById('searchError').style.display = 'block';
-                        document.getElementById('itemList').innerHTML = '';
-                        document.getElementById('invoiceDetails').style.display = 'none';
-                    }
+                    allSales = Object.entries(snap.val())
+                        .map(([id, val]) => ({ id, ...val }))
+                        .reverse();
+                    renderRecentChips(allSales.slice(0, 15));
+                } else {
+                    document.getElementById('recentChips').innerHTML = '<div style="font-size:11px; color:#94a3b8;">কোনো বিক্রয়ের তথ্য নেই।</div>';
                 }
-            } catch(e) { console.log(e); }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function renderRecentChips(list) {
+            const container = document.getElementById('recentChips');
+            container.innerHTML = '';
+            document.getElementById('recentCount').innerText = `${list.length}টি`;
+
+            if(list.length === 0) {
+                container.innerHTML = '<div style="font-size:11px; color:#94a3b8; padding:5px;">কোনো ইনভয়েস পাওয়া যায়নি।</div>';
+                return;
+            }
+
+            list.forEach(sale => {
+                const chip = document.createElement('div');
+                chip.className = `inv-chip ${currentInvoiceData && currentInvoiceData.id === sale.id ? 'active' : ''}`;
+                chip.innerHTML = `
+                    <span class="chip-no">${sale.invoice_no || 'N/A'}</span>
+                    <span class="chip-cust">${(sale.customer_name || sale.customer || 'Walk-in').slice(0, 14)} • ৳${sale.total_amount || 0}</span>
+                `;
+                chip.onclick = () => selectInvoice(sale);
+                container.appendChild(chip);
+            });
+        }
+
+        window.filterSalesList = () => {
+            const term = document.getElementById('searchInput').value.toLowerCase().trim();
+            if(!term) {
+                renderRecentChips(allSales.slice(0, 15));
+                return;
+            }
+            const filtered = allSales.filter(s => 
+                (s.invoice_no && s.invoice_no.toLowerCase().includes(term)) ||
+                (s.customer_name && s.customer_name.toLowerCase().includes(term)) ||
+                (s.customer && s.customer.toLowerCase().includes(term)) ||
+                (s.customer_phone && s.customer_phone.includes(term))
+            );
+            renderRecentChips(filtered.slice(0, 20));
+
+            // Auto-select if exact match found
+            const exact = filtered.find(s => s.invoice_no && s.invoice_no.toLowerCase() === term);
+            if(exact) selectInvoice(exact);
+        };
+
+        window.selectInvoice = (sale) => {
+            currentInvoiceData = sale;
+            document.querySelectorAll('.inv-chip').forEach(c => c.classList.remove('active'));
+            renderRecentChips(allSales.slice(0, 15));
+
+            document.getElementById('dCustomer').innerText = sale.customer_name || sale.customer || 'Local (Walk-in)';
+            document.getElementById('dInvoiceNo').innerText = sale.invoice_no || 'N/A';
+            document.getElementById('dDate').innerText = new Date(sale.created_at || sale.date).toLocaleDateString('en-GB');
+            document.getElementById('dTotal').innerText = `৳${Number(sale.total_amount || 0).toLocaleString()}`;
+            document.getElementById('dPaidDue').innerText = `Paid: ৳${sale.paid_amount || 0} | Due: ৳${sale.due_amount || 0}`;
+            document.getElementById('invoiceDetails').style.display = 'block';
+
+            renderInvoiceItems();
         };
 
         function renderInvoiceItems() {
-            document.getElementById('dCustomer').innerText = currentInvoiceData.customer || 'Local';
-            document.getElementById('dDate').innerText = new Date(currentInvoiceData.created_at || currentInvoiceData.date).toLocaleDateString();
-            document.getElementById('dTotal').innerText = `৳${currentInvoiceData.total_amount || currentInvoiceData.grandTotal}`;
-            document.getElementById('invoiceDetails').style.display = 'block';
-
             const listEl = document.getElementById('itemList');
             listEl.innerHTML = '';
             returnCart = {}; 
 
-            currentInvoiceData.items.forEach((item, index) => {
-                const maxReturnable = item.qty; // Current available quantity in invoice
+            if(!currentInvoiceData.items || currentInvoiceData.items.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; color:var(--danger); font-weight:bold; padding:20px;">এই ইনভয়েসে কোনো পণ্য অবশিষ্ট নেই।</div>';
+                calculateRefund();
+                return;
+            }
 
+            currentInvoiceData.items.forEach((item, index) => {
+                const maxReturnable = Number(item.qty || 0);
                 if (maxReturnable > 0) {
                     returnCart[index] = 0; 
+                    const rate = Number(item.sellRate || item.rate || 0);
 
                     const html = `
                     <div class="item-card">
-                        <div class="item-name">${item.name}</div>
-                        <div style="font-size: 11px; color: var(--text-light); display: flex; justify-content: space-between;">
-                            <span>Bought Qty: <strong style="color:var(--text-dark);">${item.qty}</strong></span>
-                            <span style="color: var(--primary); font-weight: bold;">Rate: ৳${item.sellRate}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div class="item-name">${item.name}</div>
+                            <button class="btn-return-all" onclick="returnMaxItem(${index}, ${maxReturnable})">Return All (${maxReturnable})</button>
+                        </div>
+                        <div style="font-size: 11.5px; color: var(--text-light); display: flex; justify-content: space-between; margin-top:2px;">
+                            <span>Sold Qty: <b style="color:var(--text-dark);">${maxReturnable} ${item.unit || 'pcs'}</b></span>
+                            <span style="color: var(--primary); font-weight: bold;">Rate: ৳${rate}</span>
                         </div>
                         <div class="item-controls">
-                            <span style="font-size: 12px; font-weight: 700;">Return Qty:</span>
+                            <span style="font-size: 12px; font-weight: 700;">ফেরতের পরিমাণ:</span>
                             <div class="qty-controls">
-                                <button onclick="changeQty(${index}, -1, ${maxReturnable})" class="qty-btn">-</button>
-                                <input type="text" id="qty_${index}" value="0" class="qty-input" readonly>
-                                <button onclick="changeQty(${index}, 1, ${maxReturnable})" class="qty-btn">+</button>
+                                <button onclick="changeQty(${index}, -1, ${maxReturnable})" class="qty-btn"><i class="fas fa-minus"></i></button>
+                                <input type="number" id="qty_${index}" value="0" class="qty-input" readonly>
+                                <button onclick="changeQty(${index}, 1, ${maxReturnable})" class="qty-btn"><i class="fas fa-plus"></i></button>
                             </div>
                         </div>
                     </div>`;
@@ -163,21 +291,21 @@
                 }
             });
 
-            if(listEl.innerHTML === '') {
-                listEl.innerHTML = '<div style="text-align:center; color: var(--success); font-weight:bold; padding: 20px;">No items left in this invoice to return.</div>';
-            }
             calculateRefund();
         }
 
+        window.returnMaxItem = (index, maxAllowed) => {
+            returnCart[index] = maxAllowed;
+            document.getElementById(`qty_${index}`).value = maxAllowed;
+            calculateRefund();
+        };
+
         window.changeQty = (itemIndex, change, maxAllowed) => {
-            let current = returnCart[itemIndex];
+            let current = returnCart[itemIndex] || 0;
             let newQty = current + change;
             
             if(newQty < 0) newQty = 0;
-            if(newQty > maxAllowed) {
-                alert(`You can only return maximum ${maxAllowed} items!`);
-                newQty = maxAllowed;
-            }
+            if(newQty > maxAllowed) newQty = maxAllowed;
             
             returnCart[itemIndex] = newQty;
             document.getElementById(`qty_${itemIndex}`).value = newQty;
@@ -188,19 +316,23 @@
             let totalRefund = 0;
             let hasItemsToReturn = false;
 
-            currentInvoiceData.items.forEach((item, index) => {
-                if(returnCart[index] > 0) {
-                    totalRefund += returnCart[index] * item.sellRate;
-                    hasItemsToReturn = true;
-                }
-            });
+            if(currentInvoiceData && currentInvoiceData.items) {
+                currentInvoiceData.items.forEach((item, index) => {
+                    const rQty = returnCart[index] || 0;
+                    if(rQty > 0) {
+                        const rate = Number(item.sellRate || item.rate || 0);
+                        totalRefund += (rQty * rate);
+                        hasItemsToReturn = true;
+                    }
+                });
+            }
 
-            document.getElementById('refundTotal').innerText = `৳${totalRefund}`;
+            document.getElementById('refundTotal').innerText = `৳${totalRefund.toLocaleString()}`;
             document.getElementById('btnProcess').disabled = !hasItemsToReturn;
         }
 
         window.processReturn = async () => {
-            if(!confirm("Are you sure? Returned items will be REMOVED from the original invoice and money will be deducted from your cashbox.")) return;
+            if(!confirm("আপনি কি নিশ্চিত? ফেরত নেওয়া পণ্যগুলো পুনরায় স্টকে যোগ হবে এবং ক্যাশবক্স থেকে টাকা বিয়োগ হবে।")) return;
             
             const btn = document.getElementById('btnProcess');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; 
@@ -212,22 +344,19 @@
             let finalInvoiceItems = [];
             const updates = {};
 
-            // 1. Prepare data and calculate deductions
             currentInvoiceData.items.forEach((item, index) => {
                 const rQty = returnCart[index] || 0;
+                const rate = Number(item.sellRate || item.rate || 0);
                 
                 if(rQty > 0) {
-                    totalRefund += rQty * item.sellRate;
-                    
-                    // Calculate profit to deduct
-                    const buyRate = Number(item.buy_price || item.purchaseRate || 0);
-                    const profitPerItem = Number(item.sellRate) - buyRate;
+                    totalRefund += (rQty * rate);
+                    const buyRate = Number(item.buyRate || item.buy_price || item.purchaseRate || 0);
+                    const profitPerItem = rate - buyRate;
                     totalProfitDeducted += (profitPerItem * rQty);
 
-                    returnedItemsLog.push({ id: item.id, name: item.name, qty_returned: rQty, rate: item.sellRate });
+                    returnedItemsLog.push({ id: item.id, name: item.name, qty_returned: rQty, rate: rate });
                 }
 
-                // REDUCE QTY (If any quantity is left, keep the item in invoice)
                 const remainingQty = item.qty - rQty;
                 if(remainingQty > 0) {
                     finalInvoiceItems.push({ ...item, qty: remainingQty });
@@ -235,26 +364,23 @@
             });
 
             try {
-                // 2. Add returned items back to Stock
+                // 1. Return Stock atomically
                 for (let log of returnedItemsLog) {
                     await runTransaction(rtdbRef(rtdb, `product_list/${log.id}/stock`), (currentStock) => {
                         return (Number(currentStock) || 0) + log.qty_returned;
                     });
                 }
 
-                // 3. Update Original Invoice in Sales Book
+                // 2. Update Sales History
                 if (finalInvoiceItems.length === 0) {
-                    // IF ALL ITEMS RETURNED -> Delete the whole invoice completely
                     updates[`sales_history/${currentInvoiceData.id}`] = null;
                 } else {
-                    // IF SOME ITEMS LEFT -> Update ALL invoice totals correctly
                     let newTotal = Number(currentInvoiceData.total_amount || 0) - totalRefund;
                     let newSubtotal = Number(currentInvoiceData.subtotal || currentInvoiceData.total_amount || 0) - totalRefund;
                     let currentPaid = Number(currentInvoiceData.paid_amount || 0);
                     let currentDue = Number(currentInvoiceData.due_amount || 0);
                     let newProfit = Number(currentInvoiceData.total_profit || 0) - totalProfitDeducted;
 
-                    // Adjust Paid and Due Logics
                     if(totalRefund <= currentPaid) {
                         currentPaid -= totalRefund; 
                     } else {
@@ -266,39 +392,50 @@
 
                     updates[`sales_history/${currentInvoiceData.id}/items`] = finalInvoiceItems;
                     updates[`sales_history/${currentInvoiceData.id}/total_amount`] = newTotal;
-                    updates[`sales_history/${currentInvoiceData.id}/subtotal`] = newSubtotal; // FIXED HERE
-                    updates[`sales_history/${currentInvoiceData.id}/grandTotal`] = newTotal;  // Just in case it's used
+                    updates[`sales_history/${currentInvoiceData.id}/subtotal`] = newSubtotal;
                     updates[`sales_history/${currentInvoiceData.id}/paid_amount`] = currentPaid;
                     updates[`sales_history/${currentInvoiceData.id}/due_amount`] = currentDue;
                     updates[`sales_history/${currentInvoiceData.id}/total_profit`] = newProfit;
                 }
 
-                // 4. Deduct from Cashbox 
+                // 3. Deduct from Cashbox
                 await runTransaction(rtdbRef(rtdb, `cash_settings/${SHOP_ID}/current_balance`), (bal) => (bal || 0) - totalRefund);
                 
-                // 5. Log Cash Transaction
+                // 4. Log Cash Out
                 await push(rtdbRef(rtdb, 'cash_transactions'), {
                     shop_id: SHOP_ID, type: 'cash_out', source: 'sales_return',
-                    amount: totalRefund, note: `Refund for Invoice ${currentInvoiceData.invoice_no}`, created_at: Date.now()
+                    amount: totalRefund, note: `Sales Return Refund (INV: ${currentInvoiceData.invoice_no})`, created_at: Date.now()
                 });
 
-                // 6. Save Return History for separate checking
+                // 5. Save Return History
                 await push(rtdbRef(rtdb, 'sales_return_history'), {
-                    shop_id: SHOP_ID, customer: currentInvoiceData.customer, invoice_no: currentInvoiceData.invoice_no,
-                    returned_items: returnedItemsLog, total_refund: totalRefund, date: Date.now()
+                    shop_id: SHOP_ID, customer: currentInvoiceData.customer_name || currentInvoiceData.customer, 
+                    invoice_no: currentInvoiceData.invoice_no, returned_items: returnedItemsLog, 
+                    total_refund: totalRefund, date: Date.now()
                 });
 
-                // Commit all updates to database
                 await update(rtdbRef(rtdb), updates);
 
-                alert("Return processed! Items have been successfully removed from the Sales Book.");
+                alert("বিক্রয় ফেরত সম্পন্ন হয়েছে! পণ্য স্টকে যুক্ত হয়েছে এবং ক্যাশবক্স অ্যাডজাস্ট হয়েছে।");
                 location.reload(); 
 
             } catch (err) {
-                alert("Error processing return: " + err.message);
+                alert("Error: " + err.message);
                 btn.innerHTML = 'Confirm Return'; btn.disabled = false;
             }
         };
+
+        // --- SCANNER ---
+        window.startScanner = () => {
+            document.getElementById('scannerModal').style.display = 'flex';
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 280, height: 140 } }, (text) => {
+                window.stopScanner();
+                document.getElementById('searchInput').value = text;
+                filterSalesList();
+            }).catch(err => { window.stopScanner(); });
+        };
+        window.stopScanner = () => { if(html5QrcodeScanner) html5QrcodeScanner.stop(); document.getElementById('scannerModal').style.display = 'none'; };
     </script>
 </body>
 </html>
