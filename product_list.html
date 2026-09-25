@@ -336,6 +336,10 @@
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
+        // Firebase product query is shared by the live listener and the bulk-stock action.
+        // Keep it at module scope so setAllStocksZero() can access it.
+        const productsQuery = query(ref(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
+
         let allProducts = [];
         let displayedProducts = [];
         let itemsPerPage = 20;
@@ -368,7 +372,6 @@
             }
 
             // Real-time Firebase Sync
-            const productsQuery = query(ref(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
             onValue(productsQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
 
