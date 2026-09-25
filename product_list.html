@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/png" href="icon-192x192.png">
-    <title>Product List - Poysha POS</title>\n    <!-- Pagination + bulk stock-zero update -->
+    <title>Product List - Poysha POS</title>\n    <!-- Pagination update: keep loaded batches after Firebase edits -->
     
     <meta name="theme-color" content="#0B4A3E">
 
@@ -166,7 +166,6 @@
             <div class="header-actions">
                 <a href="unit_admin.html" class="btn-header"><i class="fas fa-ruler"></i></a>
                 <button onclick="downloadPDF()" class="btn-header" style="background: rgba(239, 68, 68, 0.2);"><i class="fas fa-file-pdf"></i></button>
-                <button onclick="setAllStocksZero()" class="btn-header" id="zeroStockBtn" style="background: rgba(239, 68, 68, 0.2);"><i class="fas fa-boxes-stacked"></i> 0 Stock</button>
                 <button onclick="openModal('add')" class="btn-header"><i class="fas fa-plus"></i> Add</button>
             </div>
         </div>
@@ -336,10 +335,6 @@
         const SHOP_ID = localStorage.getItem('activeShopId');
         const SHOP_NAME = localStorage.getItem('activeShopName') || 'Poysha POS Store';
 
-        // Firebase product query is shared by the live listener and the bulk-stock action.
-        // Keep it at module scope so setAllStocksZero() can access it.
-        const productsQuery = query(ref(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
-
         let allProducts = [];
         let displayedProducts = [];
         let itemsPerPage = 20;
@@ -372,6 +367,7 @@
             }
 
             // Real-time Firebase Sync
+            const productsQuery = query(ref(rtdb, 'product_list'), orderByChild('shop_id'), equalTo(SHOP_ID));
             onValue(productsQuery, (snapshot) => {
                 document.getElementById('loading').style.display = 'none';
 
@@ -639,58 +635,6 @@
             } catch (err) { alert("Error saving: " + err.message); } 
             finally { btn.innerText = originalText; btn.disabled = false; }
         });
-
-        // --- SET ALL PRODUCT STOCK TO ZERO ---
-        // Only the "stock" field is changed. Product name, price, image,
-        // barcode, unit, alerts, expiry, etc. remain untouched.
-        window.setAllStocksZero = async () => {
-            if(!confirm("সব পণ্যের Stock 0 করে দিতে চান?\n\nশুধু Stock পরিবর্তন হবে; অন্য কোনো তথ্য পরিবর্তন হবে না.")) return;
-
-            const btn = document.getElementById('zeroStockBtn');
-            const originalHtml = btn ? btn.innerHTML : '';
-
-            try {
-                if(btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-                }
-
-                // Read the latest products for this shop directly from Firebase.
-                // This avoids relying on a possibly stale local cache.
-                const latestSnap = await get(productsQuery);
-
-                if(!latestSnap.exists()) {
-                    alert("এই শপে কোনো পণ্য পাওয়া যায়নি।");
-                    return;
-                }
-
-                // Multi-location update: only product_list/{id}/stock is written.
-                // No other product fields and no stock_history records are touched.
-                const zeroStockUpdates = {};
-                Object.entries(latestSnap.val()).forEach(([id, product]) => {
-                    if(Number(product.stock) !== 0) {
-                        zeroStockUpdates[`product_list/${id}/stock`] = 0;
-                    }
-                });
-
-                const count = Object.keys(zeroStockUpdates).length;
-
-                if(count === 0) {
-                    alert("সব পণ্যের Stock ইতিমধ্যে 0 আছে।");
-                    return;
-                }
-
-                await update(ref(rtdb), zeroStockUpdates);
-                alert(`${count}টি পণ্যের Stock 0 করা হয়েছে।`);
-            } catch(err) {
-                alert("Stock 0 করতে সমস্যা হয়েছে: " + err.message);
-            } finally {
-                if(btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-                }
-            }
-        };
 
         // --- DELETE PRODUCT ---
         window.deleteProduct = async (id) => {
